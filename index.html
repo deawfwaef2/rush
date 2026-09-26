@@ -531,10 +531,10 @@ const HZ_BADGE={gr:"",mg:"",rf:"",mn:"",sh:"",wr:"",gs:""};
 /* ============================================================
    RENDER ENGINE
    ============================================================ */
-const cv=$("c"), cx=cv.getContext("2d");
+const cv=$("c"); let cx=cv.getContext("2d");
 let W=0,H=0,DPR=1;
 let UIZ=1; function uiScale(){ UIZ=Math.max(0.74,Math.min(1.45,Math.min(innerWidth/1000,innerHeight/560))); document.getElementById("ui").style.zoom=UIZ; }
-function resize(){ uiScale();DPR=Math.min(2,window.devicePixelRatio||1);W=innerWidth;H=innerHeight;cv.width=W*DPR;cv.height=H*DPR;cx.setTransform(DPR,0,0,DPR,0,0);}
+function resize(){ uiScale();DPR=Math.min(1.5,window.devicePixelRatio||1);W=innerWidth;H=innerHeight;cv.width=W*DPR;cv.height=H*DPR;cx.setTransform(DPR,0,0,DPR,0,0);}
 addEventListener("resize",resize);resize();
 
 // world width per level grows: later fields are longer (fortresses extra long)
@@ -832,7 +832,34 @@ function seg(ax,ay,bx,by,w1,w2){ // tapered limb with round caps
   cx.beginPath();cx.moveTo(ax+nx*w1/2,ay+ny*w1/2);cx.lineTo(bx+nx*w2/2,by+ny*w2/2);cx.lineTo(bx-nx*w2/2,by-ny*w2/2);cx.lineTo(ax-nx*w1/2,ay-ny*w1/2);cx.fill();
   cx.beginPath();cx.arc(ax,ay,w1/2,0,7);cx.arc(bx,by,w2/2,0,7);cx.fill();}
 function limb(ax,ay,bx,by,w){seg(ax,ay,bx,by,w,w);}
+/* PERF: sprite cache — each pose rendered once to an offscreen canvas, then blitted */
+const SPR=new Map(); let sprCount=0; const SPR_B=[0.4,0.8,1.6,3.2];
+const TAU=Math.PI*2;
 function drawMan(sx,sy,s,dir,phase,state,cols,opts={}){
+  if(opts.nocache) return drawManRaw(sx,sy,s,dir,phase,state,cols,opts);
+  const v=opts.v; const need=s*DPR*(v?Math.max(v.h,v.w):1);
+  let R=SPR_B[3]; for(const b of SPR_B){ if(b>=need){R=b;break;} }
+  if(need>SPR_B[3]*1.2) return drawManRaw(sx,sy,s,dir,phase,state,cols,opts);
+  let pb=0, pn=1, ph=0;
+  if(state==="run"){pn=12;} else if(state==="melee"){pn=12;} else if(state==="cheer"){pn=8;} else if(opts.vet){pn=4;}
+  if(pn>1){ const pp=((phase%TAU)+TAU)%TAU; pb=Math.floor(pp/TAU*pn)%pn; ph=(pb+0.5)/pn*TAU; }
+  const V=v||{stride:1,lean:0,pack:true,cap:false,hold:0,w:1,h:1,bandage:false};
+  const key=cols[0]+cols[1]+state+pb+(opts.vet?1:0)+(opts.enemy?1:0)+(V.pack?1:0)+(V.cap?1:0)+(V.bandage?1:0)+Math.round(V.lean*12)+Math.round(V.stride*2.5)+Math.round(V.hold*4)+"_"+R+(opts.rim||"");
+  let c=SPR.get(key);
+  if(!c){
+    if(sprCount>2600){SPR.clear();sprCount=0;}
+    c=document.createElement("canvas"); c.width=Math.ceil(170*R); c.height=Math.ceil(150*R);
+    const g=c.getContext("2d"); const keep=cx; cx=g; g.scale(R,R);
+    drawMan0(75,125,1,1,ph,state,cols,Object.assign({},opts,{flash:false,v:Object.assign({},V,{h:1,w:1})}));
+    cx=keep; SPR.set(key,c); sprCount++;
+  }
+  const wx=v?(v.w*0.5+0.5):1, hy=v?v.h:1;
+  const dw=170*s*wx, dh=150*s*hy;
+  if(dir>=0) cx.drawImage(c,sx-75*s*wx,sy-125*s*hy,dw,dh);
+  else { cx.save(); cx.translate(sx,sy); cx.scale(-1,1); cx.drawImage(c,-75*s*wx,-125*s*hy,dw,dh); cx.restore(); }
+  if(opts.flash){ const fx=sx+dir*58*s, fy=sy-58*s; cx.fillStyle="rgba(255,210,110,0.85)"; cx.beginPath(); cx.arc(fx,fy,7*s,0,7); cx.fill(); cx.fillStyle="#fffbe0"; cx.beginPath(); cx.arc(fx,fy,3*s,0,7); cx.fill(); }
+}
+function drawManRaw(sx,sy,s,dir,phase,state,cols,opts={}){
   const v=opts.v; if(v){ cx.save(); cx.translate(sx,sy); cx.scale(v.w*0.5+0.5,v.h); cx.translate(-sx,-sy); drawMan0(sx,sy,s,dir,phase,state,cols,opts); cx.restore(); } else drawMan0(sx,sy,s,dir,phase,state,cols,opts); }
 function drawMan0(sx,sy,s,dir,phase,state,cols,opts){
   const V=opts.v||{stride:1,lean:0,pack:true,cap:false,hold:0,w:1};
@@ -903,7 +930,7 @@ function makeRagdoll(x,z,dir,cols,vet,impulse,enemy){
   pts[0].ox-=impulse[0]*0.8;pts[0].oh-=impulse[1]*0.5;
   const sticks=[[0,1],[1,2],[1,3],[3,4],[1,5],[5,6],[2,7],[7,8],[2,9],[9,10],[0,2],[1,7],[1,9]].map(([a,b])=>[a,b,Math.hypot(pts[a].x-pts[b].x,pts[a].h-pts[b].h),b>=7&&a===1?0.2:1]);
   ragdolls.push({pts,sticks,z,cols,vet,enemy,dir,life:0,rest:false});
-  if(ragdolls.length>260){const r=ragdolls.shift();corpses.push(r);} 
+  if(ragdolls.length>160){const r=ragdolls.shift();corpses.push(r);if(corpses.length>600)corpses.shift();} 
 }
 const corpses=[]; // settled ragdolls baked (kept for drawing)
 function stepRagdolls(dt){
@@ -918,7 +945,7 @@ function stepRagdolls(dt){
 function drawRagdoll(r){
   const [bx,by,s]=P(r.pts[2].x,r.z);
   const q=r.pts.map(p=>{const pp=P(p.x,r.z,p.h);return pp;});
-  const g=gradFor(bx,by,s,r.cols);cx.fillStyle=g;
+  cx.fillStyle=r.cols[1];
   const L=(a,b,w)=>limb(q[a][0],q[a][1],q[b][0],q[b][1],w*s);
   L(2,7,7);L(7,8,6);L(2,9,7);L(9,10,6);L(1,2,12);L(1,3,5);L(3,4,4.5);L(1,5,5);L(5,6,4.5);L(0,1,5);
   cx.beginPath();cx.arc(q[0][0],q[0][1],5*s,0,7);cx.fill();
@@ -991,7 +1018,7 @@ function mkMan(x,z,vet){const q=Math.random;
   const v={h:0.9+q()*0.2,w:0.9+q()*0.25,tone:(q()-0.5)*0.3,stride:0.8+q()*0.4,lean:(q()-0.5)*0.12,pack:q()<0.75,cap:q()<0.1,hold:q()<0.2?0.25:q()<0.35?-0.2:0,bandage:q()<0.08,gaitF:0.85+q()*0.3,shout:q()<0.15};
   return {x,z,dir:1,phase:q()*6,state:"idle",vet,alive:true,speed:(120+q()*40),delay:0,tx:x,chat:0,hitT:0,v,stumble:0};}
 const colCache={};
-function manCols(m){const base=m.vet?pal.vet:pal.us;const key=base[0]+(m.v?m.v.tone.toFixed(2):"");if(!colCache[key]){const t=m.v?m.v.tone:0;colCache[key]=[t>0?shade(base[0],"#e8dcc0",t*0.6):shade(base[0],"#000000",-t*0.8),t>0?shade(base[1],"#bba888",t*0.3):shade(base[1],"#000000",-t*0.6)];}return colCache[key];}
+function manCols(m){const base=m.vet?pal.vet:pal.us;const tq=m.v?Math.round(m.v.tone*13)/13:0;const key=base[0]+tq;if(!colCache[key]){const t=tq;colCache[key]=[t>0?shade(base[0],"#e8dcc0",t*0.6):shade(base[0],"#000000",-t*0.8),t>0?shade(base[1],"#bba888",t*0.3):shade(base[1],"#000000",-t*0.6)];}return colCache[key];}
 function sortMen(){men.sort((a,b)=>a.z-b.z);}
 
 /* ---------- UI build ---------- */
