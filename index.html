@@ -138,6 +138,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 .hz .bar i{display:block;height:100%;background:linear-gradient(90deg,#c9862f,#c8432f);transition:width .5s}
 .hz .ds{grid-column:2/4;font-size:11px;color:var(--dim);font-style:italic;line-height:1.3}
 #hzList.many .hz{padding:3px 2px;grid-template-columns:32px 1fr auto}#hzList.many .hz .ds{display:none}#hzList.many .hz .badge{width:30px;height:30px}#hzList.many .hz .badge svg{width:21px;height:21px}#hzList.many .hz .nm{font-size:13.5px}#hzList.many .hz .val{font-size:18px}#hzList.many .hz .bar{height:4px;margin:2px 0}
+.set-cred{font-size:10.5px;color:#7a6848;margin:10px 0 6px;line-height:1.45;text-align:center;letter-spacing:.02em}
 .adnote{font-size:12px;color:#6d5a36;margin-top:7px;letter-spacing:.05em;font-style:italic}
 .hz .inf{font-size:10px;color:var(--brass);font-style:normal;margin-left:4px;opacity:.8}
 .hz.fx{animation:shake .4s}
@@ -643,7 +644,10 @@ var AD={prov:"none",ok:false,busy:false,paused:false,lastMid:0,_pz:{},_mz:{},_pe
  store(json){ if(this.prov!=="playgama")return false; clearTimeout(this._st);
    this._st=setTimeout(()=>{ const loc=()=>{ try{localStorage.setItem(SAVE_KEY,json)}catch(e){} }; try{ const p=bridge.storage.set([SAVE_KEY],[json]); p&&p.catch?p.catch(loc):0; }catch(e){ loc(); } },500); return true; },
  flush(){ if(this.prov!=="playgama")return; clearTimeout(this._st); try{ const p=bridge.storage.set([SAVE_KEY],[JSON.stringify(S)]); p&&p.catch&&p.catch(()=>{}); }catch(e){} },
- lang(){ if(this.prov!=="playgama"||S.langPicked)return; try{ const l=String(bridge.platform.language||"").toLowerCase(); S.lang=l.startsWith("zh")?"zh":"en"; }catch(e){} },
+ /* portal language (CrazyGames: SDK.user.systemInfo.locale, Playgama: platform.language) unless the player chose one; fallback English */
+ lang(){ if(S.langPicked)return false; let l="";
+   try{ if(this.prov==="playgama")l=String(bridge.platform.language||""); else if(this.prov==="crazygames"){ const si=CrazyGames.SDK.user&&CrazyGames.SDK.user.systemInfo; l=String((si&&si.locale)||""); } }catch(e){}
+   if(!l)return false; const nl=l.toLowerCase().startsWith("zh")?"zh":"en"; if(nl===S.lang)return false; S.lang=nl; return true; },
  ready(){ try{ if(this.prov==="playgama")bridge.platform.sendMessage("game_ready"); }catch(e){} },
  msg(m){ try{ if(this.prov==="playgama")bridge.platform.sendMessage(m,{world:"western_front",level:String((S&&S.lvl||0)+1)}); }catch(e){} },
  gameplayStart(){ try{ if(this.prov==="crazygames")CrazyGames.SDK.game.gameplayStart(); }catch(e){} this.msg("level_started"); },
@@ -1481,7 +1485,7 @@ function drawParts(front){
     else if(p.col==="smokeW"){ const r=p.size*s*(0.6+k*1.2)*1.45; cx.globalAlpha=Math.max(0,0.62*(1-k*k)); cx.drawImage(SW,sx-r,sy-r,2*r,2*r); }
     else if(p.col==="gas"){ const r=p.size*s*(0.7+k)*1.45; cx.globalAlpha=Math.max(0,0.38*(1-k*k)); cx.drawImage(GS,sx-r,sy-r,2*r,2*r); }
     else if(p.col==="spark"){ cx.globalAlpha=Math.max(0,1-k); cx.fillStyle="#ffe6a0"; cx.fillRect(sx,sy,3*s,1.5*s); }
-    else if(p.col==="blood"){ cx.globalAlpha=Math.max(0,1-k); cx.fillStyle="#5a0a06"; cx.fillRect(sx,sy,2*s,2*s); }
+    else if(p.col==="blood"){ cx.globalAlpha=Math.max(0,1-k); cx.fillStyle="#3b2d1d";   /* v1.4f: mud spray, no red (PEGI 12 for CrazyGames) */ cx.fillRect(sx,sy,2*s,2*s); }
     else { cx.globalAlpha=Math.max(0,1-k*0.5); cx.fillStyle="#322618"; cx.fillRect(sx-p.size*s/2,sy-p.size*s/2,p.size*s,p.size*s); }
   }
   cx.globalAlpha=1;
@@ -2510,6 +2514,7 @@ function openSettings(){
   <div class="set-row"><span>${t.time}</span><span>${fmtT(Date.now()-S.start)} · ${S.day}d · ${IC.skull.replace('<svg','<svg width=16 height=16 style="filter:invert(1) brightness(.2)"')} ${S.lost}</span></div>
   <div class="set-row"><span>${S.lang==="zh"?"画质":"Graphics"}</span><span>${[["a",S.lang==="zh"?"自动":"Auto"],["h",S.lang==="zh"?"高":"High"],["m",S.lang==="zh"?"中":"Med"],["l",S.lang==="zh"?"低":"Low"]].map(([k,n])=>`<button class="btn sm ${(S.gfx||"a")===k?"":"dim"}" data-gfx="${k}">${n}</button>`).join(" ")}</span></div>
   <div class="set-row"><span style="opacity:.6">${t.reset}</span><button class="btn dim" id="sRst">↺</button></div>
+  <div class="set-cred">${S.lang==="zh"?"音乐":"Music"}: Kevin MacLeod (incompetech.com) · CC BY 4.0<br>${S.lang==="zh"?"音效":"Sound effects"}: freesound.org · CC0</div>
   <button class="btn red" id="sOk">✓</button></div>`;
   $("sEn").onclick=()=>{S.lang="en";S.langPicked=1;save();applyTexts();openSettings();refreshTexts();};
   $("sZh").onclick=()=>{S.lang="zh";S.langPicked=1;save();applyTexts();openSettings();refreshTexts();};
@@ -3188,7 +3193,7 @@ function grain(){cx.save();cx.globalCompositeOperation="overlay";const p=grain.p
   if(PG){ await AD.init(); await AD.loadSave(); AD.lang(); }
   applyTexts(); payDays(); updTop(); toMenu(); cam.x=cam.tx; cam.zoom=cam.tz; cam.tilt=cam.tt;
   requestAnimationFrame(frame);
-  if(!PG) await AD.init();
+  if(!PG){ await AD.init(); if(AD.lang()){ applyTexts(); try{ refreshTexts(); }catch(e){} } }
   AD.ready();
   document.addEventListener("pointerdown",()=>AU.init(),{once:true});
 })();

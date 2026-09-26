@@ -404,3 +404,5 @@ User LIKES this version (v1.4b). Requests:
   Panels, buttons, cards, the top bar and modals never move the camera; passing through the edge on the way to a button does nothing. Keys A/D/arrows still pan.
 - Developer mode REMOVED at the user's request (settings row, DEV +1d button, +1 day / +1 lvl / morale / tutorial buttons, unused ?debug const). Do not re-add it.
 - Settings reset: two-step in-game confirm (window.confirm may be blocked in portal iframes); on Playgama it also overwrites the bridge.storage save.
+- v1.4f+ (same day): CrazyGames locale -> language (SDK.user.systemInfo.locale, unless S.langPicked); hit particles are mud-coloured (PEGI 12);
+  visible CC BY music credit in Settings. CRAZYGAMES.md = full submission kit (name, descriptions, controls, tags, form fields, covers/video specs, requirements checklist).
