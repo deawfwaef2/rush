@@ -198,3 +198,16 @@ NEW wishes:
 ## v1.1j skill reward
 - Tactical merits on win (b.merits): Massed assault (b.shock), Flare timing, Officer's lead (used & survived), Low losses (<35%), Nobody broke (0 pinned). Each merit +5% survivors promoted to veterans; shown as a row in the report.
 - NEXT ideas: bench perf in real browser; more unit types; polish drawMan (figures still cartoonish).
+
+---
+## Feedback round 10 (2026-09-26) → v1.2
+(round 8/9 list re-sent; plus NEW:)
+- MORE UNIT TYPES.
+- BOOST POINTS: earn points; a boost screen lets you buy the NEXT charge's loadout (unit types, strategic resources).
+- GOAL = finish the game as FAST as possible: stopwatch; show time after every level and every chapter.
+- Victory effect: not flashy but NOT too plain either. Still many teleport ("瞬移") bugs.
+- MORE early strategic resources, e.g. "cover": during the charge when a shot is about to hit, player clicks a unit (highlight box) to make it immune to that shot. More interactivity.
+- MORE ENEMY TYPES with strategy.
+- Every level should feel different. Some chapters: levels 1-4 = sub-area 1, level 5 = fade to black, big scene change.
+- BUG: with more men, the trench sides get closer (camera zoom-out compresses). More men should mean MORE DEPTH, not zoom-out.
+- Lag with many men; near-ground foreground unsatisfying.
