@@ -281,3 +281,13 @@ COMBAT / PERF
 - Headless (software canvas) 300 men lvl 10: JS per frame plan 62 -> 6 ms, charge 130-290 -> 6-11 ms.
 - COORDINATION NOTE: another agent session is pushing to this repo at the same time. ALWAYS `git fetch && git rebase origin/main` before push; never force-push.
   I (agent A) am working next on: corpse baking, particle sprites, HUD diffing (v1.3b-3), then v1.3c spread/1.5x lines + near/far scenery, v1.3d random charge events.
+
+---
+## Feedback round 12 (2026-09-26) = round 10 list re-sent (most already done in v1.2/v1.3). Remaining focus: MORE ENEMY TYPES, chapter sub-area blackout scene change at level 5, near foreground, teleport bugs, perf.
+## v1.3c ENEMY TYPES + morale fix
+- levelDef: sn (snipers, from idx5), fl (flamethrowers, idx20), ca (counter-attack, idx12); in hazard panel, MECH cards (en/zh), IC icons, NEWM popups.
+- Snipers: stepSnipers — every 6.5/sn s a glint on enemy parapet (drawGlints) then an aimed shot at a priority target (cutting engineer > engineer/Lewis > vet); uses the Take-Cover aim box (m.aim) so player can save him; 30% chance to target an active officer (60% kill). Smoke slows them.
+- Flamethrowers: flameTick in meleeTick; burst kills 1..5 nearest attackers, more with denser formations; bombers can knock teams out (b.flK).
+- Counter-attack: when garrison hits 0, startCounter() adds 18%·e0·ca fresh enemies after 1.4s; waiting men re-enter melee (b.caPending blocks the win).
+- BUG FIX: morale cascade — shockNear hit EVERY runner within 70px (−5.5 each) → 100+ men pinned in dense crowds. Now max 5 nearest, −4 (vet −1.5), and runners regain +1.2 morale/s.
+- Balance note: lvl 21 with 320 men (no supports) still wiped out before melee — needs a balance pass.

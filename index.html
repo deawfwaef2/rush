@@ -358,8 +358,8 @@ const T = {
   deathcries:["Medic!","Argh!","Mum...","I'm hit!"],
   winCries:["Hurrah!","The trench is ours!","We did it!","Hold it, boys!"],
   sup:{art:"Artillery",snp:"Sniper",smk:"Smoke",tnk:"Tank"},
-  hz:{mg:"Machine guns",rf:"Rifles",mn:"Mines",gr:"Garrison",sh:"Enemy artillery",gs:"Gas",wr:"Barbed wire"},
-  hzD:{gr:"Men you must beat in the trench fight",mg:"Mows down runners every second",rf:"Picks off random runners",mn:"Hidden. Blow up whoever steps on them",sh:"Shells land on groups of runners",wr:"Slows the charge in the middle",gs:"Green clouds slow and choke"},
+  hz:{sn:"Snipers",fl:"Flamethrowers",ca:"Counter-attack",mg:"Machine guns",rf:"Rifles",mn:"Mines",gr:"Garrison",sh:"Enemy artillery",gs:"Gas",wr:"Barbed wire"},
+  hzD:{sn:"Hunt officers, engineers and veterans first",fl:"Burn dense crowds in the trench fight",ca:"Fresh troops strike back after you take the trench",gr:"Men you must beat in the trench fight",mg:"Mows down runners every second",rf:"Picks off random runners",mn:"Hidden. Blow up whoever steps on them",sh:"Shells land on groups of runners",wr:"Slows the charge in the middle",gs:"Green clouds slow and choke"},
   supD:{art:"Shell their line. Fire more for a bigger hit",snp:"Takes out a machine gunner mid-charge",smk:"Their fire −55% for the first 7 s",tnk:"Leads the charge, silences guns"},
   lblRes:"Reserve",lblNext:"Next men",lblDay:"Day",lblAd:"Extra draft",lblAdD:"Watch ad: get a third of a day's men now",
   sendD:"Men going over the top. Veterans go first.",rewardT:"Win reward: more men every day",advT:"Advisor",supT:"Support (refills daily)",
@@ -377,8 +377,8 @@ const T = {
   deathcries:["医护兵！","啊！","妈妈……","我中弹了！"],
   winCries:["乌拉！","战壕是我们的了！","我们做到了！","守住，兄弟们！"],
   sup:{art:"炮击",snp:"狙击手",smk:"烟幕",tnk:"坦克"},
-  hz:{mg:"机枪",rf:"步枪",mn:"地雷",gr:"守军",sh:"敌方炮击",gs:"毒气",wr:"铁丝网"},
-  hzD:{gr:"战壕白刃战中必须击败的敌人",mg:"冲锋途中每秒扫射倒一片",rf:"随机射杀冲锋的士兵",mn:"隐藏。踩到就爆炸",sh:"炮弹落在人群中",wr:"中段拖慢冲锋速度",gs:"绿色毒云，减速并致死"},
+  hz:{sn:"狙击手",fl:"火焰喷射器",ca:"反冲锋",mg:"机枪",rf:"步枪",mn:"地雷",gr:"守军",sh:"敌方炮击",gs:"毒气",wr:"铁丝网"},
+  hzD:{sn:"优先狙杀军官、工兵和老兵",fl:"白刃战中焚烧密集人群",ca:"攻占战壕后敌军援兵反扑",gr:"战壕白刃战中必须击败的敌人",mg:"冲锋途中每秒扫射倒一片",rf:"随机射杀冲锋的士兵",mn:"隐藏。踩到就爆炸",sh:"炮弹落在人群中",wr:"中段拖慢冲锋速度",gs:"绿色毒云，减速并致死"},
   supD:{art:"轰击敌阵。连续发射效果越强",snp:"冲锋途中干掉一名机枪手",smk:"前7秒敌方火力 −55%",tnk:"领头冲锋，压制火力"},
   lblRes:"预备兵",lblNext:"下批援军",lblDay:"天数",lblAd:"紧急征兵",lblAdD:"看广告：立即获得三分之一天的援军",
   sendD:"翻出战壕的人数。老兵优先出击。",rewardT:"胜利奖励：每天增援更多",advT:"参谋",supT:"火力支援（每日补充）",
@@ -454,6 +454,9 @@ function levelDef(i){
     sh: ch>=1 ? Math.min(5, 1+Math.floor((d-8)/5) + (fort?1:0)) : 0,
     wr: ch>=1 ? 1 + (fort?1:0) + (ch>=3?1:0) : 0,
     gs: ch>=3 ? Math.min(4, 1+Math.floor((d-24)/3)+(fort?1:0)) : 0,
+    sn: i>=5 ? Math.min(3, 1+Math.floor((d-5)/9)+(fort?1:0)) : 0,
+    fl: i>=20 ? Math.min(3, 1+Math.floor((d-20)/8)+(fort?1:0)) : 0,
+    ca: i>=12 ? Math.min(3, 1+Math.floor((d-12)/10)+(fort?1:0)) : 0,
     reward: (fort ? 8 + ch*2 : 2 + Math.floor(ch/1.5))*3,   // v1.3: economy x3 (scaled by PERFECTION stars on win)
   };
   if(i===0){L.gr=4;L.mg=0;L.rf=1;}
@@ -478,7 +481,7 @@ const TOOL_AT={eng:10,flare:12,off:17};
 function hasTool(k){return S.lvl>=TOOL_AT[k];}
 /* NEWM(i): mechanics that appear for the first time on level i (hazards, supports, tools) */
 function NEWM(i){ if(i<=0||i>=NLV)return []; const out=[]; const a=levelDef(i), sm=supMaxAt(i), smp=supMaxAt(i-1);
-  for(const k of ["mg","mn","sh","wr","gs"]){ let first=a[k]>0; if(first) for(let j=0;j<i;j++){ if(levelDef(j)[k]>0){first=false;break;} } if(first)out.push(k); }
+  for(const k of ["mg","mn","sh","wr","gs","sn","fl","ca"]){ let first=a[k]>0; if(first) for(let j=0;j<i;j++){ if(levelDef(j)[k]>0){first=false;break;} } if(first)out.push(k); }
   for(const k of ["art","snp","smk","tnk"]) if(sm[k]>0&&!smp[k])out.push(k);
   for(const k in TOOL_AT) if(TOOL_AT[k]===i)out.push(k);
   return out; }
@@ -653,6 +656,9 @@ function fakeAd(done){ const ov=$("ov"); ov.classList.remove("hide");
 /* ---------------- Icons (SVG) ---------------- */
 const VETI='<svg class="ti" viewBox="0 0 16 16" style="color:#f0c870"><path d="M2 3.5l6 4 6-4v3l-6 4-6-4zM2 8.5l6 4 6-4v3l-6 4-6-4z" fill="currentColor"/></svg>';
 const IC={
+ sn:`<svg viewBox="0 0 24 24" fill="none" stroke="#efe4cc" stroke-width="1.6"><circle cx="12" cy="12" r="7"/><path d="M12 2v5M12 17v5M2 12h5M17 12h5"/><circle cx="12" cy="12" r="1.3" fill="#e04a2a" stroke="none"/></svg>`,
+ fl:`<svg viewBox="0 0 24 24"><path d="M12 22c-4 0-6-3-6-6 0-4 4-6 4-10 2 2 3 4 3 6 1-1 2-2 2-4 2 2 3 5 3 8 0 3-2 6-6 6z" fill="#e07a2a"/><path d="M12 21c-2 0-3-1.5-3-3 0-2 2-3 2-5 1 1 3 3 3 5s-1 3-2 3z" fill="#f3d27a"/></svg>`,
+ ca:`<svg viewBox="0 0 24 24" fill="none" stroke="#efe4cc" stroke-width="1.8"><path d="M20 12H5M10 6l-6 6 6 6"/><path d="M20 6v12" stroke-width="1.2"/></svg>`,
  eng:`<svg viewBox="0 0 24 24"><path d="M4 20l9-9" stroke="#e8d6a8" stroke-width="2.4"/><path d="M11 9l2-5 3 1-1 3 3 1 2-2 1 3-5 2z" fill="#e8d6a8"/><path d="M3 6c3 0 3 3 6 3M13 17c3 0 4 3 8 3" stroke="#e8d6a8" stroke-width="1.3" fill="none" stroke-dasharray="2 1.5"/></svg>`,
  flare:`<svg viewBox="0 0 24 24"><path d="M6 21l5-12" stroke="#e8d6a8" stroke-width="1.6" stroke-dasharray="1.5 1.5"/><circle cx="13" cy="6" r="3.2" fill="#e8d6a8"/><path d="M13 1v2M13 9v2M8 6h2M16 6h2M9.5 2.5l1.3 1.3M15.2 8.2l1.3 1.3M16.5 2.5l-1.3 1.3" stroke="#e8d6a8" stroke-width="1.2"/></svg>`,
  off:`<svg viewBox="0 0 24 24"><path d="M6 8h12l-1.2-3.2H7.2z" fill="#e8d6a8"/><rect x="5" y="8" width="14" height="1.6" fill="#e8d6a8"/><circle cx="12" cy="12.5" r="3" fill="#e8d6a8"/><path d="M6 22l1.5-5.5h9L18 22z" fill="#e8d6a8"/><path d="M19 13l3-6" stroke="#e8d6a8" stroke-width="1.4"/></svg>`,
@@ -1421,7 +1427,7 @@ function stripHTML(){ const ch=Math.floor(S.lvl/8), zh=S.lang==="zh"; let h=`<di
 function hazRows(){
   const t=L_(), rows=[];
   const add=(k,v,max)=>{ if(lvl[k]>0||v>0) rows.push(`<div class="hz" id="hz_${k}" data-k="${k}">${ico(k)}<span class="nm">${t.hz[k]}</span><span class="val">${k==="gr"||k==="mn"?Math.round(v):Math.round(v*10)/10}</span><div class="bar"><i style="width:${Math.min(100,v/max*100)}%"></i></div><div class="ds">${t.hzD[k]} <span class="inf">ⓘ</span></div></div>`); };
-  add("gr",cur.gr,Math.max(1,lvl.gr));add("mg",cur.mg,6);add("rf",cur.rf,10);add("mn",cur.mn,14);add("sh",cur.sh,5);add("wr",cur.wr,3);add("gs",cur.gs,4);
+  add("gr",cur.gr,Math.max(1,lvl.gr));add("mg",cur.mg,6);add("rf",cur.rf,10);add("mn",cur.mn,14);add("sh",cur.sh,5);add("wr",cur.wr,3);add("gs",cur.gs,4);add("sn",cur.sn||0,3);add("fl",cur.fl||0,3);add("ca",cur.ca||0,3);
   $("hzList").innerHTML=rows.join(""); document.querySelectorAll(".hz").forEach(el=>el.onclick=()=>mechCard(el.dataset.k,false));
   { const zh=S.lang==="zh", bs=(S.stars||{})[S.lvl]; // v1.3: base reward x PERFECTION multiplier
   $("reward").innerHTML=`${ico("truck","b")}<div style="flex:1;min-width:0"><div class="t">${t.rewardT}</div><div class="v">+${lvl.reward} <small class="bz">${zh?"人/天 · 基础":"men/day · base"}</small>${bs?` <span class="bz">${starsHTML(bs,5,"sm")}</span>`:""}</div>
@@ -1708,6 +1714,7 @@ function stepBattle(dt){
       m.x+=sp*dt; m.phase+=dt*sp*0.075*(m.v?m.v.gaitF:1); if(m.zt!=null){ const dz=m.zt-m.z; m.z+=Math.sign(dz)*Math.min(Math.abs(dz),dt*0.16); }
       if(m.x>=ex-150-((m.z*977)%1)*40){b.reached++; if(b.e>0&&b.assault){m.state="melee";m.mx=ex-40+Math.random()*50+b.front; joinMelee(m);} else if(b.e>0){m.state="gather";m.gx=m.x; if(!b.gatherMsg){b.gatherMsg=1;toast(S.lang==="zh"?"先头部队在铁丝网前隐蔽，等待后续部队…":"Leading men take cover at the wire, waiting for the rest…");}} else {m.state="wait";}}
       // morale: low morale men go to ground (pinned = lost)
+      m.mor=Math.min(120,(m.mor||60)+dt*1.2);
       if(m.mor<22&&Math.random()<dt*1.6){ pinMan(m); continue; }
       // mines
       for(const mn of mines){ if(mn.live&&Math.abs(mn.x-m.x)<14&&Math.abs(mn.z-m.z)<0.07){ mn.live=false; explosion(mn.x,mn.z,0.9);
@@ -1723,6 +1730,7 @@ function stepBattle(dt){
   { const hd=alive.filter(m=>m.state==="hold"); if(hd.length){ b.holdT=(b.holdT||0)+dt; const rr=cur.rf*0.0065*0.15*(1500/SEGL())/mf(); for(const m of hd){ if(Math.random()<rr*dt*(m.vet?0.62:1)) killMan(m,"rf"); } if(b.holdT>30&&!b.flared) fireFlare(true); } }
   stepOfficer(dt);
   for(const m of men){ if(m.immune>0)m.immune-=dt; if(m.aim>0){ m.aim-=dt; if(!m.alive||m.state!=="run"&&m.state!=="cut"){m.aim=0;} else if(m.aim<=0){ m.aim=0; killMan(m,"rf"); } } }
+  stepSnipers(dt);
   // hazards: continuous fire on running men
   const lewN=men.filter(m=>m.alive&&m.type==="lewis"&&(m.state==="run"||m.state==="gather")).length; const supp=(1-(b.supp||0))*Math.max(0.55,1-0.12*lewN); const smokeF = (b.smoke>0 ? 0.45 : 1)*supp; if(b.smoke>0)b.smoke-=dt;
   const tankF = b.tanks ? Math.max(0.5,1-0.2*b.tanks.length) : 1;
@@ -1757,7 +1765,8 @@ function stepBattle(dt){
   // end conditions
   const stillMoving=men.filter(m=>m.alive&&(m.state==="run"||m.state==="crouch"||m.state==="climb"||m.state==="gather"||m.state==="cut"||m.state==="hold"||m.state==="rally")).length;
   const inMelee=b.mel.filter(m=>m.alive).length;
-  if(b.e<=0&&!b.over){ b.over=true; men.forEach(m=>{if(m.alive&&m.state==="run"){m.state="wait";}}); setTimeout(()=>result(true),900); }
+  if(b.e<=0&&!b.over&&(cur.ca||0)>0&&!b.caDone){ b.caDone=1; startCounter(); }
+  if(b.e<=0&&!b.over&&!b.caPending){ b.over=true; men.forEach(m=>{if(m.alive&&m.state==="run"){m.state="wait";}}); setTimeout(()=>result(true),900); }
   else if(men.filter(m=>m.alive).length===0&&!b.over){ b.over=true; setTimeout(()=>result(false),1600); }
   else if(stillMoving===0&&inMelee===0&&b.e>0&&!b.over){ b.over=true; setTimeout(()=>result(false),1600); }
   // camera follows the mass
@@ -1770,7 +1779,7 @@ function stepBattle(dt){
 function trenchLines(i){ return i<0?1:Math.min(4,1+Math.floor((i+1)/4)); }
 function hitK(m,bx){ const p=Math.max(0,Math.min(1,(m.x-bx)/SEGL())); if(hasDead()&&Math.abs(m.x-deadX())<45) return 0.25*FORM[m.form||1].fire; return (0.45+1.45*Math.pow(p,1.6))*FORM[m.form||1].fire*(m.vet?0.62:1); }
 function pinMan(m){ if(!m.alive)return; m.alive=false; m.pinned=true; m.state="prone"; battle.pinned++; if(Math.random()<0.3)say(m,pick(S.lang==="zh"?["我不行了…","趴下！","妈妈…"]:["I can't…","Get down!","Mother…"]),1.4); }
-function shockNear(x,z){ for(const o of men){ if(o.alive&&o.state==="run"&&Math.abs(o.x-x)<70&&Math.abs(o.z-z)<0.16){ o.mor-= (o.vet?2:5.5)*(0.6+Math.random()*0.8)*(FORM[o.form||1].melee>1?0.8:1); } } }
+function shockNear(x,z){ const nb=[]; for(const o of men){ if(o.alive&&o.state==="run"){ const d=Math.abs(o.x-x)+Math.abs(o.z-z)*400; if(d<70) nb.push([d,o]); } } nb.sort((p,q)=>p[0]-q[0]); for(let i=0;i<Math.min(5,nb.length);i++){ const o=nb[i][1]; o.mor-=(o.vet?1.5:4)*(0.6+Math.random()*0.8)*(FORM[o.form||1].melee>1?0.85:1); } }
 function joinMelee(m){ const b=battle; b.mel.push(m); if(m.type==="bomb"&&!m.thrown&&b.e>0){ m.thrown=1; if(Math.random()<0.55){ b.e=Math.max(0,b.e-1); b.eKilled++; const en=enemies.find(e=>e.alive); if(en){ en.alive=false; makeRagdoll(en.x,en.z,-1,pal.en,false,[5,7],true); } explosion(trenchX(S.lvl+1)-10,m.z,0.5); } } m.phase=Math.random()*6; if(!b.melee){ b.melee=true; big(L_().melee,"",1100); AU.cheer(); cam.shake=6; slowmo=0.55; setTimeout(()=>slowmo=1,900); } if(Math.random()<0.12)say(m,pick(S.lang==="zh"?["刺刀！","杀！","冲进去！"]:["Bayonets!","At them!","Into the trench!"]),1.1); }
 /* ============ OFFICER (strategic resource, 1 per charge, unlock lvl 17) ============
    Press O (or button) during the advance: an officer appears with the rearmost running group.
@@ -1861,6 +1870,32 @@ function applyLoadout(){ const B=S.buy||{}; const b=battle; if(!b)return; const 
   if(B.rum) men.forEach(m=>{ if(m.sent)m.mor+=15*B.rum; });
   b.strb=B.strb||0; b.cover+=0; if(B.art){ used.art+=B.art; } if(B.smk){ b.smoke+=4*B.smk; for(let k=0;k<30;k++)puff(trenchX(S.lvl)+SEGL()*(0.3+Math.random()*0.5),0.1+Math.random()*0.9,0,1,"smokeW",20,9,90,2); }
   b.loadout=Object.assign({},B); S.buy={}; save(); }
+/* ============ ENEMY TYPES: snipers, flamethrowers, counter-attack ============ */
+function stepSnipers(dt){ const b=battle, n=cur.sn||0; if(!n||b.over)return; b.glints=b.glints||[];
+  for(let i=b.glints.length-1;i>=0;i--){ const g=b.glints[i]; g.t+=dt; if(g.t>1.6)b.glints.splice(i,1); }
+  b.snT=(b.snT==null?3+Math.random()*2:b.snT)-dt*(b.smoke>0?0.4:1)*(1-0.3*Math.min(2,b.snipers||0)); if(b.snT>0)return; b.snT=6.5/n+Math.random()*2.5;
+  const pool=men.filter(m=>m.alive&&(m.state==="run"||m.state==="cut")&&!(m.aim>0)&&!(m.immune>0)); if(!pool.length)return;
+  if(b.off&&b.off.alive&&!b.off.halt&&Math.random()<0.3){ b.glints.push({z:b.off.z,t:0}); setTimeout(()=>{ if(battle===b&&b.off&&b.off.alive&&Math.random()<0.6) officerDown(); },900); return; }
+  const pr=m=>(m.state==="cut"?5:0)+(m.eng?3:0)+(m.type==="lewis"?3:0)+(m.vet?2:0)+Math.random()*1.5;
+  pool.sort((a,c)=>pr(c)-pr(a)); const t=pool[0]; t.aim=1.25; t.snAim=1; b.glints.push({z:t.z,t:0});
+  if(!b.snTip){ b.snTip=1; toast(S.lang==="zh"?"敌方狙击手！反光处就是他——点击框选的士兵让他隐蔽。":"Sniper! Watch for the glint — tap the marked man to make him take cover."); } }
+function drawGlints(){ const b=battle; if(!b||!b.glints)return; const ex=trenchX(S.lvl+1); for(const g of b.glints){ const [sx,sy,s]=P(ex+16,g.z,22); const a=Math.max(0,1-Math.abs(g.t-0.25)*1.6);
+  cx.save(); cx.globalCompositeOperation="lighter"; const r=18*s*(0.6+a); const gr=cx.createRadialGradient(sx,sy,0,sx,sy,r); gr.addColorStop(0,`rgba(255,250,220,${0.95*a})`); gr.addColorStop(1,"rgba(255,250,220,0)"); cx.fillStyle=gr; cx.fillRect(sx-r,sy-r,r*2,r*2);
+  cx.strokeStyle=`rgba(255,250,230,${0.8*a})`; cx.lineWidth=1; cx.beginPath(); cx.moveTo(sx-r*1.4,sy); cx.lineTo(sx+r*1.4,sy); cx.moveTo(sx,sy-r); cx.lineTo(sx,sy+r); cx.stroke(); cx.restore(); } }
+function flameTick(al){ const b=battle, n=cur.fl||0; if(!n||!al.length)return; b.flK=b.flK==null?n:b.flK; if(b.flK<=0)return;
+  // bombers can knock out a flame team
+  if(al.some(m=>m.type==="bomb")&&Math.random()<0.25){ b.flK--; toast(S.lang==="zh"?"掷弹兵摧毁了一个喷火小组！":"Bombers knocked out a flame team!"); return; }
+  if(Math.random()>0.22*b.flK)return;
+  const dens=al.reduce((a,m)=>a+FORM[m.form||1].melee,0)/al.length; const kill=Math.min(al.length,Math.round(1+3*(dens-0.7)/0.55+Math.random()));
+  const c=al[Math.floor(Math.random()*al.length)]; const near=al.slice().sort((a,d)=>Math.hypot(a.x-c.x,(a.z-c.z)*600)-Math.hypot(d.x-c.x,(d.z-c.z)*600)).slice(0,kill);
+  const ex=trenchX(S.lvl+1); puff(ex+b.front+10,c.z,30,10,"fire",220,0.7,9,-60); puff(c.x,c.z,20,14,"fire",160,0.8,8,-80); puff(c.x,c.z,40,6,"smoke",60,2,14,-30); SFX.play("boom_far",0.35,{gap:0.2}); cam.shake=Math.max(cam.shake,3);
+  for(const m of near){ m.alive=false; b.dead++; b.meleeDead++; b.flDead=(b.flDead||0)+1; makeRagdoll(m.x,m.z,1,["#2a2218","#141008"],m.vet,[-5-Math.random()*5,7+Math.random()*5],false); }
+  if(!b.flTip){ b.flTip=1; toast(S.lang==="zh"?"火焰喷射器！密集队形损失更大。":"Flamethrower! Dense formations lose more men."); } }
+function startCounter(){ const b=battle, n=Math.max(2,Math.round(b.e0*0.18*(cur.ca||1))); b.caPending=1;
+  big(S.lang==="zh"?"敌军反扑！":"COUNTER-ATTACK!",S.lang==="zh"?`${n} 名敌军援兵冲来`:`${n} fresh enemies coming`,1500); AU.whistle&&AU.whistle(); cam.shake=4;
+  const ex=trenchX(S.lvl+1); setTimeout(()=>{ if(battle!==b)return; b.e+=n; b.e0c=n; cur.gr=b.e; b.caPending=0; b.melee=true;
+    for(let i=0;i<Math.min(n,18);i++){ enemies.push({x:ex+b.front+260+Math.random()*120,tx:ex+b.front+Math.random()*40,z:laneZ(Math.random()),phase:0,alive:true,flash:0}); }
+    men.forEach(m=>{ if(m.alive&&(m.state==="wait"||m.state==="gather"||m.state==="cheer")){ m.state="melee"; m.mx=ex-40+Math.random()*50+b.front; if(!b.mel.includes(m))b.mel.push(m); } }); },1400); }
 function fireFlare(auto){ const b=battle; if(!b||b.flared)return; b.flared=true; const x=deadX(); vfx=vfx||{t:0,x,flares:[]}; vfx.flares.push({x:x+60,z:0.5,h:0,vh:700,t:0,c:"255,90,70"}); vfx.t=0; SFX.play("rifle_rev",0.4,{lp:1500}); AU.whistle();
   big(S.lang==="zh"?"信号弹！":"FLARE!",S.lang==="zh"?(auto?"时间到——全体起身":"全体起身，一起冲！"):(auto?"Time's up — everyone up":"Everyone up — go together!"),1300); updTools(); }
 function updTools(){ updOffPad(); const el=$("tools"); if(!el)return; const b=battle; const zh=S.lang==="zh"; if(!b||!(mode==="charge"||mode==="melee")){el.classList.add("hide");return;}
@@ -1871,6 +1906,7 @@ addEventListener("keydown",e=>{ const k=e.key.toLowerCase(); if(k==="f"&&battle&
 function meleeTick(){
   const b=battle, ex=trenchX(S.lvl+1); const al=b.mel.filter(m=>m.alive); if(!al.length)return;
   let A=0,coh=0; for(const m of al){A+=(m.vet?1.55:1)*(m.type==="bomb"?1.7:1); coh+=FORM[m.form||1].melee;} coh/=al.length; A*=coh*mf()*(b.shock?1.3:1);
+  flameTick(al);
   const E=b.e*(lvl.fort?1.25:1)*(1+0.08*Math.min(3,lvl.ch));
   const ratio=A/Math.max(0.5,E); // Lanchester: numbers compound
   const kOur=0.13*A*Math.min(2.4,Math.sqrt(ratio)), kEn=0.13*E*Math.min(2.4,Math.sqrt(1/ratio));
@@ -2087,6 +2123,9 @@ const MECH={
   rf:["Rifles","Riflemen on the parapet.",["Slow but steady: random runners fall every second.","About a quarter as deadly as one machine gun per level."],"Smoke, Artillery."],
   mn:["Mines","Buried somewhere in no man's land.",["Invisible. The first man to step on one sets it off.","The blast kills him and many men near him.","Each mine only explodes once. Big crowds lose more men per mine."],"Artillery can set mines off early."],
   sh:["Enemy artillery","Their guns are ranged on the field.",["Every few seconds a shell lands on a group of runners.","Men close together die together."],"Artillery."],
+  sn:["Snipers","Hidden marksmen in the enemy line.",["A glint on their parapet means a shot is coming.","They pick priority targets: the officer, engineers, Lewis gunners, veterans.","Take Cover can save the marked man."],"Smoke, your own snipers."],
+  fl:["Flamethrowers","Flame teams in the enemy trench.",["During the trench fight they burn a group of attackers now and then.","Dense formations lose more men to each burst.","Bombers can knock a flame team out."],"Bombers, Loose/Line formation."],
+  ca:["Counter-attack","Enemy reserves waiting behind the line.",["After you take the trench, fresh enemies strike back within seconds.","Send enough men to hold what you took — but every surplus man costs you stars."],"Enough men, veterans, a massed assault."],
   wr:["Barbed wire","A belt of wire in the middle of the field.",["Men slow down to crawl through it.","Slower men spend longer under fire."],"—"],
   gs:["Gas","Clouds of gas drifting over the field.",["Men inside a cloud slow down.","Every second in the cloud may kill."],"—"],
   art:["Artillery","Your guns shell their line before the charge.",["Each shot: a random 3–100% luck roll.","The more shots you fire in a row, the stronger each shot gets.","Lowers machine guns, rifles, enemy shelling and garrison. Can blow up mines."],"Refills every day."],
@@ -2103,6 +2142,9 @@ const MECH={
   rf:["步枪","胸墙上的步枪手。",["缓慢而持续：每秒随机有人倒下。","每级约为一挺机枪的四分之一威力。"],"烟幕、炮击。"],
   mn:["地雷","埋在无人区的某处。",["看不见。第一个踩中的人会引爆它。","爆炸会炸死他和附近很多人。","每颗地雷只爆一次。人越密集，损失越大。"],"炮击可以提前引爆地雷。"],
   sh:["敌方炮击","他们的火炮已经瞄准了战场。",["每隔几秒就有炮弹落在人群里。","挤在一起的人会一起死。"],"炮击。"],
+  sn:["狙击手","藏在敌方阵地里的神枪手。",["敌方胸墙上的反光意味着子弹要来了。","优先狙杀：军官、工兵、刘易斯机枪手、老兵。","“隐蔽”可以救下被瞄准的人。"],"烟幕、己方狙击手。"],
+  fl:["火焰喷射器","敌方战壕里的喷火小组。",["白刃战中不时焚烧一群进攻者。","队形越密，每次损失越大。","掷弹兵可以摧毁喷火小组。"],"掷弹兵、散兵线/横队。"],
+  ca:["反冲锋","敌方阵地后的预备队。",["占领战壕后，几秒内敌军援兵会反扑。","要派足够的人守住阵地——但多余的人会降低星级。"],"兵力充足、老兵、集中突击。"],
   wr:["铁丝网","战场中段的一道铁丝网。",["士兵要减速爬过去。","越慢，暴露在火力下越久。"],"—"],
   gs:["毒气","飘过战场的毒云。",["毒云中的士兵会减速。","每一秒都可能致死。"],"—"],
   art:["炮击","冲锋前我方火炮轰击敌阵。",["每一发：随机3–100%的运气。","连续发射越多，每一发越强。","降低机枪、步枪、敌方炮击和守军，可能引爆地雷。"],"每天补充。"],
@@ -2264,7 +2306,7 @@ function frame(now){
   for(const e of enemies) if(e.alive) ents.push({z:e.z,d:()=>{const fight=battle&&battle.melee&&!battle.over; const [sx,sy,s]=P(e.x,e.z,0); drawMan(sx,sy+(fight?0:TR_D*0.85)*s,s,-1,e.phase,fight?"melee":"aim",pal.en,{enemy:true,flash:e.flash>0,crop:fight?null:sy+1*s});}});
   if(battle&&battle.tanks&&(mode==="charge"||mode==="melee")) for(const tk of battle.tanks) ents.push({z:tk.z,d:()=>drawTank(tk)});
   pushSetEnts(ents); ents.sort((a,b)=>a.z-b.z); drawParts(false); for(const e of ents)e.d(); drawParts(true);
-  drawTracers(rdt); drawShells(); if(battle&&(mode==="charge"||mode==="melee"))drawAimMarks(); drawUnitMarks();
+  drawTracers(rdt); drawShells(); drawGlints(); if(battle&&(mode==="charge"||mode==="melee"))drawAimMarks(); drawUnitMarks();
   // flag raise
   if(flagRaise){flagRaise.t+=rdt; const [sx,sy,s]=P(flagRaise.x,0.5); drawFlag(sx,sy,s*1.6,130,time,Math.min(1,flagRaise.t/2.2)); if(flagRaise.t>8)flagRaise=null;}
   // foreground layer: big dark near silhouettes (depth!)
