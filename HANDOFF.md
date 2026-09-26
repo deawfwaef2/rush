@@ -158,3 +158,7 @@ NEW wishes:
 - Melee teleports fixed: men get m.mx target, enemies en.tx; both walk smoothly (no x jumps). New enemies spawn behind and walk in.
 - Gather at wire: max 3.5s (b.gatherT) then assault; gathered men take reduced rifle fire (not invulnerable).
 - Depth spread: on leaving trench each man gets zt across field depth (x FORM.zw) and drifts there while running.
+
+## v1.1b
+- FORTRESS win grand: 14 coloured signal flares (white/green/red), fanfare+cheer, men cheer, banner "FORTRESS TAKEN", gold card (.fortwin), card after 6.2s. Normal wins unchanged (quiet).
+- Failures: removed text from in-world markers & from reward panel; new #failBtn in enemy panel (count + closest result) → failsCard() table (date/sent/waves/fallen/pinned/enemy left/loss bar) + diagnosis tip.

@@ -234,6 +234,9 @@ body.cgon #hud,body.cgon #menu,body.cgon #top,body.cgon #advisor,body.cgon #adba
 .ti{width:1em;height:1em;vertical-align:-0.12em;display:inline-block}
 #cgSkip{display:none;position:fixed;right:22px;bottom:calc(12vh + 14px);z-index:60;padding:9px 22px;font-size:16px;letter-spacing:.2em;color:#efe4cc;background:#0009;border:1px solid #efe4cc88;border-radius:4px;cursor:pointer}
 #cgSkip:hover{background:#efe4cc22}body.cgon #cgSkip{display:block}
+.card.fortwin{border:2px solid #d9b25a;box-shadow:0 0 0 4px #0008,0 0 40px #d9b25a55}.card .fwr{margin:-4px auto 6px;display:inline-block;padding:3px 16px;background:linear-gradient(#b8892e,#7a5616);color:#fff4d8;font:14px Impact,sans-serif;letter-spacing:.25em;border-radius:3px}.card .fwr .ti{color:#fff4d8}
+#failBtn{margin:6px 0;display:flex;align-items:center;gap:8px;padding:6px 10px;background:#3a141066;border:1px solid #a8321f88;border-radius:6px;cursor:pointer;font-size:12px;color:var(--dim)}#failBtn .fl{color:#e87a5a;letter-spacing:.12em;font-size:11px}#failBtn>b{font:20px Impact,sans-serif;color:#efe4cc}#failBtn span b{color:#efe4cc}#failBtn em{margin-left:auto;font-style:normal;color:#f0c870;text-decoration:underline}
+.fcard{max-width:760px}.ftab{width:100%;border-collapse:collapse;font-size:13px;margin:8px 0}.ftab th{font-weight:normal;font-size:11px;letter-spacing:.08em;text-transform:uppercase;opacity:.6;text-align:left;padding:3px 6px;border-bottom:1px solid #0003}.ftab td{padding:5px 6px;border-bottom:1px solid #0002;vertical-align:top}.ftab td.n{font:17px Impact,sans-serif;text-align:right}.ftab td.r{color:#a8321f}.ftab td.wv{font-size:11px;line-height:1.35}.ftab td.bar{width:110px}.ftab td.bar div{height:9px;background:#0002;border-radius:2px;display:flex;overflow:hidden;margin-top:5px}.ftab .d{background:#a8321f}.ftab .p{background:#c8a050}
 </style>
 </head>
 <body>
@@ -275,6 +278,7 @@ body.cgon #hud,body.cgon #menu,body.cgon #top,body.cgon #advisor,body.cgon #adba
     <div class="panel" id="right">
       <div class="ph"><span id="lblEnemy">ENEMY</span><span id="lvlName"></span></div>
 <div id="hzList"></div>
+      <div id="failBtn" class="hide"></div>
       <div id="reward"></div>
       <div id="fort" class="hide"></div>
     </div>
@@ -1175,6 +1179,21 @@ function updTop(){ updStrip();
   $("bDev").classList.toggle("hide",!S.dev);
   const ch=$("charge"); if(ch){ ch.classList.toggle("refuse",S.morale<=2); }
 }
+function failBtnUpd(){ const F=(S.fails||{})[S.lvl]||[]; const el=$("failBtn"); if(!el)return; const zh=S.lang==="zh"; el.classList.toggle("hide",!F.length); if(!F.length)return;
+  const best=Math.min(...F.map(f=>f.e)); el.innerHTML=`<span class="fl">${zh?"此处失败":"FAILED HERE"}</span><b>${F.length}</b><span>${zh?"最少残敌":"closest: enemy left"} <b>${best}</b></span><em>${zh?"查看记录":"view log"}</em>`; el.onclick=failsCard; }
+function failsCard(){ const F=(S.fails||{})[S.lvl]||[]; const zh=S.lang==="zh"; const fl=zh?["散兵线","横队","密集"]:["Loose","Line","Dense"]; const ov=$("ov"); ov.classList.remove("hide"); AU.click();
+  const mx=Math.max(1,...F.map(f=>f.w.reduce((a,w)=>a+w.r+w.v,0)));
+  const rows=F.map((f,i)=>{ const sent=f.w.reduce((a,w)=>a+w.r+w.v,0); const pct=x=>Math.round(x/mx*100);
+    return `<tr><td>#${i+1}</td><td>${zh?"第"+f.day+"天":"Day "+f.day}</td><td class="n">${sent}</td><td class="wv">${f.w.map((w,j)=>`W${j+1} ${w.r}${w.v?" + "+w.v+(zh?"老兵":" vet"):""} · ${fl[w.f]}`).join("<br>")}</td><td class="n r">${f.dead}</td><td class="n">${f.pin}</td><td class="n">${f.e}</td>
+      <td class="bar"><div><i class="d" style="width:${pct(f.dead)}%"></i><i class="p" style="width:${pct(f.pin)}%"></i></div></td></tr>`; }).join("");
+  const last=F[F.length-1]; let tip="";
+  if(last){ const sent=last.w.reduce((a,w)=>a+w.r+w.v,0); if(last.pin>sent*0.25) tip=zh?"上次很多人趴下不动：士气太低或队形太散。":"Many went to ground last time: morale too low or ranks too thin.";
+    else if(last.e>0&&last.dead<sent*0.5) tip=zh?"上次在白刃战中输掉：到达时人数不足，试试更密的波次或减少间隔。":"Lost the bayonet fight: too few arrived together. Try denser waves or shorter delays.";
+    else tip=zh?"上次大多倒在途中：用散兵线、烟幕或火炮压制。":"Most fell crossing: go loose, use smoke or artillery."; }
+  ov.innerHTML=`<div class="card fcard"><h2 class="stencil">${zh?"失败记录":"FAILED ATTACKS"}</h2><div class="date">${lvlCode(S.lvl)} · ${LV[S.lvl][0]}</div>
+   <table class="ftab"><tr><th></th><th>${zh?"日期":"Date"}</th><th>${zh?"派出":"Sent"}</th><th>${zh?"编组":"Waves"}</th><th>${zh?"阵亡":"Fallen"}</th><th>${zh?"趴下":"Pinned"}</th><th>${zh?"残敌":"Enemy left"}</th><th>${zh?"损失":"Losses"}</th></tr>${rows}</table>
+   <div class="rem">${tip}</div><button class="btn" id="okf">OK</button></div>`;
+  $("okf").onclick=()=>{AU.click();ov.classList.add("hide");}; }
 function failsHTML(){ const F=(S.fails||{})[S.lvl]; if(!F||!F.length)return ""; const zh=S.lang==="zh"; const fl=zh?["散","横","密"]:["L","Ln","D"];
   return `<div class="fails"><div class="ft">✝︎ ${zh?"此阵地失败的冲锋":"FAILED ATTACKS HERE"}</div>`+F.map((f,i)=>`<div class="fr"><b>#${i+1}</b> ${zh?"第":"D"}${f.day}${zh?"天":""} · ${f.w.map((w,j)=>`W${j+1} ${w.r}${w.v?"+★"+w.v:""}<i>${fl[w.f]}</i>`).join(" ")} <span>✝︎${f.dead} ⬇${f.pin} · ${zh?"残敌":"left"} ${f.e}</span></div>`).join("")+`</div>`; }
 const ROM=["I","II","III","IV","V","VI"];
@@ -1199,10 +1218,10 @@ function hazRows(){
   const add=(k,v,max)=>{ if(lvl[k]>0||v>0) rows.push(`<div class="hz" id="hz_${k}" data-k="${k}">${ico(k)}<span class="nm">${t.hz[k]}</span><span class="val">${k==="gr"||k==="mn"?Math.round(v):Math.round(v*10)/10}</span><div class="bar"><i style="width:${Math.min(100,v/max*100)}%"></i></div><div class="ds">${t.hzD[k]} <span class="inf">ⓘ</span></div></div>`); };
   add("gr",cur.gr,Math.max(1,lvl.gr));add("mg",cur.mg,6);add("rf",cur.rf,10);add("mn",cur.mn,14);add("sh",cur.sh,5);add("wr",cur.wr,3);add("gs",cur.gs,4);
   $("hzList").innerHTML=rows.join(""); document.querySelectorAll(".hz").forEach(el=>el.onclick=()=>mechCard(el.dataset.k,false));
-  $("reward").innerHTML=`${ico("truck","b")}<div><div class="t">${t.rewardT}</div><div class="v">+${lvl.reward} ${S.lang==="zh"?"人 / 天":"men / day"}</div><div class="t">${S.income} → ${S.income+lvl.reward}</div></div>`+failsHTML();
+  $("reward").innerHTML=`${ico("truck","b")}<div><div class="t">${t.rewardT}</div><div class="v">+${lvl.reward} ${S.lang==="zh"?"人 / 天":"men / day"}</div><div class="t">${S.income} → ${S.income+lvl.reward}</div></div>`;
   $("sendD").textContent=t.spent;
   const f=$("fort"); f.classList.toggle("hide",!lvl.fort); f.innerHTML=`${SVI.warn} ${t.fortress} · ${t.fortTip}`;
-  $("lvlName").textContent=LV[S.lvl][0]; updStrip();
+  $("lvlName").textContent=LV[S.lvl][0]; updStrip(); failBtnUpd();
 }
 function buildSupports(){
   const t=L_(),el=$("supports");el.innerHTML="";
@@ -1623,11 +1642,14 @@ function result(win){
     // cinematic: flag + cheer + slowmo + camera rise
     men.forEach(m=>{if(m.alive){m.state="idle";m.jump=0;}});
     flagRaise={x:trenchX(done+1),t:0};
-    // v1.0: no banner, no bursts, no cheering — the line is simply taken.
+    // v1.0: normal wins are quiet. v1.1: FORTRESS wins are a real celebration.
+    const grand=!!lvl.fort;
+    if(grand){ const zh=S.lang==="zh"; men.forEach(m=>{if(m.alive){m.state="cheer";m.jump=Math.random()*2;}}); startVictoryFX(trenchX(done+1),surv,true); AU.fanfare(); cam.shake=4;
+      setTimeout(()=>victoryBanner(zh?"要塞陷落":"FORTRESS TAKEN",zh?"整个战区的钟声都响了":"Every church bell behind the line is ringing",LV[done][0]),900); }
     setTimeout(()=>{
       const ov=$("ov");ov.classList.remove("hide");
       const L=LV[done];
-      ov.innerHTML=`<div class="card"><div class="date">${L[1]} · ${t.day} ${S.hist[S.hist.length-1].day}${S.lang==="zh"?"天":""}</div><h2 class="stencil">${L[0]}</h2><p>${L[S.lang==="zh"?3:2]}</p>
+      ov.innerHTML=`<div class="card${grand?" fortwin":""}">${grand?`<div class="fwr">${SVI.fort||""}${S.lang==="zh"?"要塞攻克":"FORTRESS TAKEN"}</div>`:""}<div class="date">${L[1]} · ${t.day} ${S.hist[S.hist.length-1].day}${S.lang==="zh"?"天":""}</div><h2 class="stencil">${L[0]}</h2><p>${L[S.lang==="zh"?3:2]}</p>
         <div class="tiles">
           <div class="tile gold"><b class="cu" data-v="${lvl.reward}" data-p="+">0</b><span>${t.winInc}</span><i>${S.income-lvl.reward} → ${S.income} / ${S.lang==="zh"?"天":"day"}</i></div>
           <div class="tile"><b class="cu" data-v="${vetGain}" data-p="+">0</b><span>${t.winVet}</span></div>
@@ -1639,7 +1661,7 @@ function result(win){
         <button class="btn" id="okr">▶︎</button></div>`;
       ov.querySelectorAll(".cu").forEach(e=>e.textContent=((+e.dataset.v>0&&e.dataset.p)||"")+e.dataset.v); CG.banner(true); // [AD SPOT C]
       $("okr").onclick=()=>{AU.click();CG.banner(false);CG.midgame(()=>{ if(S.done)showEnd(); else advanceCamp(); });}; // [AD SPOT B]
-    },3200);
+    },grand?6200:3200);
   } else {
     (S.fails=S.fails||{})[S.lvl]=(S.fails[S.lvl]||[]).concat([{day:S.day,w:S.lastWaves||[],dead:b.dead,pin:b.pinned,e:Math.round(b.e)}]).slice(-8);
     save();
@@ -1863,7 +1885,7 @@ function frame(now){
   // mines (hidden: only faint)
   for(const mn of mines){ if(!mn.live)continue; const [sx,sy,s]=P(mn.x,mn.z); cx.fillStyle="rgba(30,24,16,0.35)";cx.beginPath();cx.ellipse(sx,sy,6*s,2*s,0,0,7);cx.fill(); }
   // failed-attempt markers at the enemy wire
-  { const F=(S.fails||{})[S.lvl]; if(F&&mode!=="menu") F.forEach((f,i)=>{ const [sx,sy,s]=P(trenchX(S.lvl+1)-110-i*26,0.62+(i%3)*0.1); cx.fillStyle="#2a1e12"; cx.fillRect(sx-1.5*s,sy-34*s,3*s,34*s); cx.fillRect(sx-9*s,sy-26*s,18*s,3*s); cx.fillStyle="rgba(240,225,190,.9)"; cx.font=`${Math.max(9,11*s)}px Georgia`; cx.fillText("#"+(i+1)+" ✝︎"+f.dead,sx-12*s,sy-38*s); }); }
+  { const F=(S.fails||{})[S.lvl]; if(F&&mode!=="menu") F.forEach((f,i)=>{ const [sx,sy,s]=P(trenchX(S.lvl+1)-110-i*26,0.62+(i%3)*0.1); cx.fillStyle="#2a1e12"; cx.fillRect(sx-1.5*s,sy-34*s,3*s,34*s); cx.fillRect(sx-9*s,sy-26*s,18*s,3*s); }); }
   // corpses (baked)
   for(const r of corpses) if(Math.abs(r.pts[2].x-cam.x)<W*1.5) drawRagdoll(r);
   // depth-sorted entities
@@ -1957,16 +1979,17 @@ function groundFog(){ // low drifting mist bands over both battle zones
     g.addColorStop(0,pal.fog+"0.16)");g.addColorStop(1,pal.fog+"0)");cx.fillStyle=g;cx.beginPath();cx.ellipse(x,sy-h*0.5,w,h,0,0,7);cx.fill(); } }
 /* ---------- VICTORY FX: signal flares, golden burst, tossed helmets, paper, light sweep ---------- */
 let vfx=null;
-function startVictoryFX(x,surv){ vfx={t:0,x,flares:[]}; // somber: two white star shells over the taken line, drifting smoke
+function startVictoryFX(x,surv,grand){ vfx={t:0,x,flares:[],grand}; if(grand){ const cols=["255,250,230","140,255,150","255,120,90","255,250,230","255,230,140"]; for(let i=0;i<14;i++) setTimeout(()=>{ if(!vfx)return; vfx.flares.push({x:x-420+Math.random()*840,z:0.2+Math.random()*0.7,h:0,vh:620+Math.random()*260,t:0,c:cols[i%cols.length]}); SFX.play("rifle_rev",0.25,{lp:1400,gap:0.1}); },200+i*380+Math.random()*200); return; } // somber: two white star shells over the taken line, drifting smoke
   for(let i=0;i<2;i++) setTimeout(()=>{ if(!vfx)return; vfx.flares.push({x:x-120+Math.random()*240,z:0.3+Math.random()*0.5,h:0,vh:560+Math.random()*120,t:0}); SFX.play("rifle_rev",0.3,{lp:1200}); },400+i*900);
 }
 function drawVictoryFX(dt){ if(!vfx)return; vfx.t+=dt;
   for(const f of vfx.flares){ f.t+=dt; if(f.vh>-30){f.h+=f.vh*dt; f.vh-=480*dt;} else {f.h-=25*dt;}
     const [sx,sy,s]=P(f.x,f.z,f.h); const life=Math.max(0,1-f.t/7); if(life<=0)continue;
     const R_=Math.min(160,Math.max(40,120*s))*life; const g=cx.createRadialGradient(sx,sy,0,sx,sy,R_);
-    g.addColorStop(0,`rgba(255,250,230,${0.8*life})`);g.addColorStop(0.1,`rgba(255,245,220,${0.22*life})`);g.addColorStop(1,"rgba(255,245,220,0)");cx.fillStyle=g;cx.fillRect(sx-R_,sy-R_,R_*2,R_*2);
+    const fc=f.c||"255,250,230"; g.addColorStop(0,`rgba(${fc},${0.85*life})`);g.addColorStop(0.1,`rgba(${fc},${0.25*life})`);g.addColorStop(1,`rgba(${fc},0)`);cx.fillStyle=g;cx.fillRect(sx-R_,sy-R_,R_*2,R_*2);
     cx.strokeStyle="rgba(230,225,210,0.25)";cx.lineWidth=1.5;cx.beginPath();cx.moveTo(sx,sy);cx.lineTo(sx+6,sy+40);cx.stroke(); }
-  if(vfx.t>9)vfx=null;
+  if(vfx.grand&&vfx.t<6){ const a=0.12*Math.sin(Math.min(1,vfx.t/6)*Math.PI); const g2=cx.createLinearGradient(0,0,0,H); g2.addColorStop(0,`rgba(255,220,150,${a})`); g2.addColorStop(1,"rgba(255,220,150,0)"); cx.fillStyle=g2; cx.fillRect(0,0,W,H); }
+  if(vfx.t>(vfx.grand?12:9))vfx=null;
 }
 function victoryBanner(a,b,place){ const el=document.createElement("div"); el.id="vban";
   el.innerHTML=`<div class="rib"><div class="w stencil">${a}</div><div class="p">${place}</div><div class="s">${b}</div></div>`; $("ui").appendChild(el); setTimeout(()=>el.classList.add("out"),2800); setTimeout(()=>el.remove(),3400); }
