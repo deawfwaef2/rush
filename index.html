@@ -64,6 +64,9 @@ b{font-weight:700}
 .panel:before{content:"";position:absolute;inset:3px;border:1px dashed #ffffff10;border-radius:6px;pointer-events:none}
 .ph{font-size:12px;letter-spacing:.3em;color:var(--brass);margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;text-transform:uppercase}
 .ph span:last-child{letter-spacing:.05em;color:var(--dim);text-transform:none;font-size:12px}
+.rep{margin:10px 0 6px;text-align:left;font-size:13px}.rep table{width:100%;border-collapse:collapse}.rep td{padding:3px 6px;border-bottom:1px solid #ffffff14}.rep td:last-child{text-align:right;font-family:Impact,sans-serif;font-size:17px}.rep td small{font-family:Georgia;font-size:10px;opacity:.7}.rep .red{color:#e87a5a}.rep .gold{color:#f0c870}.rep .rem{margin-top:8px;padding:7px 9px;background:#0005;border-left:3px solid var(--brass);font-style:italic;line-height:1.4}
+.fails{grid-column:1/-1;width:100%;margin-top:8px;font-size:11px;border-top:1px solid #ffffff18;padding-top:6px}.fails .ft{color:#e87a5a;letter-spacing:.15em;margin-bottom:3px}.fails .fr{padding:2px 0;color:var(--ink)}.fails .fr i{color:var(--dim);margin:0 3px 0 1px}.fails .fr span{color:#e8a080;margin-left:4px}
+.ov .card{max-height:96vh;overflow:auto}
 #left{left:12px;top:72px;width:270px;max-height:calc(100vh - 160px);overflow:auto}
 #waveTabs{display:flex;gap:4px;margin-bottom:6px;flex-wrap:wrap}
 #waveTabs button{flex:1;min-width:44px;height:38px;border-radius:5px;border:1px solid var(--line);background:linear-gradient(#3a3226,#1f1a13);color:var(--ink);font-family:Impact,sans-serif;font-size:15px;letter-spacing:.06em;cursor:pointer;line-height:1;position:relative}
@@ -994,6 +997,7 @@ function drawParts(front){
     else if(p.col==="smoke"){cx.fillStyle=`rgba(60,55,48,${0.45*(1-k)})`;cx.beginPath();cx.arc(sx,sy,p.size*s*(0.6+k*1.6),0,7);cx.fill();}
     else if(p.col==="smokeW"){cx.fillStyle=`rgba(225,220,205,${0.55*(1-k*k)})`;cx.beginPath();cx.arc(sx,sy,p.size*s*(0.6+k*1.2),0,7);cx.fill();}
     else if(p.col==="gas"){cx.fillStyle=`rgba(170,190,70,${0.32*(1-k*k)})`;cx.beginPath();cx.arc(sx,sy,p.size*s*(0.7+k),0,7);cx.fill();}
+    else if(p.col==="spark"){cx.fillStyle=`rgba(255,230,160,${1-k})`;cx.fillRect(sx,sy,3*s,1.5*s);}
     else if(p.col==="blood"){cx.fillStyle=`rgba(90,10,6,${1-k})`;cx.fillRect(sx,sy,2*s,2*s);}
     else {cx.fillStyle=`rgba(50,38,24,${1-k*0.5})`;cx.fillRect(sx-p.size*s/2,sy-p.size*s/2,p.size*s,p.size*s);}
   }
@@ -1066,12 +1070,14 @@ function updTop(){
   $("bDev").classList.toggle("hide",!S.dev);
   const ch=$("charge"); if(ch){ ch.classList.toggle("refuse",S.morale<=2); }
 }
+function failsHTML(){ const F=(S.fails||{})[S.lvl]; if(!F||!F.length)return ""; const zh=S.lang==="zh"; const fl=zh?["散","横","密"]:["L","Ln","D"];
+  return `<div class="fails"><div class="ft">✝ ${zh?"此阵地失败的冲锋":"FAILED ATTACKS HERE"}</div>`+F.map((f,i)=>`<div class="fr"><b>#${i+1}</b> ${zh?"第":"D"}${f.day}${zh?"天":""} · ${f.w.map((w,j)=>`W${j+1} ${w.r}${w.v?"+★"+w.v:""}<i>${fl[w.f]}</i>`).join(" ")} <span>✝${f.dead} ⬇${f.pin} · ${zh?"残敌":"left"} ${f.e}</span></div>`).join("")+`</div>`; }
 function hazRows(){
   const t=L_(), rows=[];
   const add=(k,v,max)=>{ if(lvl[k]>0||v>0) rows.push(`<div class="hz" id="hz_${k}" data-k="${k}">${ico(k)}<span class="nm">${t.hz[k]}</span><span class="val">${k==="gr"||k==="mn"?Math.round(v):Math.round(v*10)/10}</span><div class="bar"><i style="width:${Math.min(100,v/max*100)}%"></i></div><div class="ds">${t.hzD[k]} <span class="inf">ⓘ</span></div></div>`); };
   add("gr",cur.gr,Math.max(1,lvl.gr));add("mg",cur.mg,6);add("rf",cur.rf,10);add("mn",cur.mn,14);add("sh",cur.sh,5);add("wr",cur.wr,3);add("gs",cur.gs,4);
   $("hzList").innerHTML=rows.join(""); document.querySelectorAll(".hz").forEach(el=>el.onclick=()=>mechCard(el.dataset.k,false));
-  $("reward").innerHTML=`${ico("truck","b")}<div><div class="t">${t.rewardT}</div><div class="v">+${lvl.reward} ${S.lang==="zh"?"人 / 天":"men / day"}</div><div class="t">${S.income} → ${S.income+lvl.reward}</div></div>`;
+  $("reward").innerHTML=`${ico("truck","b")}<div><div class="t">${t.rewardT}</div><div class="v">+${lvl.reward} ${S.lang==="zh"?"人 / 天":"men / day"}</div><div class="t">${S.income} → ${S.income+lvl.reward}</div></div>`+failsHTML();
   $("sendD").textContent=t.spent;
   const f=$("fort"); f.classList.toggle("hide",!lvl.fort); f.textContent=`⚠ ${t.fortress} · ${t.fortTip}`;
   $("lvlName").textContent=`${LV[S.lvl][0]} · ${S.lvl+1}/${NLV}`;
@@ -1273,7 +1279,7 @@ function startCharge(){
   const bx=trenchX(S.lvl);
   let acc=0; const wStart=waves.map((w,i)=>{ if(i>0) acc+=w.d+1.2; return acc; });
   men.forEach((m,i)=>{m.arriving=false;m.x=m.tx;m.state="crouch";const wf=waves[m.wave||0]; m.form=wf?wf.f:1; m.delay=0.9+wStart[m.wave||0]+Math.random()*(m.form===0?1.6:m.form===1?0.8:0.45);m.mor=55+S.morale*0.4+(m.vet?30:0)+Math.random()*25;m.speed=(135+Math.random()*35)*(lvl.ch===2?0.87:1)*(0.85+0.15*mf()/1.0);});
-  battle={t:0,sent:sendN,dead:0,reached:0,nodes:[0.3,0.6,0.86].map(f=>({x:bx+SEGL()*f,done:false})),mgT:0,rfT:0,shT:0,gasZones:[],smoke:used.smk?4+used.smk*4:0,snipers:used.snp,tank:null,melee:false,sniperDone:false,over:false};
+  battle={t:0,sent:sendN,dead:0,reached:0,nodes:[0.3,0.6,0.86].map(f=>({x:bx+SEGL()*f,done:false})),mgT:0,rfT:0,shT:0,gasZones:[],smoke:used.smk?4+used.smk*4:0,snipers:used.snp,tank:null,melee:false,e:Math.max(0,Math.round(cur.gr)),e0:Math.max(0,Math.round(cur.gr)),mel:[],mT:0.3,supp:0,front:0,pinned:0,eKilled:0,meleeDead:0,sniperDone:false,over:false};
   // gas zones
   for(let i=0;i<Math.round(cur.gs);i++)battle.gasZones.push({x:bx+SEGL()*(0.25+0.5*Math.random()),w:120+Math.random()*80});
   if(used.smk){for(let i=0;i<30+used.smk*20;i++)puff(bx+SEGL()*(0.3+Math.random()*0.5),0.1+Math.random()*0.9,0,1,"smokeW",20,9,90,2);}
@@ -1285,9 +1291,9 @@ function startCharge(){
   $("hud").classList.remove("hide");
 }
 function killMan(m,cause){
-  if(!m.alive)return; m.alive=false; battle&&battle.dead++;
+  if(!m.alive)return; if(battle)shockNear(m.x,m.z); m.alive=false; battle&&battle.dead++;
   const rr=Math.random(); if(cause==="mg"||cause==="rf"){ const imp2 = rr<0.35?[1.5+Math.random()*2,1]: rr<0.7?[-4-Math.random()*5,3+Math.random()*5]:[-(1+Math.random()*2),7+Math.random()*4];
-    m.alive=false; battle&&battle.dead++; makeRagdoll(m.x,m.z,m.dir,manCols(m),m.vet,imp2,false); puff(m.x,m.z,40,5,"blood",60,0.5,2,-400); if(Math.random()<0.06)say(m,pick(L_().deathcries)); return; }
+    makeRagdoll(m.x,m.z,m.dir,manCols(m),m.vet,imp2,false); puff(m.x,m.z,40,5,"blood",60,0.5,2,-400); if(Math.random()<0.06)say(m,pick(L_().deathcries)); return; }
   const imp = cause==="mine"?[ (Math.random()-0.3)*14, 22+Math.random()*10 ] : cause==="shell"?[(Math.random()-0.5)*16,18+Math.random()*8]: [ -3-Math.random()*4, 2+Math.random()*4 ];
   makeRagdoll(m.x,m.z,m.dir,manCols(m),m.vet,imp,false);
   puff(m.x,m.z,40,4,"blood",60,0.5,2,-400);
@@ -1309,7 +1315,9 @@ function stepBattle(dt){
       if(m.hold>0){m.hold-=dt;sp*=0.08;}
       if(m.stumble>0){m.stumble-=dt;sp*=0.05;} else if(Math.random()<dt*0.04){m.stumble=0.35+Math.random()*0.4; if(Math.random()<0.3)say(m,pick(S.lang==="zh"?["起来！","继续跑！","别停！"]:["Up!","Keep going!","Don't stop!"]),1);}
       m.x+=sp*dt; m.phase+=dt*sp*0.075*(m.v?m.v.gaitF:1);
-      if(m.x>=ex-50){m.state="wait";m.x=ex-50-Math.random()*20;b.reached++;}
+      if(m.x>=ex-50){b.reached++; if(b.e>0){m.state="melee";m.x=ex-40+Math.random()*50+b.front; joinMelee(m);} else {m.state="wait";m.x=ex-50-Math.random()*20;}}
+      // morale: low morale men go to ground (pinned = lost)
+      if(m.mor<22&&Math.random()<dt*1.6){ pinMan(m); continue; }
       // mines
       for(const mn of mines){ if(mn.live&&Math.abs(mn.x-m.x)<14&&Math.abs(mn.z-m.z)<0.07){ mn.live=false; explosion(mn.x,mn.z,0.9);
          for(const o of alive){ if(o.alive&&Math.abs(o.x-mn.x)<45&&Math.abs(o.z-mn.z)<0.12&&(o===m||Math.random()<0.6)) killMan(o,"mine"); } } }
@@ -1318,7 +1326,7 @@ function stepBattle(dt){
     }
   }
   // hazards: continuous fire on running men
-  const smokeF = b.smoke>0 ? 0.45 : 1; if(b.smoke>0)b.smoke-=dt;
+  const supp=1-(b.supp||0); const smokeF = (b.smoke>0 ? 0.45 : 1)*supp; if(b.smoke>0)b.smoke-=dt;
   const tankF = b.tanks ? Math.max(0.5,1-0.2*b.tanks.length) : 1;
   if(running.length){
     // machine guns
@@ -1326,11 +1334,11 @@ function stepBattle(dt){
     b.mgT-=dt; if(cur.mg>0.05&&b.mgT<=0){ b.mgT=0.09; AU.mg(1,0.12+Math.min(0.2,cur.mg*0.03));
       const tgt=pick(running); const nest=enemies[Math.floor(Math.random()*enemies.length)]||{x:ex,z:0.5};
       tracer(ex+8,nest.z,40,tgt.x+(Math.random()-0.5)*30,tgt.z,20+Math.random()*40); if(nest)nest.flash=0.06; }
-    for(const m of running){ if(Math.random()<mgRate*dt*(1+ (m.x-bx)/SEGL()*0.6)) killMan(m,"mg"); }
+    for(const m of running){ if(m.alive&&Math.random()<mgRate*dt*hitK(m,bx)) killMan(m,"mg"); }
     // rifles
     const rfRate=cur.rf*0.0065*smokeF*(1500/SEGL())/mf();
     b.rfT-=dt; if(cur.rf>0.05&&b.rfT<=0){b.rfT=0.5/Math.max(0.3,cur.rf)*2; AU.shot(0.15); const e=pick(enemies.filter(e=>e.alive))||null; if(e){e.flash=0.08;const tgt=pick(running);tracer(e.x,e.z,48,tgt.x,tgt.z,40);}}
-    for(const m of running){ if(Math.random()<rfRate*dt) killMan(m,"rf"); }
+    for(const m of running){ if(m.alive&&Math.random()<rfRate*dt*hitK(m,bx)) killMan(m,"rf"); }
     // enemy shelling
     if(cur.sh>0.05){ b.shT-=dt; if(b.shT<=0){ b.shT=(3.2/cur.sh)*(0.6+Math.random()*0.8); const tg=pick(running); const sx=tg.x+(Math.random()-0.5)*120, sz=Math.max(0.05,Math.min(1,tg.z+(Math.random()-0.5)*0.2));
        explosion(sx,sz,1.3); for(const o of running){ if(o.alive&&Math.abs(o.x-sx)<55&&Math.abs(o.z-sz)<0.14&&Math.random()<0.75)killMan(o,"shell"); } } }
@@ -1342,16 +1350,44 @@ function stepBattle(dt){
   // node events (stepwise resolution with split-screen)
   const lead=running.length?Math.max(...running.map(m=>m.x)):0;
   for(let ni=0;ni<b.nodes.length;ni++){ const nd=b.nodes[ni]; if(!nd.done&&lead>=nd.x){ nd.done=true; nodeEvent(ni); } }
+  // continuous melee at the enemy line
+  if(b.mel.length&&b.e>0){ b.mT-=dt; if(b.mT<=0){ b.mT=0.45; meleeTick(); } }
   // end conditions
-  const stillMoving=alive.filter(m=>m.state==="run"||m.state==="crouch").length;
-  if(alive.length===0){ b.over=true; setTimeout(()=>result(false),1600); }
-  else if(stillMoving===0&&!b.melee){ b.melee=true; startMelee(); }
+  const stillMoving=men.filter(m=>m.alive&&(m.state==="run"||m.state==="crouch")).length;
+  const inMelee=b.mel.filter(m=>m.alive).length;
+  if(b.e<=0&&!b.over){ b.over=true; men.forEach(m=>{if(m.alive&&m.state==="run"){m.state="wait";}}); setTimeout(()=>result(true),900); }
+  else if(men.filter(m=>m.alive).length===0&&!b.over){ b.over=true; setTimeout(()=>result(false),1600); }
+  else if(stillMoving===0&&inMelee===0&&b.e>0&&!b.over){ b.over=true; setTimeout(()=>result(false),1600); }
   // camera follows the mass
-  if(running.length){ const avg=running.reduce((s,m)=>s+m.x,0)/running.length; cam.tx=Math.min(ex-200,Math.max(bx+100,avg+160)); }
+  if(b.mel.length&&(!running.length||b.mel.length>running.length*0.6)){cam.tx=ex-80+b.front; cam.tz=1.15;} else if(running.length){ const avg=running.reduce((s,m)=>s+m.x,0)/running.length; cam.tx=Math.min(ex-200,Math.max(bx+100,avg+160)); }
   // HUD
-  $("hud").innerHTML=`<span>${IC.man.replace('<svg','<svg width=22 height=22 style="vertical-align:-3px"')} ${alive.length}</span><span style="color:#c8432f">${IC.skull.replace('<svg','<svg width=22 height=22 style="vertical-align:-3px"')} ${b.dead}</span><span>${IC.gr.replace('<svg','<svg width=22 height=22 style="vertical-align:-3px"')} ${Math.round(cur.gr)}</span>`;
+  $("hud").innerHTML=`<span>${IC.man.replace('<svg','<svg width=22 height=22 style="vertical-align:-3px"')} ${alive.length}</span><span style="color:#c8432f">${IC.skull.replace('<svg','<svg width=22 height=22 style="vertical-align:-3px"')} ${b.dead}</span><span>${IC.gr.replace('<svg','<svg width=22 height=22 style="vertical-align:-3px"')} ${Math.max(0,Math.round(b.e))}</span>${b.pinned?`<span style="color:#d8b060">⬇ ${b.pinned}</span>`:""}`;
 }
 
+function hitK(m,bx){ const p=Math.max(0,Math.min(1,(m.x-bx)/SEGL())); return (0.45+1.45*Math.pow(p,1.6))*FORM[m.form||1].fire*(m.vet?0.62:1); }
+function pinMan(m){ if(!m.alive)return; m.alive=false; m.pinned=true; m.state="prone"; battle.pinned++; if(Math.random()<0.3)say(m,pick(S.lang==="zh"?["我不行了…","趴下！","妈妈…"]:["I can't…","Get down!","Mother…"]),1.4); }
+function shockNear(x,z){ for(const o of men){ if(o.alive&&o.state==="run"&&Math.abs(o.x-x)<70&&Math.abs(o.z-z)<0.16){ o.mor-= (o.vet?4:9)*(0.6+Math.random()*0.8); } } }
+function joinMelee(m){ const b=battle; b.mel.push(m); m.phase=Math.random()*6; if(!b.melee){ b.melee=true; big(L_().melee,"",1100); AU.cheer(); cam.shake=6; slowmo=0.55; setTimeout(()=>slowmo=1,900); } if(Math.random()<0.12)say(m,pick(S.lang==="zh"?["刺刀！","杀！","冲进去！"]:["Bayonets!","At them!","Into the trench!"]),1.1); }
+function meleeTick(){
+  const b=battle, ex=trenchX(S.lvl+1); const al=b.mel.filter(m=>m.alive); if(!al.length)return;
+  let A=0,coh=0; for(const m of al){A+=m.vet?1.55:1; coh+=FORM[m.form||1].melee;} coh/=al.length; A*=coh*mf();
+  const E=b.e*(lvl.fort?1.25:1)*(1+0.08*Math.min(3,lvl.ch));
+  const ratio=A/Math.max(0.5,E); // Lanchester: numbers compound
+  const kOur=0.3*A*Math.min(2.2,Math.sqrt(ratio)), kEn=0.3*E*Math.min(2.2,Math.sqrt(1/ratio));
+  const rnd=x=>Math.floor(x)+(Math.random()<x-Math.floor(x)?1:0);
+  let k=Math.min(b.e,rnd(kOur*(0.7+Math.random()*0.6))), kk=Math.min(al.length,rnd(kEn*(0.7+Math.random()*0.6)));
+  b.e-=k; b.eKilled+=k; cur.gr=b.e; b.supp=Math.min(0.9,A/(A+E)*1.15);
+  b.front=Math.min(160,(1-b.e/Math.max(1,b.e0))*160); // fight moves deeper into the trench system
+  let ve=enemies.filter(x=>x.alive); for(let i=0;i<Math.min(k,ve.length);i++){ const en=ve[Math.floor(Math.random()*ve.length)]; if(en.alive){en.alive=false;makeRagdoll(en.x,en.z,-1,pal.en,false,[8+Math.random()*6,6+Math.random()*6],true);puff(en.x,en.z,40,4,"blood",60,0.5,2,-400);} }
+  ve=enemies.filter(x=>x.alive); while(ve.length<Math.min(b.e,24)){const n={x:ex+b.front+Math.random()*50,z:laneZ(Math.random()),phase:0,alive:true,flash:0};enemies.push(n);ve.push(n);}
+  enemies.forEach(en=>{if(en.alive&&en.x<ex+b.front-10)en.x+=6;});
+  al.sort(()=>Math.random()-0.5); for(let i=0;i<kk;i++){ const m=al[i]; m.alive=false; b.dead++; b.meleeDead++; makeRagdoll(m.x,m.z,1,manCols(m),m.vet,[-6-Math.random()*6,6+Math.random()*6],false); }
+  al.forEach(m=>{ if(m.alive&&m.x<ex-30+b.front)m.x+=8+Math.random()*10; });
+  for(let i=0;i<Math.min(6,2+k);i++)setTimeout(()=>AU.clang(),i*70); if(Math.random()<0.6)AU.shot(0.25);
+  for(let i=0;i<Math.min(8,k+kk);i++){const x=ex+b.front-20+Math.random()*60;puff(x,laneZ(Math.random()),45,3,"spark",80,0.25,2,-200);}
+  cam.shake=Math.max(cam.shake,2+Math.min(8,k)); if(k>=5&&Math.random()<0.5){slowmo=0.5;setTimeout(()=>slowmo=1,350);}
+  if(ratio>2.5&&Math.random()<0.2)toast(S.lang==="zh"?"敌军被压倒！":"The enemy is overwhelmed!");
+}
 function nodeEvent(ni){
   const b=battle; const running=men.filter(m=>m.alive&&m.state==="run");
   // pick featured hazard for this node
@@ -1400,13 +1436,30 @@ function startMelee(){
 }
 
 /* ---------- RESULT ---------- */
+function reportHTML(b,surv,vetGain,hold,rear,fail){
+  const zh=S.lang==="zh"; const lw=S.lastWaves||[]; const fl=zh?["散兵线","横队","密集"]:["loose","line","dense"];
+  const row=(k,v,c="")=>`<tr><td>${k}</td><td class="${c}">${v}</td></tr>`;
+  let rem; const eff=b.sent/Math.max(1,b.e0);
+  if(fail){ rem = b.pinned>b.sent*0.25 ? (zh?"士气崩溃：大批士兵趴在弹坑里不肯起来。提升士气或派老兵带队。":"Morale broke: many went to ground and would not rise. Raise morale or lead with veterans.")
+           : b.meleeDead>b.dead*0.4 ? (zh?"白刃战失利：到达的人太少或太分散。把波次间隔缩短、队形收紧。":"Lost at the bayonet: too few arrived, or too spread out. Shorten wave delays, tighten formation.")
+           : (zh?"在无人区被火力消灭。用更散的队形、烟幕和炮击压制。":"Cut down in no man's land. Loosen formation, use smoke and artillery.");}
+  else if(rear>b.e0*1.5) rem = zh?`兵力过剩：${rear} 人被调往后方，对这个阵地毫无用处。下次少派一些。`:`Overcommitted: ${rear} men were sent to the rear — surplus to this attack. Send fewer next time.`;
+  else if(b.dead>b.sent*0.7) rem = zh?"惨胜：代价极高。考虑更多火力支援或分波次进攻。":"Pyrrhic: the price was terrible. Consider more support or more waves.";
+  else if(eff<3&&b.dead<b.sent*0.5) rem = zh?"高效：兵力恰到好处。参谋部很满意。":"Efficient: just enough men. Staff is pleased.";
+  else rem = zh?"合格：阵地拿下，损失可以接受。":"Sound: the line is taken at an acceptable cost.";
+  return `<div class="rep"><table>${row(zh?"派出":"Sent",`${b.sent} <small>(${lw.map((w,i)=>`W${i+1}:${w.r}${w.v?"+★"+w.v:""} ${fl[w.f]}`).join(" · ")})</small>`)}
+   ${row(zh?"阵亡":"Killed",b.dead,"red")}${row(zh?"趴下不起 (计为损失)":"Went to ground (lost)",b.pinned,"red")}
+   ${row(zh?"击毙守军":"Enemy killed",b.eKilled)}
+   ${fail?"":row(zh?"幸存":"Survived",surv)+row(zh?"留守新阵地":"Hold the new trench",hold)+row(zh?"调往后方":"Transferred to the rear",rear, rear>b.e0?"red":"")+row(zh?"晋升老兵 返回":"Return as veterans",vetGain,"gold")}
+   </table><div class="rem">📝 ${rem}</div></div>`;
+}
 function result(win){
   mode="result"; CG.gameplayStop(); slowmo=1;
   const b=battle; const t=L_(); const surv=men.filter(m=>m.alive).length;
   S.lost+=b.dead; S.lastMoraleD = win ? (lvl.fort?30:18) : -20; if(!win&&b.dead>b.sent*0.8)S.lastMoraleD-=5; S.morale=Math.max(0,Math.min(100,S.morale+S.lastMoraleD)); S.moraleT=Date.now();
   if(win){
     CG.happy();
-    const vetGain=surv>0?Math.max(1,Math.floor(surv*0.25)):0; const hold=surv-vetGain;
+    const vetGain=surv>0?Math.max(1,Math.floor(surv*0.25)):0; const need=Math.max(1,Math.ceil(b.e0*0.6)); const hold=Math.min(surv-vetGain,need); const rear=surv-vetGain-hold;
     S.vets+=vetGain; S.reserve+=vetGain;
     S.hist.push({lvl:S.lvl,day:S.day,lost:b.dead,sent:b.sent});
     S.income+=lvl.reward;
@@ -1431,17 +1484,19 @@ function result(win){
           <div class="tile"><b class="cu" data-v="${S.lastMoraleD}" data-p="+">0</b><span>${t.morale}</span><i>${Math.round(S.morale)} · ${moraleWord()}</i></div>
           <div class="tile"><b class="cu" data-v="${hold}">0</b><span>${t.winHold}</span></div>
           <div class="tile dark"><b class="cu" data-v="${b.dead}">0</b><span>${t.winLost}</span></div></div>
+        ${reportHTML(b,surv,vetGain,hold,rear)}
         <div style="font-size:13px;opacity:.7">${S.done?"":t.nextObj+": <b>"+LV[S.lvl][0]+"</b>"}</div>
         <button class="btn" id="okr">▶</button></div>`;
       countUp(); ov.querySelector(".card").classList.add("vcard"); CG.banner(true); // [AD SPOT C]
       $("okr").onclick=()=>{AU.click();CG.banner(false);CG.midgame(()=>{ if(S.done)showEnd(); else advanceCamp(); });}; // [AD SPOT B]
     },3200);
   } else {
+    (S.fails=S.fails||{})[S.lvl]=(S.fails[S.lvl]||[]).concat([{day:S.day,w:S.lastWaves||[],dead:b.dead,pin:b.pinned,e:Math.round(b.e)}]).slice(-8);
     save();
     big(t.fail,t.failS,2400);
     setTimeout(()=>{
       const ov=$("ov");ov.classList.remove("hide");
-      ov.innerHTML=`<div class="card"><h2 class="stencil">${t.fail}</h2><div style="font-size:16px;line-height:1.9">${IC.skull.replace('<svg','<svg width=18 height=18 style="vertical-align:-3px"')} <b>${b.dead}</b> ${t.winLost} · ${IC.gr.replace('<svg','<svg width=18 height=18 style="vertical-align:-3px"')} <b>${Math.round(cur.gr)}</b> ${t.hz.gr}</div>
+      ov.innerHTML=`<div class="card"><h2 class="stencil">${t.fail}</h2><div style="font-size:16px;line-height:1.9">${IC.skull.replace('<svg','<svg width=18 height=18 style="vertical-align:-3px"')} <b>${b.dead}</b> ${t.winLost} · ${IC.gr.replace('<svg','<svg width=18 height=18 style="vertical-align:-3px"')} <b>${Math.round(cur.gr)}</b> ${t.hz.gr}</div>${reportHTML(b,0,0,0,0,true)}
         <p>${S.lang==="zh"?"战壕里又空出了几个位置。":"More empty places in the trench tonight."}</p><div style="font-size:15px">${IC.morale.replace('<svg','<svg width=18 height=18 style="vertical-align:-3px"')} <b>${S.lastMoraleD}</b> ${t.morale} (${Math.round(S.morale)} · ${moraleWord()})</div><button class="btn" id="okr">▶</button></div>`;
       CG.banner(true);
       $("okr").onclick=()=>{AU.click();CG.banner(false);CG.midgame(()=>advanceCamp());};
@@ -1656,11 +1711,14 @@ function frame(now){
       cx.fillStyle="#efe4cc";cx.font="12px Georgia";cx.fillText(LV[h.lvl][0],tx+6,ty-8);cx.font="12px Georgia";cx.fillText(`☼${h.day}   ✝${h.lost}`,tx+6,ty+8);} }
   // mines (hidden: only faint)
   for(const mn of mines){ if(!mn.live)continue; const [sx,sy,s]=P(mn.x,mn.z); cx.fillStyle="rgba(30,24,16,0.35)";cx.beginPath();cx.ellipse(sx,sy,6*s,2*s,0,0,7);cx.fill(); }
+  // failed-attempt markers at the enemy wire
+  { const F=(S.fails||{})[S.lvl]; if(F&&mode!=="menu") F.forEach((f,i)=>{ const [sx,sy,s]=P(trenchX(S.lvl+1)-110-i*26,0.62+(i%3)*0.1); cx.fillStyle="#2a1e12"; cx.fillRect(sx-1.5*s,sy-34*s,3*s,34*s); cx.fillRect(sx-9*s,sy-26*s,18*s,3*s); cx.fillStyle="rgba(240,225,190,.9)"; cx.font=`${Math.max(9,11*s)}px Georgia`; cx.fillText("#"+(i+1)+" ✝"+f.dead,sx-12*s,sy-38*s); }); }
   // corpses (baked)
   for(const r of corpses) if(Math.abs(r.pts[2].x-cam.x)<W*1.5) drawRagdoll(r);
   // depth-sorted entities
   const ents=[];
   for(const r of ragdolls) ents.push({z:r.z,d:()=>drawRagdoll(r)});
+  for(const m of men) if(m.pinned) ents.push({z:m.z,d:()=>{const [sx,sy,s]=P(m.x,m.z);cx.save();cx.translate(sx,sy+3*s);cx.rotate(1.42);drawMan(0,0,s*0.95,1,0,"crouch",manCols(m),{vet:m.vet,v:m.v});cx.restore();}});
   for(const m of men) if(m.alive) ents.push({z:m.z,d:()=>{const [sx,sy,s]=P(m.x,m.z,m.state==="cheer"?Math.abs(Math.sin(m.jump||0))*14:0);drawMan(sx,sy,s,m.dir,m.phase,m.stumble>0?"crouch":m.state==="wait"?"crouch":m.state==="cheer"?"cheer":(m.arriving?"run":m.state),manCols(m),{vet:m.vet,v:m.v});
      if(m.state==="cheer"){ /* rifle raised */ }}});
   for(const e of enemies) if(e.alive) ents.push({z:e.z,d:()=>{const [sx,sy,s]=P(e.x,e.z,-18);drawMan(sx,sy,s,-1,e.phase,mode==="melee"?"melee":"aim",pal.en,{enemy:true,flash:e.flash>0});}});
