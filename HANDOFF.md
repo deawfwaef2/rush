@@ -406,3 +406,4 @@ User LIKES this version (v1.4b). Requests:
 - Settings reset: two-step in-game confirm (window.confirm may be blocked in portal iframes); on Playgama it also overwrites the bridge.storage save.
 - v1.4f+ (same day): CrazyGames locale -> language (SDK.user.systemInfo.locale, unless S.langPicked); hit particles are mud-coloured (PEGI 12);
   visible CC BY music credit in Settings. CRAZYGAMES.md = full submission kit (name, descriptions, controls, tags, form fields, covers/video specs, requirements checklist).
+- Release v1.4f (https://github.com/deawfwaef2/rush/releases/tag/v1.4f) has the current ZIPs. Upload rush-crazygames.zip to CrazyGames.
