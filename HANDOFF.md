@@ -211,3 +211,16 @@ NEW wishes:
 - Every level should feel different. Some chapters: levels 1-4 = sub-area 1, level 5 = fade to black, big scene change.
 - BUG: with more men, the trench sides get closer (camera zoom-out compresses). More men should mean MORE DEPTH, not zoom-out.
 - Lag with many men; near-ground foreground unsatisfying.
+(round 8/9 list re-sent; most done in v1.0–v1.1j) NEW:
+- More UNIT TYPES. REINFORCEMENT POINTS (增援点) + boost SHOP: spend points to buy next charge's loadout (unit types, strategic resources).
+- Goal = finish the game as fast as possible: STOPWATCH; show level time after each clear and chapter time.
+- Normal victory must not be too plain either (modest but not bare). Still many teleport ("瞬移") bugs.
+- More EARLY strategic resources, e.g. "take cover": when a shot is about to hit, click the marked unit (box) to make it immune to that shot → playability.
+- More ENEMY types, more strategy. Each battlefield should feel different.
+- Chapter structure: sub-stages 1-4, then level 5 → blackout + big scene change (unique to some chapters).
+- BUG: with more men, the trench sides (own/enemy) come closer on screen (camera zoom-out shrinks field) → fix. Depth must grow with more men.
+- Lag with many men; foreground/near view unsatisfying.
+## v1.2a
+- STOPWATCH: S.clock (run time) + S.lvlT[lvl] accumulate only in plan/charge/melee/barrage (not menu/result/CG). #cClock chip in top bar. Win card .timeRow: level time (+ "new best" via S.best), chapter time on chapter end, run time. fmtT(), chapT(ch).
+- Normal win: modest but not bare — 1/3 of survivors raise rifles, soft cheer + bugle, "LINE TAKEN · name · time" caption. Fortress win stays grand.
+- Plan camera no longer zooms out with more men (trenches used to come closer); instead tilt rises (cam.tt 0.25→0.6) to show more depth. Running depth spread grows with men sent (0.5+sent/140, max 0.94).
