@@ -107,7 +107,12 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 @keyframes pulse{50%{opacity:.6}}
 #supWrap{position:absolute;left:50%;transform:translateX(-50%);bottom:92px;display:flex;flex-direction:column;align-items:center;gap:4px}
 #supT{font-size:10px;letter-spacing:.3em;color:var(--dim);text-transform:uppercase;text-shadow:0 1px 2px #000}
-#supports{display:flex;gap:8px}
+#supports{display:flex;gap:10px}
+.sup .sm0{width:30px;height:30px;border-radius:50%;border:1px solid var(--brass);background:#1a140c;color:#f3e2b8;font-size:18px;line-height:1;cursor:pointer;flex:none}
+.sup .sm0:active{transform:scale(.9)}
+.pips{display:flex;gap:3px;margin-top:3px}.pips em{width:9px;height:9px;border-radius:50%;border:1px solid #8fa060;background:#0006}.pips em.u{background:#f3d890;border-color:#f3d890;box-shadow:0 0 6px #f3d890}
+.sup .n{left:auto!important;right:34px;top:-8px!important;font-size:13px!important;min-width:24px!important;height:24px!important;background:#c9a45a!important;color:#1a140c!important}
+.sup.on .n{animation:pop .3s}@keyframes pop{50%{transform:scale(1.4)}}
 .sup{position:relative;display:flex;align-items:center;gap:8px;padding:5px 12px 5px 5px;border-radius:30px;cursor:pointer;background:linear-gradient(#2e281e,#15120d);border:1px solid var(--line);box-shadow:0 3px 8px #0009;max-width:210px}
 .sup:active{transform:translateY(2px)}
 .sup .tx{display:flex;flex-direction:column;line-height:1.15}.sup .tx b{font-size:14px}.sup .tx i{font-size:10.5px;color:var(--dim)}
@@ -350,7 +355,7 @@ function load(){try{S=JSON.parse(localStorage.getItem(SAVE_KEY))}catch(e){} if(!
 function save(){try{localStorage.setItem(SAVE_KEY,JSON.stringify(S))}catch(e){}}
 load();
 const L_ = ()=>T[S.lang];
-function supMax(){const ch=Math.floor(S.lvl/8);return {art: 2+Math.min(3,ch), snp: S.lvl>=3?1:0, smk: S.lvl>=9?1:0, tnk: S.lvl>=32?1:0};}
+function supMax(){const ch=Math.floor(S.lvl/8);return {art: 3+Math.min(4,ch), snp: S.lvl>=3?2+Math.floor(ch/2):0, smk: S.lvl>=9?2+Math.floor(ch/3):0, tnk: S.lvl>=32?2:0};}
 /* MORALE: 0..100. Wins raise it, defeats drop it, and it always drifts back toward 50 over (real) time.
    mf = 0.75..1.25 multiplies speed, melee and survival. At 0 the men refuse to charge. */
 function moraleTick(){ const now=Date.now(); const hrs=(now-S.moraleT)/3600000; if(hrs>0){ S.morale=50+(S.morale-50)*Math.pow(0.5,hrs/6); S.moraleT=now; } }
@@ -899,8 +904,9 @@ function hazRows(){
 function buildSupports(){
   const t=L_(),el=$("supports");el.innerHTML="";
   for(const k of ["art","snp","smk","tnk"]){ const mx=supMax()[k]; if(!mx)continue;
-    const d=document.createElement("div");d.className="sup"+(S.sup[k]<=0?" off":"")+(used[k]?" on":"");d.title=t.sup[k];
-    d.innerHTML=ico(k,"g")+`<div class="tx"><b>${t.sup[k]}</b><i>${t.supD[k]}</i></div><span class="n">×${S.sup[k]}</span><span class="q">i</span>`;d.onclick=(e)=>{ if(e.target.classList.contains("q")){mechCard(k,true);return;} useSupport(k);};el.appendChild(d);}
+    const d=document.createElement("div");d.className="sup"+(S.sup[k]+used[k]<=0?" off":"")+(used[k]?" on":"");
+    d.innerHTML=`<button class="sm0" data-a="-">−</button>${ico(k,"g")}<div class="tx"><b>${t.sup[k]}</b><i>${t.supD[k]}</i><div class="pips">${Array.from({length:S.sup[k]+used[k]},(_,i)=>`<em class="${i<used[k]?"u":""}"></em>`).join("")}</div></div><span class="n">${used[k]}</span><button class="sm0" data-a="+">+</button><span class="q">i</span>`;
+    d.onclick=(e)=>{ const a=e.target.dataset&&e.target.dataset.a; if(e.target.classList.contains("q")){mechCard(k,true);return;} if(a==="-"){unuseSupport(k);return;} useSupport(k);};el.appendChild(d);}
 }
 function setSend(n){
   const before=sendN; sendN=Math.max(0,Math.min(S.reserve,n));
@@ -927,7 +933,7 @@ function simulateQuick(n,vets,c,runs=120){
   for(let r=0;r<runs;r++){
     let alive=n, v=Math.min(vets,n);
     const tCross=SEGL()/150*(1+c.wr*0.18)*(lvl.ch===2?1.15:1);
-    const pDie=1-Math.exp(-(c.mg*0.028+c.rf*0.0065+c.sh*0.006+c.gs*0.008)*(tCross*1500/SEGL())*(used.smk?0.55:1)/mf());
+    const pDie=1-Math.exp(-(c.mg*0.028+c.rf*0.0065+c.sh*0.006+c.gs*0.008)*(tCross*1500/SEGL())*(used.smk?Math.max(0.35,1-0.25*used.smk):1)*(used.snp?Math.max(0.6,1-0.12*used.snp):1)/mf());
     let d=0;for(let i=0;i<alive;i++)if(Math.random()<pDie)d++;
     alive-=d; v=Math.round(v*(alive/n));
     d=0;for(let i=0;i<Math.round(c.mn);i++){if(alive>0)d+=1+Math.floor(Math.random()*2.2);} alive=Math.max(0,alive-d);
@@ -949,12 +955,12 @@ function advisor(){ return;
 /* ---------- Supports ---------- */
 function useSupport(k){
   if(mode!=="plan")return; AU.init();
-  if(S.sup[k]<=0){ if(used[k]){ S.sup[k]+=used[k]; used[k]=0; AU.click(); toast("↺"); save(); buildSupports(); updTop(); } else toast("✕"); return; }
-  if(k!=="art"&&used[k])return;
+  if(S.sup[k]<=0){ toast(S.lang==="zh"?"今日已用完":"None left today"); return; }
   S.sup[k]--; used[k]++; AU.clang();
   toast(`${L_().sup[k]} ×${used[k]} · ${S.lang==="zh"?"冲锋时执行":"fires when you charge"}`);
   save(); buildSupports(); updTop();
 }
+function unuseSupport(k){ if(mode!=="plan"||!used[k])return; used[k]--; S.sup[k]++; AU.click(); save(); buildSupports(); }
 /* Pre-charge barrage: artillery shots play one by one AFTER pressing CHARGE (camera on enemy line, bars drop live) */
 function runBarrage(done){
   const n=used.art; if(!n){done();return;}
@@ -1031,11 +1037,11 @@ function startCharge(){
   S.reserve-=sendN; S.vets-=vetsSent; save(); updTop();
   const bx=trenchX(S.lvl);
   men.forEach((m,i)=>{m.arriving=false;if(m.x<bx-60)m.x=bx-40-Math.random()*20;m.state="crouch";m.delay=0.9+Math.random()*1.2+(i/sendN)*1.2;m.speed=(135+Math.random()*35)*(lvl.ch===2?0.87:1)*(0.85+0.15*mf()/1.0);});
-  battle={t:0,sent:sendN,dead:0,reached:0,nodes:[0.3,0.6,0.86].map(f=>({x:bx+SEGL()*f,done:false})),mgT:0,rfT:0,shT:0,gasZones:[],smoke:used.smk?7:0,tank:null,melee:false,sniperDone:false,over:false};
+  battle={t:0,sent:sendN,dead:0,reached:0,nodes:[0.3,0.6,0.86].map(f=>({x:bx+SEGL()*f,done:false})),mgT:0,rfT:0,shT:0,gasZones:[],smoke:used.smk?4+used.smk*4:0,snipers:used.snp,tank:null,melee:false,sniperDone:false,over:false};
   // gas zones
   for(let i=0;i<Math.round(cur.gs);i++)battle.gasZones.push({x:bx+SEGL()*(0.25+0.5*Math.random()),w:120+Math.random()*80});
-  if(used.smk){for(let i=0;i<40;i++)puff(bx+SEGL()*(0.3+Math.random()*0.5),0.1+Math.random()*0.9,0,1,"smokeW",20,9,90,2);}
-  if(used.tnk){battle.tank={x:bx-60,z:0.55,hp:1};}
+  if(used.smk){for(let i=0;i<30+used.smk*20;i++)puff(bx+SEGL()*(0.3+Math.random()*0.5),0.1+Math.random()*0.9,0,1,"smokeW",20,9,90,2);}
+  if(used.tnk){battle.tanks=[];for(let i=0;i<used.tnk;i++)battle.tanks.push({x:bx-60-i*140,z:[0.62,0.3,0.8][i%3],hp:1});battle.tank=battle.tanks[0];}
   // MONTAGE: close-up officer whistle, then bugle, then wide
   montage={t:0,dur:3.6,seed:Math.random()*100}; AU.tone&&AU.ctx&&[0,0.9].forEach(d=>setTimeout(()=>AU.tone(AU.now(),1500,0.04,0.06,"square"),d*1000));
   setTimeout(()=>AU.whistle(),1750); setTimeout(()=>AU.bugle(),2500); setTimeout(()=>AU.thud(),2900);
@@ -1077,7 +1083,7 @@ function stepBattle(dt){
   }
   // hazards: continuous fire on running men
   const smokeF = b.smoke>0 ? 0.45 : 1; if(b.smoke>0)b.smoke-=dt;
-  const tankF = b.tank&&b.tank.hp>0 ? 0.8 : 1;
+  const tankF = b.tanks ? Math.max(0.5,1-0.2*b.tanks.length) : 1;
   if(running.length){
     // machine guns
     const mgRate=cur.mg*0.028*smokeF*tankF*(1500/SEGL())/mf(); // per soldier per second
@@ -1096,7 +1102,7 @@ function stepBattle(dt){
   // gas visuals
   if(Math.random()<0.5)for(const g of b.gasZones)puff(g.x+(Math.random()-0.5)*g.w*2,Math.random(),0,1,"gas",15,4,70,3);
   // tank
-  if(b.tank){ const tk=b.tank; if(tk.x<ex-120)tk.x+=48*dt; if(Math.random()<dt*0.8){AU.shot(0.3);explosion(ex+20,0.2+Math.random()*0.7,0.8);cur.mg=Math.max(0,cur.mg-0.15);cur.rf=Math.max(0,cur.rf-0.1);} }
+  if(b.tanks)for(const tk of b.tanks){ if(tk.x<ex-120)tk.x+=48*dt; if(Math.random()<dt*0.8){AU.shot(0.3);explosion(ex+20,0.2+Math.random()*0.7,0.8);cur.mg=Math.max(0,cur.mg-0.15);cur.rf=Math.max(0,cur.rf-0.1);} }
   // node events (stepwise resolution with split-screen)
   const lead=running.length?Math.max(...running.map(m=>m.x)):0;
   for(let ni=0;ni<b.nodes.length;ni++){ const nd=b.nodes[ni]; if(!nd.done&&lead>=nd.x){ nd.done=true; nodeEvent(ni); } }
@@ -1116,7 +1122,7 @@ function nodeEvent(ni){
   const opts=[]; if(cur.mg>0.3)opts.push("mg"); if(cur.rf>0.5)opts.push("rf"); if(cur.sh>0.3)opts.push("sh");
   if(!opts.length)return;
   const kind= ni===0&&cur.mg>0.3 ? "mg" : pick(opts);
-  const counter = kind==="mg" && used.snp && !b.sniperDone;
+  const counter = kind==="mg" && b.snipers>0;
   insets.push({kind,t:0,dur:counter?3.2:2.2,side:"right",counter});
   // casualties burst (stepwise)
   const pct = kind==="mg"? Math.min(0.5,cur.mg*0.045) : kind==="rf"? Math.min(0.3,cur.rf*0.018) : Math.min(0.35,cur.sh*0.05);
@@ -1124,7 +1130,7 @@ function nodeEvent(ni){
   running.sort(()=>Math.random()-0.5);
   for(let i=0;i<n;i++){ const m=running[i]; setTimeout(()=>{ if(m.alive){ if(kind==="mg"){const e=enemies[0]||{z:.5};tracer(trenchX(S.lvl+1),e.z,40,m.x,m.z,30);} killMan(m,kind==="sh"?"shell":"mg"); if(kind==="mg"&&i%3==0)AU.mg(2,0.2);} }, 200+i*(1100/Math.max(1,n))); }
   if(kind==="sh"){ for(let i=0;i<3;i++)setTimeout(()=>{const tg=pick(running);if(tg)explosion(tg.x,tg.z,1.2);},i*300); }
-  if(counter){ b.sniperDone=true; insets.push({kind:"snp",t:0,dur:3.2,side:"left"});
+  if(counter){ b.snipers--; insets.push({kind:"snp",t:0,dur:3.2,side:"left"});
     setTimeout(()=>{ AU.shot(0.6); cur.mg=Math.max(0,cur.mg-1.5); toast(`${IC.snp.replace('<svg','<svg width=18 height=18 style="vertical-align:middle"')} ${IC.mg.replace('<svg','<svg width=18 height=18 style="vertical-align:middle"')} ✕`); },1500); }
 }
 
@@ -1421,7 +1427,7 @@ function frame(now){
   for(const m of men) if(m.alive) ents.push({z:m.z,d:()=>{const [sx,sy,s]=P(m.x,m.z);drawMan(sx,sy,s,m.dir,m.phase,m.stumble>0?"crouch":m.state==="wait"?"crouch":m.state==="cheer"?"cheer":(m.arriving?"run":m.state),manCols(m),{vet:m.vet,v:m.v});
      if(m.state==="cheer"){ /* rifle raised */ }}});
   for(const e of enemies) if(e.alive) ents.push({z:e.z,d:()=>{const [sx,sy,s]=P(e.x,e.z,-18);drawMan(sx,sy,s,-1,e.phase,mode==="melee"?"melee":"aim",pal.en,{enemy:true,flash:e.flash>0});}});
-  if(battle&&battle.tank&&(mode==="charge"||mode==="melee")) ents.push({z:battle.tank.z,d:()=>drawTank(battle.tank)});
+  if(battle&&battle.tanks&&(mode==="charge"||mode==="melee")) for(const tk of battle.tanks) ents.push({z:tk.z,d:()=>drawTank(tk)});
   ents.push({z:MIDZ+0.02,d:drawBerm}); ents.sort((a,b)=>a.z-b.z); drawParts(false); for(const e of ents)e.d(); drawParts(true);
   drawTracers(rdt);
   // flag raise
