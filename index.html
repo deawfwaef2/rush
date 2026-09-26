@@ -237,6 +237,8 @@ body.cgon #hud,body.cgon #menu,body.cgon #top,body.cgon #advisor,body.cgon #adba
 .card.fortwin{border:2px solid #d9b25a;box-shadow:0 0 0 4px #0008,0 0 40px #d9b25a55}.card .fwr{margin:-4px auto 6px;display:inline-block;padding:3px 16px;background:linear-gradient(#b8892e,#7a5616);color:#fff4d8;font:14px Impact,sans-serif;letter-spacing:.25em;border-radius:3px}.card .fwr .ti{color:#fff4d8}
 #failBtn{margin:6px 0;display:flex;align-items:center;gap:8px;padding:6px 10px;background:#3a141066;border:1px solid #a8321f88;border-radius:6px;cursor:pointer;font-size:12px;color:var(--dim)}#failBtn .fl{color:#e87a5a;letter-spacing:.12em;font-size:11px}#failBtn>b{font:20px Impact,sans-serif;color:#efe4cc}#failBtn span b{color:#efe4cc}#failBtn em{margin-left:auto;font-style:normal;color:#f0c870;text-decoration:underline}
 .fcard{max-width:760px}.ftab{width:100%;border-collapse:collapse;font-size:13px;margin:8px 0}.ftab th{font-weight:normal;font-size:11px;letter-spacing:.08em;text-transform:uppercase;opacity:.6;text-align:left;padding:3px 6px;border-bottom:1px solid #0003}.ftab td{padding:5px 6px;border-bottom:1px solid #0002;vertical-align:top}.ftab td.n{font:17px Impact,sans-serif;text-align:right}.ftab td.r{color:#a8321f}.ftab td.wv{font-size:11px;line-height:1.35}.ftab td.bar{width:110px}.ftab td.bar div{height:9px;background:#0002;border-radius:2px;display:flex;overflow:hidden;margin-top:5px}.ftab .d{background:#a8321f}.ftab .p{background:#c8a050}
+#nextU{margin:6px 0;display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:6px 8px;border:1px dashed #f0c87066;border-radius:6px;font-size:11px}#nextU>span{width:100%;color:#f0c870;letter-spacing:.14em;font-size:10px}#nextU .nu{display:flex;align-items:center;gap:5px;padding:3px 8px 3px 4px;background:#0005;border-radius:14px;cursor:pointer}#nextU .nu svg{width:18px;height:18px}#nextU .nu b{font-weight:normal;color:#efe4cc}
+.card.newm{border:2px solid #d9b25a}.card .nwr{display:inline-block;margin:-4px auto 6px;padding:2px 14px;background:#7e1d12;color:#fff4d8;font:13px Impact,sans-serif;letter-spacing:.3em;border-radius:3px}
 </style>
 </head>
 <body>
@@ -278,7 +280,7 @@ body.cgon #hud,body.cgon #menu,body.cgon #top,body.cgon #advisor,body.cgon #adba
     <div class="panel" id="right">
       <div class="ph"><span id="lblEnemy">ENEMY</span><span id="lvlName"></span></div>
 <div id="hzList"></div>
-      <div id="failBtn" class="hide"></div>
+      <div id="failBtn" class="hide"></div><div id="nextU" class="hide"></div>
       <div id="reward"></div>
       <div id="fort" class="hide"></div>
     </div>
@@ -431,7 +433,17 @@ function load(){try{S=JSON.parse(localStorage.getItem(SAVE_KEY))}catch(e){} if(!
 function save(){try{localStorage.setItem(SAVE_KEY,JSON.stringify(S))}catch(e){}}
 load();
 const L_ = ()=>T[S.lang];
-function supMax(){const ch=Math.floor(S.lvl/8);return {art: S.lvl>=4?3+Math.min(4,ch):0, snp: S.lvl>=3?2+Math.floor(ch/2):0, smk: S.lvl>=9?2+Math.floor(ch/3):0, tnk: S.lvl>=32?2:0};}
+function supMaxAt(i){const ch=Math.floor(i/8);return {art: i>=4?3+Math.min(4,ch):0, snp: i>=3?2+Math.floor(ch/2):0, smk: i>=9?2+Math.floor(ch/3):0, tnk: i>=32?2:0};}
+function supMax(){return supMaxAt(S.lvl);}
+/* mid-game unlocks (tools): engineers cut wire, signal flare holds waves at dead ground, officer = player-steered leader */
+const TOOL_AT={eng:10,flare:12,off:17};
+function hasTool(k){return S.lvl>=TOOL_AT[k];}
+/* NEWM(i): mechanics that appear for the first time on level i (hazards, supports, tools) */
+function NEWM(i){ if(i<=0||i>=NLV)return []; const out=[]; const a=levelDef(i), sm=supMaxAt(i), smp=supMaxAt(i-1);
+  for(const k of ["mg","mn","sh","wr","gs"]){ let first=a[k]>0; if(first) for(let j=0;j<i;j++){ if(levelDef(j)[k]>0){first=false;break;} } if(first)out.push(k); }
+  for(const k of ["art","snp","smk","tnk"]) if(sm[k]>0&&!smp[k])out.push(k);
+  for(const k in TOOL_AT) if(TOOL_AT[k]===i)out.push(k);
+  return out; }
 /* MORALE: 0..100. Wins raise it, defeats drop it, and it always drifts back toward 50 over (real) time.
    mf = 0.75..1.25 multiplies speed, melee and survival. At 0 the men refuse to charge. */
 function moraleTick(){ const now=Date.now(); const hrs=(now-S.moraleT)/3600000; if(hrs>0){ S.morale=50+(S.morale-50)*Math.pow(0.5,hrs/6); S.moraleT=now; } }
@@ -591,7 +603,11 @@ function fakeAd(done){ const ov=$("ov"); ov.classList.remove("hide");
   let n=3; const iv=setInterval(()=>{n--; const e=document.getElementById("fk"); if(e)e.textContent=n; if(n<=0){clearInterval(iv);ov.classList.add("hide");done();}},700); }
 
 /* ---------------- Icons (SVG) ---------------- */
+const VETI='<svg class="ti" viewBox="0 0 16 16" style="color:#f0c870"><path d="M2 3.5l6 4 6-4v3l-6 4-6-4zM2 8.5l6 4 6-4v3l-6 4-6-4z" fill="currentColor"/></svg>';
 const IC={
+ eng:`<svg viewBox="0 0 24 24"><path d="M4 20l9-9" stroke="#e8d6a8" stroke-width="2.4"/><path d="M11 9l2-5 3 1-1 3 3 1 2-2 1 3-5 2z" fill="#e8d6a8"/><path d="M3 6c3 0 3 3 6 3M13 17c3 0 4 3 8 3" stroke="#e8d6a8" stroke-width="1.3" fill="none" stroke-dasharray="2 1.5"/></svg>`,
+ flare:`<svg viewBox="0 0 24 24"><path d="M6 21l5-12" stroke="#e8d6a8" stroke-width="1.6" stroke-dasharray="1.5 1.5"/><circle cx="13" cy="6" r="3.2" fill="#e8d6a8"/><path d="M13 1v2M13 9v2M8 6h2M16 6h2M9.5 2.5l1.3 1.3M15.2 8.2l1.3 1.3M16.5 2.5l-1.3 1.3" stroke="#e8d6a8" stroke-width="1.2"/></svg>`,
+ off:`<svg viewBox="0 0 24 24"><path d="M6 8h12l-1.2-3.2H7.2z" fill="#e8d6a8"/><rect x="5" y="8" width="14" height="1.6" fill="#e8d6a8"/><circle cx="12" cy="12.5" r="3" fill="#e8d6a8"/><path d="M6 22l1.5-5.5h9L18 22z" fill="#e8d6a8"/><path d="M19 13l3-6" stroke="#e8d6a8" stroke-width="1.4"/></svg>`,
  man:`<svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="3" fill="#d9c9a3"/><path d="M8 4.5h8l-1-2h-6z" fill="#8a7a55"/><path d="M8 9h8l1 7h-2l-1 7h-4l-1-7H7z" fill="#d9c9a3"/></svg>`,
  vet:`<svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="3" fill="#e8c872"/><path d="M7 4.5h10l-1.5-2.5h-7z" fill="#b6892e"/><path d="M8 9h8l1 7h-2l-1 7h-4l-1-7H7z" fill="#e8c872"/><path d="M10 11l2 2 2-2" stroke="#7e1d12" stroke-width="1.6" fill="none"/></svg>`,
  clock:`<svg viewBox="0 0 24 24" fill="none" stroke="#d9c9a3" stroke-width="2"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2M9 2h6"/></svg>`,
@@ -1170,7 +1186,7 @@ function fmtT(ms){ms=Math.max(0,ms);const h=Math.floor(ms/3600000),m=Math.floor(
 function updTop(){ updStrip();
   const t=L_(), zh=S.lang==="zh"; moraleTick();
   const left=S.lastPay+DAY_MS-Date.now();
-  $("cTroops").innerHTML=`<div class="ic">${IC.man}</div><div class="vv"><span class="lb">${t.lblRes}</span><b>${S.reserve}${S.vets?` <small>★${S.vets}</small>`:""}</b></div>`;
+  $("cTroops").innerHTML=`<div class="ic">${IC.man}</div><div class="vv"><span class="lb">${t.lblRes}</span><b>${S.reserve}${S.vets?` <small>${VETI}${S.vets}</small>`:""}</b></div>`;
   $("cTimer").innerHTML=`<div class="ic">${IC.truck}</div><div class="vv"><span class="lb">${t.lblNext} · +${dailyMen()}</span><span>${fmtT(left)}</span><div class="tbar"><i style="width:${100-left/DAY_MS*100}%"></i></div></div>`;
   $("cMorale").innerHTML=`<div class="ic">${IC.morale}</div><div class="vv"><span class="lb">${t.morale} · ${moraleWord()}</span><b>${Math.round(S.morale)}</b><div class="mbar"><i style="width:${S.morale}%;background-position:${-S.morale*0}px 0"></i></div></div>`;
   $("cDay").innerHTML=`<div class="ic">${IC.cal}</div><div class="vv"><span class="lb">${t.lblDay}</span><b>${S.day}</b></div>`;
@@ -1195,11 +1211,11 @@ function failsCard(){ const F=(S.fails||{})[S.lvl]||[]; const zh=S.lang==="zh"; 
    <div class="rem">${tip}</div><button class="btn" id="okf">OK</button></div>`;
   $("okf").onclick=()=>{AU.click();ov.classList.add("hide");}; }
 function failsHTML(){ const F=(S.fails||{})[S.lvl]; if(!F||!F.length)return ""; const zh=S.lang==="zh"; const fl=zh?["散","横","密"]:["L","Ln","D"];
-  return `<div class="fails"><div class="ft">✝︎ ${zh?"此阵地失败的冲锋":"FAILED ATTACKS HERE"}</div>`+F.map((f,i)=>`<div class="fr"><b>#${i+1}</b> ${zh?"第":"D"}${f.day}${zh?"天":""} · ${f.w.map((w,j)=>`W${j+1} ${w.r}${w.v?"+★"+w.v:""}<i>${fl[w.f]}</i>`).join(" ")} <span>✝︎${f.dead} ⬇${f.pin} · ${zh?"残敌":"left"} ${f.e}</span></div>`).join("")+`</div>`; }
+  return `<div class="fails"><div class="ft">✝︎ ${zh?"此阵地失败的冲锋":"FAILED ATTACKS HERE"}</div>`+F.map((f,i)=>`<div class="fr"><b>#${i+1}</b> ${zh?"第":"D"}${f.day}${zh?"天":""} · ${f.w.map((w,j)=>`W${j+1} ${w.r}${w.v?"+"+VETI+w.v:""}<i>${fl[w.f]}</i>`).join(" ")} <span>✝︎${f.dead} ⬇${f.pin} · ${zh?"残敌":"left"} ${f.e}</span></div>`).join("")+`</div>`; }
 const ROM=["I","II","III","IV","V","VI"];
 function lvlCode(i){ return ROM[Math.floor(i/8)]+"-"+(i%8+1); }
 function lvlTags(i){ const t=[]; const k=i%8; if(k===2)t.push("cg"); if(k===7)t.push("fort");
-  if([3,4,8,9,24,32].includes(i))t.push("new");
+  if(NEWM(i).length)t.push("new");
   return t; }
 const SVI={cg:'<svg class="ti" viewBox="0 0 12 12"><rect x="1" y="3" width="10" height="7" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M1 3l2-2h2l-2 2m2 0l2-2h2l-2 2" stroke="currentColor" stroke-width="1" fill="none"/></svg>',
  fort:'<svg class="ti" viewBox="0 0 12 12"><path d="M1 11V4h2v2h2V4h2v2h2V4h2v7z" fill="currentColor"/></svg>',
@@ -1221,7 +1237,7 @@ function hazRows(){
   $("reward").innerHTML=`${ico("truck","b")}<div><div class="t">${t.rewardT}</div><div class="v">+${lvl.reward} ${S.lang==="zh"?"人 / 天":"men / day"}</div><div class="t">${S.income} → ${S.income+lvl.reward}</div></div>`;
   $("sendD").textContent=t.spent;
   const f=$("fort"); f.classList.toggle("hide",!lvl.fort); f.innerHTML=`${SVI.warn} ${t.fortress} · ${t.fortTip}`;
-  $("lvlName").textContent=LV[S.lvl][0]; updStrip(); failBtnUpd();
+  $("lvlName").textContent=LV[S.lvl][0]; updStrip(); failBtnUpd(); { const nu=NEWM(S.lvl+1), el=$("nextU"), zh=S.lang==="zh"; el.classList.toggle("hide",!nu.length); el.innerHTML=nu.length?`<span>${zh?"攻克后解锁 / 出现":"AFTER THIS LEVEL"}</span>`+nu.map(k=>`<div class="nu" data-k="${k}">${IC[k]||""}<b>${(MECH[S.lang][k]||[k])[0]}</b></div>`).join(""):""; el.querySelectorAll(".nu").forEach(d=>d.onclick=()=>mechCard(d.dataset.k,["art","snp","smk","tnk","eng","flare","off"].includes(d.dataset.k))); }
 }
 function buildSupports(){
   const t=L_(),el=$("supports");el.innerHTML="";
@@ -1245,7 +1261,7 @@ function formIcon(f){const pts=f===0?[[3,4],[13,3],[23,5],[7,12],[19,13],[4,19],
 function buildWaves(){
   { let vl=S.vets, rl=recAvail(); waves.forEach(w=>{ w.v=Math.max(0,Math.min(w.v,vl)); vl-=w.v; w.r=Math.max(0,Math.min(w.r,rl)); rl-=w.r; }); }
   const zh=S.lang==="zh"; const W0=waves[wSel];
-  $("waveTabs").innerHTML=waves.map((w,i)=>`<button class="${i===wSel?"on":""}" data-i="${i}">W${i+1}<small>${w.r}${w.v?"+★"+w.v:""}</small>${i>0?`<span class="x" data-x="${i}">×</span>`:""}</button>`).join("")+(waves.length<MAXW()?`<button class="add" data-add="1" title="${zh?"新增波次":"add wave"}">+</button>`:"");
+  $("waveTabs").innerHTML=waves.map((w,i)=>`<button class="${i===wSel?"on":""}" data-i="${i}">W${i+1}<small>${w.r}${w.v?"+"+VETI+w.v:""}</small>${i>0?`<span class="x" data-x="${i}">×</span>`:""}</button>`).join("")+(waves.length<MAXW()?`<button class="add" data-add="1" title="${zh?"新增波次":"add wave"}">+</button>`:"");
   $("waveTabs").querySelectorAll("button").forEach(b=>b.onclick=(e)=>{AU.init();AU.click(); if(e.target.dataset.x){waves.splice(+e.target.dataset.x,1);wSel=Math.min(wSel,waves.length-1);syncMen();buildWaves();return;}
     if(b.dataset.add){const pf=waves[waves.length-1];waves.push({r:0,v:0,f:pf?pf.f:1,d:4});wSel=waves.length-1;buildWaves();return;} wSel=+b.dataset.i;buildWaves();});
   $("lblRec").textContent=(zh?"新兵":"RECRUITS")+` · W${wSel+1}`;
@@ -1267,8 +1283,8 @@ function buildWaves(){
   if(!warn.length&&sendN>0) warn.push("OK");
   $("warn").innerHTML=warn.map(w=>w==="OK"?`<div class="ok">${zh?"队形合理。":"Formation sound."}</div>`:`<div>${SVI.warn} ${w}</div>`).join("");
   const t=L_();
-  $("sendInfo").innerHTML=`<div><span>${zh?"总计派出":"Total going over"}</span><b>${sendN}</b></div><div><span>${zh?"其中老兵":"of which veterans"}</span><b>★ ${totV()}</b></div><div><span>${t.sendInfoB}</span><b>${S.reserve-sendN}</b></div>`;
-  $("lblVet").textContent=`${recAvail()-totR()} + ★${S.vets-totV()} / ${S.reserve}`;
+  $("sendInfo").innerHTML=`<div><span>${zh?"总计派出":"Total going over"}</span><b>${sendN}</b></div><div><span>${zh?"其中老兵":"of which veterans"}</span><b>${VETI} ${totV()}</b></div><div><span>${t.sendInfoB}</span><b>${S.reserve-sendN}</b></div>`;
+  $("lblVet").textContent=`${recAvail()-totR()} + ${S.vets-totV()} / ${S.reserve}`;
 }
 const STAR='<svg class="ti" viewBox="0 0 12 12"><path d="M6 .8l1.5 3.4 3.7.3-2.8 2.4.9 3.6L6 8.6 2.7 10.5l.9-3.6L.8 4.5l3.7-.3z" fill="currentColor"/></svg>';
 function buildVetRow(zh){ const el=$("vetRow"); const W0=waves[wSel]; const free=S.vets-totV();
@@ -1407,7 +1423,7 @@ function toPlan(){
   cam.tx=trenchX(S.lvl)+SEGL()*0.2; cam.tz=0.9; cam.tt=0.45;
   setTimeout(()=>{ if(mode!=="pan")return; mode="plan"; $("plan").classList.remove("hide"); hazRows(); buildSupports(); buildPresets(); setSend(Math.min(S.reserve, Math.max(0, Math.ceil(lvl.gr*2)))); CG.gameplayStart(); updTop();
     if(lvl.fort) big(`${L_().fortress}`,L_().fortTip,2200); if(S.reserve<Math.max(5,lvl.gr)) setTimeout(adOffer,900);
-    const ch=Math.floor(S.lvl/8); if(S.lvl%8===2 && !S["seenCG"+ch]){S["seenCG"+ch]=1;save();playChapterCG(ch,()=>{});} else if(S.lvl%8===0 && !S["seenCh"+ch]){S["seenCh"+ch]=1;save();chapterCard(ch);} else if(!S.tut) setTimeout(startTut,400); },1300);
+    const ch=Math.floor(S.lvl/8); if(S.lvl%8===2 && !S["seenCG"+ch]){S["seenCG"+ch]=1;save();playChapterCG(ch,()=>{});} else if(S.lvl%8===0 && !S["seenCh"+ch]){S["seenCh"+ch]=1;save();chapterCard(ch);} else if(!S.tut) setTimeout(startTut,400); showNewMechs(); },1300);
 }
 function chapterCard(ch){
   const c=CHAPTERS[ch]; const ov=$("ov"); ov.classList.remove("hide");
@@ -1620,7 +1636,7 @@ function reportHTML(b,surv,vetGain,hold,rear,fail){
   else if(b.dead>b.sent*0.7) rem = zh?"惨胜：代价极高。考虑更多火力支援或分波次进攻。":"Pyrrhic: the price was terrible. Consider more support or more waves.";
   else if(eff<3&&b.dead<b.sent*0.5) rem = zh?"高效：兵力恰到好处。参谋部很满意。":"Efficient: just enough men. Staff is pleased.";
   else rem = zh?"合格：阵地拿下，损失可以接受。":"Sound: the line is taken at an acceptable cost.";
-  return `<div class="rep"><table>${row(zh?"派出":"Sent",`${b.sent} <small>(${lw.map((w,i)=>`W${i+1}:${w.r}${w.v?"+★"+w.v:""} ${fl[w.f]}`).join(" · ")})</small>`)}
+  return `<div class="rep"><table>${row(zh?"派出":"Sent",`${b.sent} <small>(${lw.map((w,i)=>`W${i+1}:${w.r}${w.v?"+"+VETI+w.v:""} ${fl[w.f]}`).join(" · ")})</small>`)}
    ${row(zh?"阵亡":"Killed",b.dead,"red")}${row(zh?"趴下不起 (计为损失)":"Went to ground (lost)",b.pinned,"red")}
    ${row(zh?"击毙守军":"Enemy killed",b.eKilled)}
    ${fail?"":row(zh?"幸存":"Survived",surv)+row(zh?"留守新阵地":"Hold the new trench",hold)+row(zh?"调往后方":"Transferred to the rear",rear, rear>b.e0?"red":"")+row(zh?"晋升老兵 返回":"Return as veterans",vetGain,"gold")}
@@ -1745,6 +1761,9 @@ const MECH={
   art:["Artillery","Your guns shell their line before the charge.",["Each shot: a random 3–100% luck roll.","The more shots you fire in a row, the stronger each shot gets.","Lowers machine guns, rifles, enemy shelling and garrison. Can blow up mines."],"Refills every day."],
   snp:["Sniper","A marksman goes out ahead of the charge.",["At the first machine-gun checkpoint he kills the gunner.","That burst kills far fewer men, and machine guns drop by 1.5."],"1 per day."],
   smk:["Smoke","Smoke shells blind their guns.",["For the first 7 seconds of the charge, all enemy fire is −55%."],"1 per day."],
+  eng:["Engineers","Sappers with wire-cutters go out with a wave.",["Assign engineers to a wave. When they reach a wire belt they cut gaps.","Each engineer opens a gap quickly; everyone behind passes the wire at almost full speed.","Without engineers, men bunch up at the wire and are shot down."],"Engineers are drawn from recruits."],
+  flare:["Signal flare","Hold at the dead ground, go together.",["Set a wave to HOLD: its men run to the dead ground in no man's land and go to ground there.","Press FLARE during the charge: a red flare goes up and every holding man rises and runs on together.","Arriving as one mass wins the bayonet fight."],"1 per charge."],
+  off:["Officer","A company officer leads from the front.",["Once per charge. Press OFFICER, then steer him with W A S D (or drag).","Men within his reach follow him. Lead them into shell craters to take cover and regroup, then push on.","If he is killed, the men carry on with their original orders."],"1 per charge."],
   tnk:["Tank","A landship leads the charge.",["While it rolls, enemy fire is −20%.","It shells their trench, slowly silencing guns."],"1 per day."],
  },
  zh:{
@@ -1758,10 +1777,17 @@ const MECH={
   art:["炮击","冲锋前我方火炮轰击敌阵。",["每一发：随机3–100%的运气。","连续发射越多，每一发越强。","降低机枪、步枪、敌方炮击和守军，可能引爆地雷。"],"每天补充。"],
   snp:["狙击手","一名神枪手先于冲锋出发。",["在第一个机枪节点，他会击毙机枪手。","那次扫射死的人少得多，机枪 −1.5。"],"每天1次。"],
   smk:["烟幕","烟幕弹遮蔽敌方火力。",["冲锋开始的7秒内，所有敌方火力 −55%。"],"每天1次。"],
+  eng:["工兵","带着钢丝钳的工兵随波次出发。",["为某个波次分配工兵。他们到达铁丝网时会剪开缺口。","每名工兵都能很快开出缺口，后面的人几乎全速通过。","没有工兵，大部队会卡在铁丝网前被成片射倒。"],"工兵从新兵中抽调。"],
+  flare:["信号弹","先在死角集结，再一起冲。",["把某个波次设为【待命】：士兵会冲到无人区的死角地带卧倒等待。","冲锋中按下【信号弹】：红色信号弹升空，所有待命的士兵一起起身继续冲锋。","同时到达的人群才能赢下白刃战。"],"每次冲锋1发。"],
+  off:["军官","连长亲自带队冲在最前。",["每次冲锋1次。按下【军官】后用 W A S D（或拖动）控制他。","附近的士兵会跟随他。带他们进入弹坑隐蔽、重新集结，然后继续冲锋。","如果他阵亡，士兵们会按原命令继续冲锋。"],"每次冲锋1次。"],
   tnk:["坦克","陆地战舰领头冲锋。",["坦克行进时，敌方火力 −20%。","它会轰击敌壕，逐渐压制火力。"],"每天1次。"],
  }};
-function mechCard(k,isSup){ const m=MECH[S.lang][k]; if(!m)return; const ov=$("ov"); ov.classList.remove("hide"); AU.click();
-  ov.innerHTML=`<div class="card" style="max-width:460px"><div style="display:flex;align-items:center;gap:12px;justify-content:center">${ico(k,isSup?"g":"",52)}<h2 class="stencil">${m[0]}</h2></div><p>${m[1]}</p>
+function showNewMechs(){ S.seenM=S.seenM||{}; const q=NEWM(S.lvl).filter(k=>!S.seenM[k]); if(!q.length)return;
+  const tick=()=>{ if(mode!=="plan")return; if(chCG||!$("ov").classList.contains("hide")||!$("tut").classList.contains("hide")){setTimeout(tick,600);return;}
+    const k=q.shift(); if(!k)return; S.seenM[k]=1; save(); mechCard(k,["art","snp","smk","tnk","eng","flare","off"].includes(k),true); const ok=$("okm"); const o=ok.onclick; ok.onclick=()=>{o&&o(); if(q.length)setTimeout(tick,250);}; };
+  setTimeout(tick,700); }
+function mechCard(k,isSup,isNew){ const m=MECH[S.lang][k]; if(!m)return; const ov=$("ov"); ov.classList.remove("hide"); AU.click();
+  ov.innerHTML=`<div class="card${isNew?" newm":""}" style="max-width:460px">${isNew?`<div class="nwr">${S.lang==="zh"?"新机制":"NEW"}</div>`:""}<div style="display:flex;align-items:center;gap:12px;justify-content:center">${ico(k,isSup?"g":"",52)}<h2 class="stencil">${m[0]}</h2></div><p>${m[1]}</p>
    <ul class="mech">${m[2].map(x=>`<li>${x}</li>`).join("")}</ul>
    <div class="mech" style="margin-top:8px"><b>${isSup?(S.lang==="zh"?"补给：":"Supply: "):(S.lang==="zh"?"克制：":"Countered by: ")}</b>${m[3]}</div>
    <button class="btn" id="okm" style="margin-top:12px">OK</button></div>`; $("okm").onclick=()=>ov.classList.add("hide"); }

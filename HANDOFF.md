@@ -162,3 +162,8 @@ NEW wishes:
 ## v1.1b
 - FORTRESS win grand: 14 coloured signal flares (white/green/red), fanfare+cheer, men cheer, banner "FORTRESS TAKEN", gold card (.fortwin), card after 6.2s. Normal wins unchanged (quiet).
 - Failures: removed text from in-world markers & from reward panel; new #failBtn in enemy panel (count + closest result) → failsCard() table (date/sent/waves/fallen/pinned/enemy left/loss bar) + diagnosis tip.
+
+## v1.1c
+- NEWM(i): auto list of mechanics first appearing on level i (hazards, supports via supMaxAt, tools TOOL_AT={eng:10,flare:12,off:17}). lvlTags "new" uses it. showNewMechs() pops mechCard(k,isSup,isNew) with NEW ribbon for each unseen (S.seenM). Enemy panel #nextU lists what appears AFTER this level (clickable).
+- MECH text + IC icons added for eng/flare/off (gameplay implemented in next stages).
+- Remaining ★ glyphs replaced by VETI svg.
