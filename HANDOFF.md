@@ -375,3 +375,13 @@ User LIKES this version (v1.4b). Requests:
   Measured (1.5x DPI, software canvas, lvl10/300 men): plan 9-10 fps (Q2) -> 16 (Q1) -> 22-25 (Q0); charge 7-8.5 -> 11-12 -> 18.
 - Settings: Graphics Auto/High/Med/Low (S.gfx a/h/m/l) pins QUAL.
 - Trench LOD: Q0 all trenches, Q1 support lines -> sandbag band instead of ~500 single bags; far bags (<0.6 px scale) always a band.
+## v1.4d round-14 UI fixes (2026-09-27, agent A)
+- Root cause of cut-off panels: #ui uses CSS zoom (UIZ up to 1.45) but max-heights used 100vh -> panels ran off-screen.
+  uiScale() now sets --uih/--uiw (viewport / UIZ); #left/#right/#supports use them. Thin visible scrollbars. Threat list gets .many (compact rows, no descriptions) at >=6 rows.
+- Fire-support cards redesigned: compact vertical card, name never wraps, "used / total" counter (the old badge showed only the number committed, which read as "0 resources").
+- S.supCap: when a newly reached level raises supMax, the increase is added at once (was only at the next daily refill = "not updating").
+- Officer row on the plan screen (from lvl 17): "Officer - O key in the charge - once per charge", click = info card.
+- Battle: #tools moves above the officer WASD pad (#ui.offon); officer caption uses the lower third; toasts drop to 37% while a top caption shows.
+- Flamethrower teams are visible: figure with tanks/hose/lance + pilot flame in the enemy trench, label during the approach;
+  every flame burst is a jet from the nearest team to the victims (drawFlJets); knocked-out teams vanish in a fireball. b.flK remains the count.
+- Panels: backdrop-filter blur removed (was re-blurred every frame over the animated canvas).

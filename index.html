@@ -60,7 +60,7 @@ b{font-weight:700}
 #frontinfo{margin-top:12px;font-size:14px;opacity:.85;letter-spacing:.18em;text-shadow:0 1px 3px #000}
 #menuHint{margin-top:6px;font-size:12px;opacity:.55;letter-spacing:.1em}
 /* ---------- panels ---------- */
-.panel{position:absolute;background:linear-gradient(#26211acc,#141109ee);border:1px solid var(--line);border-radius:8px;box-shadow:inset 0 1px 0 #ffffff12,0 10px 30px #000b;padding:10px 12px;backdrop-filter:blur(3px)}
+.panel{position:absolute;background:linear-gradient(#26211acc,#141109ee);border:1px solid var(--line);border-radius:8px;box-shadow:inset 0 1px 0 #ffffff12,0 10px 30px #000b;padding:10px 12px}
 .panel:before{content:"";position:absolute;inset:3px;border:1px dashed #ffffff10;border-radius:6px;pointer-events:none}
 .ph{font-size:12px;letter-spacing:.3em;color:var(--brass);margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;text-transform:uppercase}
 .ph span:last-child{letter-spacing:.05em;color:var(--dim);text-transform:none;font-size:12px}
@@ -84,7 +84,7 @@ b{font-weight:700}
 .strip .nd.fort span{border-radius:3px;border-width:2px}
 .strip .nd.cg span{border-style:double;border-width:3px}
 .strip .lg{margin-top:4px;color:#f0c870}.strip .lg span{display:block;color:var(--dim);font-size:10px}
-#left{left:12px;top:72px;width:270px;max-height:calc(100vh - 160px);overflow:auto}
+#left{left:12px;top:72px;width:270px;max-height:calc(var(--uih,100vh) - 160px);overflow:auto}
 #waveTabs{display:flex;gap:4px;margin-bottom:6px;flex-wrap:wrap}
 #waveTabs button{flex:1;min-width:44px;height:38px;border-radius:5px;border:1px solid var(--line);background:linear-gradient(#3a3226,#1f1a13);color:var(--ink);font-family:Impact,sans-serif;font-size:15px;letter-spacing:.06em;cursor:pointer;line-height:1;position:relative}
 #waveTabs button small{display:block;font-family:Georgia;font-size:10px;color:var(--dim);margin-top:2px}
@@ -105,7 +105,8 @@ b{font-weight:700}
 #warn{margin-top:6px;font-size:12px;line-height:1.35}
 #warn div{padding:4px 6px;border-radius:4px;margin-top:3px;background:#5a1a0e99;border-left:3px solid #e0603a;color:#ffd9c0}
 #warn div.ok{background:#2a3a1a99;border-left-color:#9ac060;color:#dfeec8}
-#right{right:12px;top:72px;width:270px;max-height:calc(100vh - 170px);overflow:auto}
+#right{right:12px;top:72px;width:270px;max-height:calc(var(--uih,100vh) - 86px);overflow:auto}
+#left,#right{scrollbar-width:thin;scrollbar-color:#c9a45a88 #0003}#left::-webkit-scrollbar,#right::-webkit-scrollbar{width:6px}#left::-webkit-scrollbar-thumb,#right::-webkit-scrollbar-thumb{background:#c9a45a88;border-radius:3px}
 .stepper{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:2px 0 6px}
 .rb{width:52px;height:52px;border-radius:50%;border:1px solid var(--brass);background:radial-gradient(circle at 40% 30%,#6a5a3a,#2a2217);color:#f3e2b8;font-size:30px;line-height:1;cursor:pointer;box-shadow:inset 0 2px 0 #ffffff22,0 3px 0 #000;font-family:Georgia}
 .rb:active{transform:translateY(2px);box-shadow:none}
@@ -137,6 +138,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 .hz .bar{grid-column:2/4;height:5px;background:#0008;border-radius:3px;overflow:hidden;margin:3px 0}
 .hz .bar i{display:block;height:100%;background:linear-gradient(90deg,#c9862f,#c8432f);transition:width .5s}
 .hz .ds{grid-column:2/4;font-size:11px;color:var(--dim);font-style:italic;line-height:1.3}
+#hzList.many .hz{padding:3px 2px;grid-template-columns:32px 1fr auto}#hzList.many .hz .ds{display:none}#hzList.many .hz .badge{width:30px;height:30px}#hzList.many .hz .badge svg{width:21px;height:21px}#hzList.many .hz .nm{font-size:13.5px}#hzList.many .hz .val{font-size:18px}#hzList.many .hz .bar{height:4px;margin:2px 0}
 .hz .inf{font-size:10px;color:var(--brass);font-style:normal;margin-left:4px;opacity:.8}
 .hz.fx{animation:shake .4s}
 @keyframes shake{25%{transform:translateX(-4px)}50%{transform:translateX(4px)}75%{transform:translateX(-2px)}}
@@ -147,17 +149,18 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 @keyframes pulse{50%{opacity:.6}}
 #supWrap{position:absolute;left:50%;transform:translateX(-50%);bottom:92px;display:flex;flex-direction:column;align-items:center;gap:4px}
 #supT{font-size:10px;letter-spacing:.3em;color:var(--dim);text-transform:uppercase;text-shadow:0 1px 2px #000}
-#supports{display:flex;gap:10px}
-.sup .sm0{width:30px;height:30px;border-radius:50%;border:1px solid var(--brass);background:#1a140c;color:#f3e2b8;font-size:18px;line-height:1;cursor:pointer;flex:none}
-.sup .sm0:active{transform:scale(.9)}
-.pips{display:flex;gap:3px;margin-top:3px}.pips em{width:9px;height:9px;border-radius:50%;border:1px solid #8fa060;background:#0006}.pips em.u{background:#f3d890;border-color:#f3d890;box-shadow:0 0 6px #f3d890}
-.sup .n{left:auto!important;right:34px;top:-8px!important;font-size:13px!important;min-width:24px!important;height:24px!important;background:#c9a45a!important;color:#1a140c!important}
-.sup.on .n{animation:pop .3s}@keyframes pop{50%{transform:scale(1.4)}}
-.sup{position:relative;display:flex;align-items:center;gap:8px;padding:5px 12px 5px 5px;border-radius:30px;cursor:pointer;background:linear-gradient(#2e281e,#15120d);border:1px solid var(--line);box-shadow:0 3px 8px #0009;max-width:210px}
-.sup:active{transform:translateY(2px)}
-.sup .tx{display:flex;flex-direction:column;line-height:1.15}.sup .tx b{font-size:14px}.sup .tx i{font-size:10.5px;color:var(--dim)}
-.sup .n{position:absolute;left:30px;top:-5px;background:var(--red);color:#fff;border-radius:10px;min-width:20px;height:20px;font-size:12px;display:grid;place-items:center;font-family:sans-serif;border:1px solid #000;padding:0 4px}
-.sup .q{position:absolute;right:-4px;top:-6px;width:18px;height:18px;border-radius:50%;background:#1a140c;border:1px solid var(--brass);color:var(--brass);font-size:11px;display:grid;place-items:center;font-family:Georgia}
+#supports{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;max-width:calc(var(--uiw,100vw) - 600px)}
+.sup{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;padding:5px 8px 6px;min-width:100px;border-radius:10px;cursor:pointer;background:linear-gradient(#2e281e,#15120d);border:1px solid var(--line);box-shadow:0 3px 8px #0009}
+.sup.on{border-color:#f3d890;box-shadow:0 0 0 1px #f3d89055,0 3px 8px #0009}.sup.off{opacity:.55}
+.sup .hd{display:flex;align-items:center;gap:6px}.sup .hd .badge{width:32px;height:32px;flex:none}.sup .hd svg{width:22px;height:22px}
+.sup .nm{font-size:13.5px;white-space:nowrap;line-height:1.1;font-weight:bold}
+.sup .cnt{font:13px Impact,sans-serif;letter-spacing:.04em;color:#f3d890;white-space:nowrap}.sup .cnt small{font:10px Georgia,serif;color:var(--dim);letter-spacing:0;margin-left:3px}
+.sup .ctl{display:flex;align-items:center;gap:5px}
+.sup .sm0{width:26px;height:26px;border-radius:50%;border:1px solid var(--brass);background:#1a140c;color:#f3e2b8;font-size:16px;line-height:1;cursor:pointer;flex:none;padding:0}
+.sup .sm0:active{transform:scale(.9)}.sup:active{transform:translateY(1px)}
+.pips{display:flex;flex-wrap:wrap;justify-content:center;gap:3px;max-width:78px}.pips em{width:8px;height:8px;border-radius:50%;border:1px solid #8fa060;background:#0006}.pips em.u{background:#f3d890;border-color:#f3d890;box-shadow:0 0 5px #f3d890}
+.sup.on .cnt{animation:pop .3s}@keyframes pop{50%{transform:scale(1.25)}}
+.sup .q{position:absolute;right:-5px;top:-6px;width:18px;height:18px;border-radius:50%;background:#1a140c;border:1px solid var(--brass);color:var(--brass);font-size:11px;display:grid;place-items:center;font-family:Georgia}
 .sup.off{opacity:.4;filter:grayscale(1)}
 .sup.on{border-color:#f3d890;box-shadow:0 0 16px #c9a45a88}
 #advisor{position:absolute;left:50%;transform:translateX(-50%);top:70px;max-width:44vw;display:flex;align-items:center;gap:10px;background:linear-gradient(90deg,#15120dee,#221d15ee);border:1px solid var(--line);border-radius:40px;padding:4px 18px 4px 4px;box-shadow:0 6px 18px #0009}
@@ -192,6 +195,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 @keyframes efIn{from{opacity:0;transform:translateX(-16px)}to{opacity:1;transform:none}}
 @keyframes dieRoll{from{transform:rotate(-200deg) scale(.4)}to{transform:none}}
 #bigtxt.low{top:auto;bottom:13%}
+#toast.below{top:37%}
 #bigtxt small{display:block;font-size:14px;letter-spacing:.28em;margin-top:2px;opacity:.9;font-family:Georgia}
 #hud{position:absolute;left:50%;transform:translateX(-50%);top:72px;display:flex;gap:18px;font-size:22px;background:#0008;padding:4px 16px;border-radius:20px}
 #toast{position:absolute;left:50%;top:24%;transform:translateX(-50%);background:#14110dee;border:1px solid var(--brass2);padding:8px 18px;border-radius:4px;font-size:16px;opacity:0;transition:opacity .3s;pointer-events:none!important}
@@ -235,7 +239,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 @media (orientation:portrait) and (max-width:700px){#rot{display:flex}}
 @media (max-height:520px){
  .chip{min-height:38px;padding:2px 8px 2px 4px}.chip .ic{width:30px;height:30px}.chip .vv>b,.chip .vv>span:not(.lb){font-size:15px}.ibtn{width:38px;height:38px}
- #left,#right{top:56px;padding:7px 9px}#left{width:210px}#right{width:230px;max-height:calc(100vh - 130px)}
+ #left,#right{top:56px;padding:7px 9px}#left{width:210px}#right{width:230px;max-height:calc(var(--uih,100vh) - 70px)}#left{max-height:calc(var(--uih,100vh) - 130px)}
  .bigN{font-size:36px}.rb{width:40px;height:40px;font-size:24px}.hz{padding:4px 2px}.hz .ds{display:none}.badge{width:32px;height:32px}.badge svg{width:22px;height:22px}.hz{grid-template-columns:32px 1fr auto}
  #supWrap{bottom:66px}#supT{display:none}.sup .tx i{display:none}
  #charge{font-size:26px;padding:6px 36px;bottom:8px}
@@ -254,8 +258,10 @@ body.cgon #hud,body.cgon #menu,body.cgon #top,body.cgon #advisor,body.cgon #adba
 .card.newm{border:2px solid #d9b25a}.card .nwr{display:inline-block;margin:-4px auto 6px;padding:2px 14px;background:#7e1d12;color:#fff4d8;font:13px Impact,sans-serif;letter-spacing:.3em;border-radius:3px}
 .toolRow{display:flex;align-items:center;gap:6px;margin-top:7px;font-size:13px}.toolRow .bt svg{width:22px;height:22px}.toolRow .lb{flex:0 0 96px;color:var(--dim);font-size:11px;letter-spacing:.08em;text-transform:uppercase;line-height:1.1}.toolRow .lb small{text-transform:none;letter-spacing:0;font-size:10px}.toolRow b{flex:1;text-align:center;font-family:Impact,sans-serif;font-size:22px;color:#e8e0cc}
 #tools{position:absolute;right:14px;bottom:18px;display:flex;gap:10px;z-index:5}#tools button{display:flex;flex-direction:column;align-items:center;gap:2px;min-width:86px;padding:8px 10px;background:linear-gradient(#3a2a18,#1a120a);border:2px solid #c9a86a;border-radius:8px;color:#efe4cc;font:15px Impact,sans-serif;letter-spacing:.1em;cursor:pointer}#tools button svg{width:30px;height:30px}#tools small{font:10px Georgia;opacity:.6}#bFlare{border-color:#e05a3a!important;animation:pulseF 1s infinite}@keyframes pulseF{50%{box-shadow:0 0 18px #e05a3a}}
+#offRow{cursor:pointer}#offRow .ofTx{flex:1;font-size:11px;color:#e8d9b0;line-height:1.2}#offRow .ofq{flex:none;width:18px;height:18px;border-radius:50%;border:1px solid var(--brass);color:var(--brass);font:11px Georgia;display:grid;place-items:center}
 .toolRow .seg{flex:1;padding:6px 4px;background:#0004;border:1px solid #ffffff22;color:#cbb;border-radius:4px;font-size:12px;cursor:pointer}.toolRow .seg.on{background:#7e1d12;border-color:#f3d890;color:#fff}
-#supports.many .sup .tx i{display:none}#supports.many .sup{max-width:150px}#supports{flex-wrap:wrap;justify-content:center;max-width:calc(100vw - 660px)}
+#supports.many .supX .tx i{display:none}#supports.many .sup{max-width:150px}#supports{flex-wrap:wrap;justify-content:center;max-width:calc(100vw - 660px)}
+#ui.offon #tools{bottom:128px}
 #offpad{position:absolute;right:14px;bottom:14px;display:flex;gap:10px;align-items:flex-end;z-index:6}
 #offpad .dp{display:grid;grid-template-columns:repeat(3,44px);grid-template-rows:repeat(2,44px);gap:4px}
 #offpad .dp button:nth-child(1){grid-column:2;grid-row:1}#offpad .dp button:nth-child(2){grid-column:1;grid-row:2}#offpad .dp button:nth-child(3){grid-column:2;grid-row:2}#offpad .dp button:nth-child(4){grid-column:3;grid-row:2}
@@ -319,7 +325,7 @@ body.cgon #hud,body.cgon #menu,body.cgon #top,body.cgon #advisor,body.cgon #adba
       <input type="range" id="sendR" min="0" max="100" value="0">
       <div class="presets" id="presets"></div>
       <div id="vetRow"></div>
-      <div id="engRow" class="toolRow"></div><div id="holdRow" class="toolRow"></div>
+      <div id="engRow" class="toolRow"></div><div id="holdRow" class="toolRow"></div><div id="offRow" class="toolRow"></div>
       <div id="formRow"></div>
       <div id="delayRow"></div>
       <div id="warn"></div>
@@ -375,7 +381,7 @@ const T = {
   hzD:{sn:"Hunt officers, engineers and veterans first",fl:"Burn dense crowds in the trench fight",ca:"Fresh troops strike back after you take the trench",gr:"Men you must beat in the trench fight",mg:"Mows down runners every second",rf:"Picks off random runners",mn:"Hidden. Blow up whoever steps on them",sh:"Shells land on groups of runners",wr:"Slows the charge in the middle",gs:"Green clouds slow and choke"},
   supD:{art:"Shell their line. Fire more for a bigger hit",snp:"Takes out a machine gunner mid-charge",smk:"Their fire −55% for the first 7 s",tnk:"Leads the charge, silences guns"},
   lblRes:"Reserve",lblNext:"Next men",lblDay:"Day",lblAd:"Extra draft",lblAdD:"Watch ad: get a third of a day's men now",
-  sendD:"Men going over the top. Veterans go first.",rewardT:"Win reward: more men every day",advT:"Advisor",supT:"Support (refills daily)",
+  sendD:"Men going over the top. Veterans go first.",rewardT:"Win reward: more men every day",advT:"Advisor",supT:"Fire support - refilled with every daily draft",
   winHold:"stay to hold the trench",winVet:"survivors become veterans",winInc:"more men every day",winLost:"fallen",nextObj:"Next objective",advWho:"Major Hale · advisor",morale:"Morale",reinf:"Reinforcements",perDay:"per day",
   presets:["×1","×1.5","×2","ALL"],presetsS:["garrison","garrison","garrison","reserve"],sendInfoA:"Including veterans",sendInfoB:"Reserve left",sendInfoC:"Est. arrive alive",
   spent:"All who go over are spent. Surplus survivors go to the rear: less surplus = more stars.",
@@ -394,7 +400,7 @@ const T = {
   hzD:{sn:"优先狙杀军官、工兵和老兵",fl:"白刃战中焚烧密集人群",ca:"攻占战壕后敌军援兵反扑",gr:"战壕白刃战中必须击败的敌人",mg:"冲锋途中每秒扫射倒一片",rf:"随机射杀冲锋的士兵",mn:"隐藏。踩到就爆炸",sh:"炮弹落在人群中",wr:"中段拖慢冲锋速度",gs:"绿色毒云，减速并致死"},
   supD:{art:"轰击敌阵。连续发射效果越强",snp:"冲锋途中干掉一名机枪手",smk:"前7秒敌方火力 −55%",tnk:"领头冲锋，压制火力"},
   lblRes:"预备兵",lblNext:"下批援军",lblDay:"天数",lblAd:"紧急征兵",lblAdD:"看广告：立即获得三分之一天的援军",
-  sendD:"翻出战壕的人数。老兵优先出击。",rewardT:"胜利奖励：每天增援更多",advT:"参谋",supT:"火力支援（每日补充）",
+  sendD:"翻出战壕的人数。老兵优先出击。",rewardT:"胜利奖励：每天增援更多",advT:"参谋",supT:"火力支援 · 随每日援军补满",
   winHold:"人留守战壕",winVet:"幸存者晋升老兵",winInc:"每日援军增加",winLost:"阵亡",nextObj:"下一个目标",advWho:"黑尔少校 · 参谋",morale:"士气",reinf:"援军",perDay:"每天",
   presets:["×1","×1.5","×2","全部"],presetsS:["守军","守军","守军","预备"],sendInfoA:"其中老兵",sendInfoB:"剩余预备",sendInfoC:"预计抵达",
   spent:"派上去的人都会被消耗。多余的幸存者调往后方：多余越少，星级越高。",
@@ -516,7 +522,7 @@ function payDays(){
   if(n>0){ n=Math.min(n,7); S.lastGain=dailyMen()*n; S.reserve+=dailyMen()*n; S.day+=n; S.lastPay+=Math.floor((now-S.lastPay)/DAY_MS)*DAY_MS; refreshSupports(true); save(); return n;}
   refreshSupports(false); return 0;
 }
-function refreshSupports(force){ if(force||S.supDay!==S.day){S.sup=supMax();S.supDay=S.day;} }
+function refreshSupports(force){ if(force||S.supDay!==S.day){S.sup=supMax();S.supCap=supMax();S.supDay=S.day;} }
 function giveDay(){ S.lastGain=dailyMen(); S.reserve+=dailyMen(); S.lastPay=Date.now(); S.day+=1; refreshSupports(true); save(); }
 /* v1.3: a rewarded ad = ONE THIRD of the daily draft (3 ads/day = one extra day). Does not advance the day. */
 function adMen(){ return Math.max(1,Math.round(dailyMen()/3)); }
@@ -726,7 +732,7 @@ const HZ_BADGE={gr:"",mg:"",rf:"",mn:"",sh:"",wr:"",gs:""};
    ============================================================ */
 const cv=$("c"); let cx=cv.getContext("2d");
 let W=0,H=0,DPR=1;
-let UIZ=1; function uiScale(){ UIZ=Math.max(0.74,Math.min(1.45,Math.min(innerWidth/1000,innerHeight/560))); document.getElementById("ui").style.zoom=UIZ; }
+let UIZ=1; function uiScale(){ UIZ=Math.max(0.74,Math.min(1.45,Math.min(innerWidth/1000,innerHeight/560))); document.getElementById("ui").style.zoom=UIZ; const rs=document.documentElement.style; rs.setProperty("--uih",(innerHeight/UIZ).toFixed(1)+"px"); rs.setProperty("--uiw",(innerWidth/UIZ).toFixed(1)+"px"); }
 let QUAL=2, qAcc=0, qT=0;
 const QDPR=[1,1.25,1.5]; let QMAX=2;
 function perfTick(rdt){ if(S.gfx&&S.gfx!=="a"){ const q={h:2,m:1,l:0}[S.gfx]; if(q!=null&&QUAL!==q){ QUAL=q; resize(); } return; }
@@ -1531,7 +1537,7 @@ function hazRows(){
   const t=L_(), rows=[];
   const add=(k,v,max)=>{ if(lvl[k]>0||v>0) rows.push(`<div class="hz" id="hz_${k}" data-k="${k}">${ico(k)}<span class="nm">${t.hz[k]}</span><span class="val">${k==="gr"||k==="mn"?Math.round(v):Math.round(v*10)/10}</span><div class="bar"><i style="width:${Math.min(100,v/max*100)}%"></i></div><div class="ds">${t.hzD[k]} <span class="inf">ⓘ</span></div></div>`); };
   add("gr",cur.gr,Math.max(1,lvl.gr));add("mg",cur.mg,6);add("rf",cur.rf,10);add("mn",cur.mn,14);add("sh",cur.sh,5);add("wr",cur.wr,3);add("gs",cur.gs,4);add("sn",cur.sn||0,3);add("fl",cur.fl||0,3);add("ca",cur.ca||0,3);
-  $("hzList").innerHTML=rows.join(""); document.querySelectorAll(".hz").forEach(el=>el.onclick=()=>mechCard(el.dataset.k,false));
+  $("hzList").innerHTML=rows.join(""); $("hzList").classList.toggle("many",rows.length>=6); document.querySelectorAll(".hz").forEach(el=>el.onclick=()=>mechCard(el.dataset.k,false));
   { const zh=S.lang==="zh", bs=(S.stars||{})[S.lvl]; // v1.3: base reward x PERFECTION multiplier
   $("reward").innerHTML=`${ico("truck","b")}<div style="flex:1;min-width:0"><div class="t">${t.rewardT}</div><div class="v">+${lvl.reward} <small class="bz">${zh?"人/天 · 基础":"men/day · base"}</small>${bs?` <span class="bz">${starsHTML(bs,5,"sm")}</span>`:""}</div>
    <div class="pgrid">${[5,4,3,2,1].map(s=>`<span class="pc${s===5?" top":""}"><b>${s}${STARF}</b><em>×${PERF_M[s-1]*100}%</em></span>`).join("")}</div>
@@ -1541,11 +1547,16 @@ function hazRows(){
   $("lvlName").textContent=LV[S.lvl][0]; updStrip(); failBtnUpd(); { const nu=NEWM(S.lvl+1), el=$("nextU"), zh=S.lang==="zh"; el.classList.toggle("hide",!nu.length); el.innerHTML=nu.length?`<span>${zh?"攻克后解锁 / 出现":"AFTER THIS LEVEL"}</span>`+nu.map(k=>`<div class="nu" data-k="${k}">${IC[k]||""}<b>${(MECH[S.lang][k]||[k])[0]}</b></div>`).join(""):""; el.querySelectorAll(".nu").forEach(d=>d.onclick=()=>mechCard(d.dataset.k,["art","snp","smk","tnk","eng","flare","off"].includes(d.dataset.k))); }
 }
 function buildSupports(){
-  const t=L_(),el=$("supports");el.innerHTML=""; el.classList.toggle("many",Object.values(supMax()).filter(v=>v>0).length>=3);
-  S.supU=S.supU||{}; for(const k in supMax()){ if(supMax()[k]>0&&!S.supU[k]){ S.supU[k]=1; S.sup[k]=Math.max(S.sup[k]||0,supMax()[k]); save(); } }
+  const t=L_(),el=$("supports");el.innerHTML=""; 
+  S.supU=S.supU||{}; S.supCap=S.supCap||{}; { const mx=supMax(); let ch=0;
+    for(const k in mx){ if(mx[k]>0&&!S.supU[k]){ S.supU[k]=1; S.sup[k]=Math.max(S.sup[k]||0,mx[k]); ch=1; }
+      const was=S.supCap[k]; if(was!=null&&mx[k]>was){ S.sup[k]=Math.min(mx[k],(S.sup[k]||0)+(mx[k]-was)); ch=1; } if(was!==mx[k]){ S.supCap[k]=mx[k]; ch=1; } }
+    if(ch)save(); }
   for(const k of ["art","snp","smk","tnk"]){ const mx=supMax()[k]; if(!mx)continue;
     const d=document.createElement("div");d.className="sup"+(S.sup[k]+used[k]<=0?" off":"")+(used[k]?" on":"");
-    d.innerHTML=`<button class="sm0" data-a="-">−</button>${ico(k,"g")}<div class="tx"><b>${t.sup[k]}</b><i>${t.supD[k]}</i><div class="pips">${Array.from({length:S.sup[k]+used[k]},(_,i)=>`<em class="${i<used[k]?"u":""}"></em>`).join("")}</div></div><span class="n">${used[k]}</span><button class="sm0" data-a="+">+</button><span class="q">i</span>`;
+    const av=S.sup[k]+used[k], zh=S.lang==="zh";
+    d.innerHTML=`<span class="q">i</span><div class="hd">${ico(k,"g")}<b class="nm">${t.sup[k]}</b></div><div class="cnt">${used[k]} / ${av}<small>${zh?"已派 / 可用":"used / total"}</small></div><div class="ctl"><button class="sm0" data-a="-">−</button><div class="pips">${Array.from({length:av},(_,i)=>`<em class="${i<used[k]?"u":""}"></em>`).join("")}</div><button class="sm0" data-a="+">+</button></div>`;
+    d.title=t.supD[k];
     d.onclick=(e)=>{ const a=e.target.dataset&&e.target.dataset.a; if(e.target.classList.contains("q")){mechCard(k,true);return;} if(a==="-"){unuseSupport(k);return;} useSupport(k);};el.appendChild(d);}
   $("supWrap").style.visibility=el.children.length?"":"hidden";
 }
@@ -1575,6 +1586,9 @@ function buildWaves(){
   { const hr=$("holdRow"); if(!hasTool("flare")){hr.style.display="none";} else { hr.style.display="";
     hr.innerHTML=`<div class="bt">${IC.flare}</div><span class="lb">${zh?"命令":"Orders"}<br><small>${zh?"待命=在死角等信号弹":"hold = wait at dead ground for flare"}</small></span><button class="seg ${W0.h?"":"on"}" data-h="0">${zh?"直冲":"Go"}</button><button class="seg ${W0.h?"on":""}" data-h="1">${zh?"待命":"Hold"}</button>`;
     hr.querySelectorAll("button").forEach(b=>b.onclick=()=>{AU.init();AU.click(); W0.h=+b.dataset.h; buildWaves();}); } }
+  { const orw=$("offRow"); if(orw){ if(!hasTool("off")){orw.style.display="none";} else { orw.style.display="";
+    orw.innerHTML=`<div class="bt">${IC.off||ico("off","g")}</div><span class="lb">${zh?"军官":"Officer"}<br><small>${zh?"冲锋中按 O 键":"O key in the charge"}</small></span><span class="ofTx">${zh?"每次冲锋 1 次":"once per charge"}</span><span class="ofq">i</span>`;
+    orw.onclick=()=>{AU.init();AU.click();mechCard("off",true);}; } } }
   const fl=zh?["散兵线","横队","密集"]:["Loose","Line","Dense"];
   $("formRow").innerHTML=`<span class="lb">${zh?"队形":"Formation"}</span>`+[0,1,2].map(f=>`<button data-f="${f}" class="${W0.f===f?"on":""}">${formIcon(f)}${fl[f]}</button>`).join("");
   $("formRow").querySelectorAll("button").forEach(b=>b.onclick=()=>{AU.init();AU.click();W0.f=+b.dataset.f;syncMen(true);buildWaves();});
@@ -1706,7 +1720,7 @@ function runBarrage(done){
 function floatTxt(t,x,y,col,size){ const d=document.createElement("div"); d.className="ftxt stencil"; d.textContent=t; Object.assign(d.style,{left:x/UIZ+"px",top:y/UIZ+"px",color:col,fontSize:size+"px"}); $("ui").appendChild(d); setTimeout(()=>d.remove(),1400); }
 let camPeek=0;
 
-function toast(html){const t=$("toast");t.innerHTML=html;t.classList.add("show");clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove("show"),1400);}
+function toast(html){const t=$("toast"),bg=$("bigtxt");t.classList.toggle("below",!!(bg&&bg.classList.contains("show")&&!bg.classList.contains("low")));t.innerHTML=html;t.classList.add("show");clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove("show"),1400);}
 function big(txt,sub,ms=1600,low){const b=$("bigtxt");b.innerHTML=txt+(sub?`<small>${sub}</small>`:"");b.classList.toggle("low",!!low);b.classList.add("show");clearTimeout(b._h);if(ms)b._h=setTimeout(()=>b.classList.remove("show"),ms);}
 
 /* ---------- Modes ---------- */
@@ -1899,7 +1913,7 @@ addEventListener("keyup",e=>{ OKEYS[e.key.toLowerCase()]=0; });
 function startOfficer(){ const b=battle; if(!b||b.offUsed||!hasTool("off")||mode!=="charge")return; const run=men.filter(m=>m.alive&&m.state==="run"); if(!run.length){toast(S.lang==="zh"?"没有正在前进的部队。":"No one is advancing.");return;}
   b.offUsed=1; run.sort((a,c)=>a.x-c.x); const x0=run[0].x; b.off={x:x0-20,z:0.55,alive:true,halt:false,t:0,phase:0,hp:1};
   for(const m of run) if(m.x<x0+SEGL()*0.35) m.fol=1;
-  AU.whistle(); big(S.lang==="zh"?"军官上前":"OFFICER UP",S.lang==="zh"?"WASD移动 · 空格 停止集结 / 再次冲锋":"WASD move · SPACE halt & rally / charge again",1800); updTools(); updOffPad(); }
+  AU.whistle(); big(S.lang==="zh"?"军官上前":"OFFICER UP",S.lang==="zh"?"WASD移动 · 空格 停止集结 / 再次冲锋":"WASD move · SPACE halt & rally / charge again",1800,true); updTools(); updOffPad(); }
 window.startOfficer=startOfficer;
 function officerHalt(){ const b=battle, o=b&&b.off; if(!o||!o.alive)return; if(!o.halt){ o.halt=true; o.haltT=0; toast(S.lang==="zh"?"卧倒！在军官身边集结。":"Down! Rally on the officer."); }
   else { o.halt=false; o.boost=o.haltT>2; const n=men.filter(m=>m.alive&&m.fol&&m.state==="rally").length; AU.whistle(); SFX.play("charge",0.5,{gap:1});
@@ -1933,7 +1947,7 @@ function updOffPad(){ let el=$("offpad"); const on=battle&&battle.off&&battle.of
     el.innerHTML=`<div class="dp"><button data-k="u">W</button><button data-k="l">A</button><button data-k="d">S</button><button data-k="r">D</button></div><button class="hb" data-h="1">${S.lang==="zh"?"停止/冲锋":"HALT / GO"}<small>SPACE</small></button>`;
     el.querySelectorAll("button[data-k]").forEach(bt=>{ const k=bt.dataset.k; bt.onpointerdown=e=>{e.preventDefault();OFFPAD[k]=1;}; bt.onpointerup=bt.onpointerleave=bt.onpointercancel=()=>{OFFPAD[k]=0;}; });
     el.querySelector(".hb").onclick=()=>officerHalt(); }
-  el.classList.toggle("hide",!on); const hb=el.querySelector(".hb"); if(hb&&on) hb.classList.toggle("on",battle.off.halt); }
+  el.classList.toggle("hide",!on); $("ui").classList.toggle("offon",!!on); const hb=el.querySelector(".hb"); if(hb&&on) hb.classList.toggle("on",battle.off.halt); }
 /* TAKE COVER (early strategic resource): rifle hits are sometimes telegraphed as an aimed shot (box on the man).
    Click the box before the timer runs out → he dives and is immune briefly. Charges per charge = COVER_BASE + bought. */
 const COVER_BASE=()=>S.lvl>=1?3:0;
@@ -1990,13 +2004,54 @@ function stepSnipers(dt){ const b=battle, n=cur.sn||0; if(!n||b.over)return; b.g
 function drawGlints(){ const b=battle; if(!b||!b.glints)return; const ex=trenchX(S.lvl+1); for(const g of b.glints){ const [sx,sy,s]=P(ex+16,g.z,22); const a=Math.max(0,1-Math.abs(g.t-0.25)*1.6);
   cx.save(); cx.globalCompositeOperation="lighter"; const r=18*s*(0.6+a); const gr=cx.createRadialGradient(sx,sy,0,sx,sy,r); gr.addColorStop(0,`rgba(255,250,220,${0.95*a})`); gr.addColorStop(1,"rgba(255,250,220,0)"); cx.fillStyle=gr; cx.fillRect(sx-r,sy-r,r*2,r*2);
   cx.strokeStyle=`rgba(255,250,230,${0.8*a})`; cx.lineWidth=1; cx.beginPath(); cx.moveTo(sx-r*1.4,sy); cx.lineTo(sx+r*1.4,sy); cx.moveTo(sx,sy-r); cx.lineTo(sx,sy+r); cx.stroke(); cx.restore(); } }
+/* v1.4d FLAME TEAMS (agent A): the flamethrower teams are real figures in the enemy trench (tanks, hose, lance with
+   pilot flame, label during the approach). Each flameTick burst is a visible jet from the nearest team to the victims.
+   A team knocked out (grenade) disappears with a fireball. b.flK stays the single source of truth for the count. */
+const flJets=[];
+function flTeams(){ const b=battle; if(!b||!cur||!(cur.fl>0))return null;
+  if(!b.flT){ const n=cur.fl, ex=trenchX(S.lvl+1); b.flT=[];
+    for(let i=0;i<n;i++){ const z=Math.min(0.94,Math.max(0.08,(i+0.5)/n*0.86+0.07+(Math.random()-0.5)*0.08)); b.flT.push({x:ex+trenchOff(ex,z)+4,z,alive:true,ph:Math.random()*6}); } }
+  const want=b.flK==null?cur.fl:b.flK; const al=b.flT.filter(t=>t.alive);
+  while(al.length>Math.max(0,want)){ const t=al.pop(); t.alive=false; puff(t.x,t.z,34,16,"fire",200,0.8,10,-70); puff(t.x,t.z,40,8,"smoke",80,2.4,16,-30); cam.shake=Math.max(cam.shake,2.5); }
+  return b.flT; }
+function flNozzle(t){ const [sx,sy,s]=P(t.x,t.z,0); return [sx-47*s, sy+TR_D*0.62*s-55*s, s]; }
+function drawFlameTeam(t){ const [sx,sy,s]=P(t.x,t.z,0); if(sx<-120||sx>W+120)return; const by=sy+TR_D*0.62*s, clipY=sy+1*s;
+  drawMan(sx,by,s,-1,t.ph,"aim",pal.en,{enemy:true,crop:clipY});
+  const shX=sx-1.5*s, shY=by-62*s;
+  cx.save(); cx.beginPath(); cx.rect(sx-70*s,0,140*s,clipY); cx.clip();
+  const tank=(x,y,w,h)=>{ cx.beginPath(); cx.moveTo(x,y+w/2); cx.arc(x+w/2,y+w/2,w/2,Math.PI,0); cx.lineTo(x+w,y+h); cx.lineTo(x,y+h); cx.closePath(); cx.fill(); };
+  const tx=shX+6*s, ty=shY+1*s;
+  cx.fillStyle="#26261f"; tank(tx+4.5*s,ty+1.5*s,6.5*s,24*s); cx.fillStyle="#34342a"; tank(tx-1*s,ty,6.5*s,24*s);
+  cx.fillStyle="#77755c"; cx.fillRect(tx+0.4*s,ty+3*s,1.4*s,18*s); cx.fillRect(tx+5.9*s,ty+4.5*s,1.2*s,18*s);
+  cx.strokeStyle="#15140f"; cx.lineWidth=Math.max(1,1.8*s); cx.beginPath(); cx.moveTo(tx+3*s,ty+22*s); cx.quadraticCurveTo(sx-4*s,ty+31*s,shX-14*s,shY+9*s); cx.stroke();
+  cx.restore();
+  const [nx,ny]=flNozzle(t), f=0.5+0.5*Math.sin(performance.now()*0.031+t.ph*7);
+  cx.fillStyle="rgba(255,120,30,0.55)"; cx.beginPath(); cx.arc(nx,ny,(2.6+1.6*f)*s,0,7); cx.fill();
+  cx.fillStyle="rgba(255,225,140,0.95)"; cx.beginPath(); cx.arc(nx,ny,(1.1+0.8*f)*s,0,7); cx.fill();
+  if(mode==="charge"&&s>0.3){ cx.font=`bold ${Math.max(11,Math.round(10*s+6))}px Georgia`; cx.textAlign="center"; cx.lineWidth=3; cx.strokeStyle="#000a"; const lb=S.lang==="zh"?"喷火兵":"FLAMETHROWER";
+    cx.strokeText(lb,sx,shY-14*s); cx.fillStyle="#ffb070"; cx.fillText(lb,sx,shY-14*s); } }
+function drawFlJets(dt){ if(!flJets.length)return; cx.save(); cx.globalCompositeOperation="lighter";
+  for(let i=flJets.length-1;i>=0;i--){ const j=flJets[i]; j.t+=dt; if(j.t>j.T||j.b!==battle){ flJets.splice(i,1); continue; }
+    const [x0,y0,s0]=flNozzle(j.team), [tx,ty,ts]=P(j.x1,j.z1,16);
+    const grow=Math.min(1,j.t/0.22), end=j.T-0.35, fade=j.t<end?1:Math.max(0,(j.T-j.t)/0.35), tail=j.t<end?0:(1-fade)*0.9;
+    const N=18, span=Math.hypot(tx-x0,ty-y0);
+    for(let k=0;k<N;k++){ const u=k/(N-1); if(u>grow||u<tail)continue;
+      const x=x0+(tx-x0)*u, y=y0+(ty-y0)*u-Math.sin(Math.PI*u)*span*0.1;
+      const fl=0.7+0.6*Math.abs(Math.sin(j.t*41+k*1.9)), r=(2.2+u*u*12+u*4)*Math.max(s0,ts*0.8)*fl, a=(0.56-0.2*u)*fade;
+      cx.fillStyle=`rgba(255,${(80+80*(1-u))|0},20,${a.toFixed(3)})`; cx.beginPath(); cx.arc(x,y,r*1.5,0,7); cx.fill();
+      cx.fillStyle=`rgba(255,235,160,${(a*0.85).toFixed(3)})`; cx.beginPath(); cx.arc(x,y,r*0.55,0,7); cx.fill(); }
+    if(grow>=1&&fade>0.6){ const r=(12+6*Math.sin(j.t*23))*ts; cx.fillStyle=`rgba(255,140,40,${0.35*fade})`; cx.beginPath(); cx.ellipse(tx,ty+8*ts,r*1.6,r*0.8,0,0,7); cx.fill(); }
+  }
+  cx.restore(); }
 function flameTick(al){ const b=battle, n=cur.fl||0; if(!n||!al.length)return; b.flK=b.flK==null?n:b.flK; if(b.flK<=0)return;
   // bombers can knock out a flame team
   if(al.some(m=>m.type==="bomb")&&Math.random()<0.25){ b.flK--; toast(S.lang==="zh"?"掷弹兵摧毁了一个喷火小组！":"Bombers knocked out a flame team!"); return; }
   if(Math.random()>0.22*b.flK)return;
   const dens=al.reduce((a,m)=>a+FORM[m.form||1].melee,0)/al.length; const kill=Math.min(al.length,Math.round(1+3*(dens-0.7)/0.55+Math.random()));
   const c=al[Math.floor(Math.random()*al.length)]; const near=al.slice().sort((a,d)=>Math.hypot(a.x-c.x,(a.z-c.z)*600)-Math.hypot(d.x-c.x,(d.z-c.z)*600)).slice(0,kill);
-  const ex=trenchX(S.lvl+1); puff(ex+b.front+10,c.z,30,10,"fire",220,0.7,9,-60); puff(c.x,c.z,20,14,"fire",160,0.8,8,-80); puff(c.x,c.z,40,6,"smoke",60,2,14,-30); SFX.play("boom_far",0.35,{gap:0.2}); cam.shake=Math.max(cam.shake,3);
+  const ex=trenchX(S.lvl+1); const TT=flTeams(), live=TT?TT.filter(t=>t.alive):[]; const tm=live.length?live.reduce((a,t)=>Math.abs(t.z-c.z)<Math.abs(a.z-c.z)?t:a):null;
+  if(tm){ flJets.push({b,team:tm,x1:c.x,z1:c.z,t:0,T:1.05}); puff(tm.x-44,tm.z,40,6,"fire",120,0.5,7,-40); SFX.play("scream1",0.22,{gap:1.2,delay:0.3}); } else puff(ex+b.front+10,c.z,30,10,"fire",220,0.7,9,-60);
+  puff(c.x,c.z,20,14,"fire",160,0.8,8,-80); puff(c.x,c.z,40,6,"smoke",60,2,14,-30); SFX.play("boom_far",0.35,{gap:0.2}); cam.shake=Math.max(cam.shake,3);
   for(const m of near){ m.alive=false; b.dead++; b.meleeDead++; b.flDead=(b.flDead||0)+1; makeRagdoll(m.x,m.z,1,["#2a2218","#141008"],m.vet,[-5-Math.random()*5,7+Math.random()*5],false); }
   if(!b.flTip){ b.flTip=1; toast(S.lang==="zh"?"火焰喷射器！密集队形损失更大。":"Flamethrower! Dense formations lose more men."); } }
 function startCounter(){ const b=battle, n=Math.max(2,Math.round(b.e0*0.18*(cur.ca||1))); b.caPending=1;
@@ -2609,8 +2664,9 @@ function frame(now){
   for(const m of men) if(m.alive&&!m.intrench) ents.push({z:m.z,d:()=>{const [sx0,sy,s]=P(m.x,m.z,0); const sx=sx0+(m.state==="melee"&&m.pose==="melee"?Math.max(0,Math.sin(m.phase*3))*6*s:0); if(EVS[m.state]){drawEvMan(m,sx,sy,s);return;} drawMan(sx,sy,s,m.dir,m.phase,m.stumble>0?"crouch":(m.state==="wait"||m.state==="gather"||m.state==="rally"||m.state==="cut"||m.state==="hold")?"crouch":m.state==="cheer"?"cheer":(m.arriving?"run":m.state==="melee"?(m.pose||"melee"):m.state),manCols(m),{vet:m.vet,v:m.v,flash:m.state==="melee"&&m.flash>0});
      if(m.state==="cheer"){ /* rifle raised */ }}});
   for(const e of enemies) if(e.alive) ents.push({z:e.z,d:()=>drawEnemy(e)});
+  if(battle&&(mode==="charge"||mode==="melee")){ const FT=flTeams(); if(FT) for(const t of FT) if(t.alive) ents.push({z:t.z,d:()=>drawFlameTeam(t)}); }
   if(battle&&battle.tanks&&(mode==="charge"||mode==="melee")) for(const tk of battle.tanks) ents.push({z:tk.z,d:()=>drawTank(tk)});
-  pushSetEnts(ents); ents.sort((a,b)=>a.z-b.z); drawParts(false); for(const e of ents)e.d(); drawClash(rdt*(slowmo||1)); drawParts(true);
+  pushSetEnts(ents); ents.sort((a,b)=>a.z-b.z); drawParts(false); for(const e of ents)e.d(); drawClash(rdt*(slowmo||1)); drawFlJets(rdt*(slowmo||1)); drawParts(true);
   drawTracers(rdt); drawShells(); drawGlints(); if(battle&&(mode==="charge"||mode==="melee"))drawAimMarks(); drawUnitMarks();
   // flag raise
   if(flagRaise){flagRaise.t+=rdt; const [sx,sy,s]=P(flagRaise.x,0.5); drawFlag(sx,sy,s*1.6,130,time,Math.min(1,flagRaise.t/2.2)); if(flagRaise.t>8)flagRaise=null;}
