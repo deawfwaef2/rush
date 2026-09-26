@@ -320,3 +320,7 @@ COMBAT / PERF
   Same bug in drawGround mottling (circle gradient clipped by a 0.28-flat ellipse), atmos() ended at 60% alpha with a hard rect edge, far patchwork all ended on one line at z=0.12, and grass/crater rows skipped the z 0.5-0.56 band.
 - Fix: fog + mottling now blit a cached soft radial sprite (softSpr) squashed vertically (fades in every direction, also cheaper: no per-frame gradients); atmos fades to 0; patchwork fades out; rows fill the gap.
 - To inspect at full quality in headless: `python3 /home/user/dev/fogshot.py file:///home/user/rush/index.html <lvl> <tag>` (pins QUAL=2).
+## v1.3i victory beat (2026-09-26, agent A)
+- Last defender falls: 0.85 s slow-motion + small shake before result().
+- Normal wins now also fire the existing somber startVictoryFX(x,surv,false) (two white star shells over the taken line); fortress wins unchanged (grand).
+- big(txt,sub,ms,low): new 4th arg puts the caption in a lower-third band; used for LINE TAKEN so it no longer hides the raised flag. Other captions sit at 21% (below the HUD pill) with a small pop-in.

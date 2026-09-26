@@ -179,8 +179,9 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 .card .mech{text-align:left;font-size:14px;line-height:1.55;font-style:normal}
 .card .mech li{margin:4px 0 4px 18px}
 .stats{display:flex;gap:18px;justify-content:center;margin:12px 0;font-size:20px}
-#bigtxt{position:absolute;left:50%;top:15%;transform:translateX(-50%);max-width:92vw;text-align:center;font-size:min(5.4vw,48px);color:#f2e6c8;text-shadow:0 3px 0 #000,0 0 22px #000;pointer-events:none;letter-spacing:.14em;opacity:0;transition:opacity .35s;padding:4px 34px 6px;background:linear-gradient(90deg,#0000,#000a 18%,#000a 82%,#0000)}
-#bigtxt.show{opacity:1}
+#bigtxt{position:absolute;left:50%;top:21%;transform:translateX(-50%);max-width:92vw;text-align:center;font-size:min(5.4vw,48px);color:#f2e6c8;text-shadow:0 3px 0 #000,0 0 22px #000;pointer-events:none;letter-spacing:.14em;opacity:0;transition:opacity .35s;padding:4px 34px 6px;background:linear-gradient(90deg,#0000,#000a 18%,#000a 82%,#0000)}
+#bigtxt.show{opacity:1;animation:bigIn .42s cubic-bezier(.2,1.5,.4,1)}
+@keyframes bigIn{from{transform:translateX(-50%) scale(.86)}to{transform:translateX(-50%) scale(1)}}
 #evFeed{position:absolute;left:14px;top:96px;width:min(340px,62vw);pointer-events:none;display:flex;flex-direction:column;gap:4px;z-index:6}
 #evFeed .ef{display:flex;align-items:center;gap:8px;padding:3px 10px;background:#14110cc4;border-left:3px solid #8a7f68;color:#efe4cc;font:12.5px/1.3 Georgia,serif;border-radius:3px;animation:efIn .28s ease-out;transition:opacity .6s,transform .6s}
 #evFeed .ef.g{border-left-color:#8fb060}#evFeed .ef.b{border-left-color:#c8634a}
@@ -190,6 +191,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 #evFeed .ef.out{opacity:0;transform:translateX(-14px)}
 @keyframes efIn{from{opacity:0;transform:translateX(-16px)}to{opacity:1;transform:none}}
 @keyframes dieRoll{from{transform:rotate(-200deg) scale(.4)}to{transform:none}}
+#bigtxt.low{top:auto;bottom:13%}
 #bigtxt small{display:block;font-size:14px;letter-spacing:.28em;margin-top:2px;opacity:.9;font-family:Georgia}
 #hud{position:absolute;left:50%;transform:translateX(-50%);top:72px;display:flex;gap:18px;font-size:22px;background:#0008;padding:4px 16px;border-radius:20px}
 #toast{position:absolute;left:50%;top:24%;transform:translateX(-50%);background:#14110dee;border:1px solid var(--brass2);padding:8px 18px;border-radius:4px;font-size:16px;opacity:0;transition:opacity .3s;pointer-events:none!important}
@@ -1645,7 +1647,7 @@ function floatTxt(t,x,y,col,size){ const d=document.createElement("div"); d.clas
 let camPeek=0;
 
 function toast(html){const t=$("toast");t.innerHTML=html;t.classList.add("show");clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove("show"),1400);}
-function big(txt,sub,ms=1600){const b=$("bigtxt");b.innerHTML=txt+(sub?`<small>${sub}</small>`:"");b.classList.add("show");clearTimeout(b._h);if(ms)b._h=setTimeout(()=>b.classList.remove("show"),ms);}
+function big(txt,sub,ms=1600,low){const b=$("bigtxt");b.innerHTML=txt+(sub?`<small>${sub}</small>`:"");b.classList.toggle("low",!!low);b.classList.add("show");clearTimeout(b._h);if(ms)b._h=setTimeout(()=>b.classList.remove("show"),ms);}
 
 /* ---------- Modes ---------- */
 let clockT=0;
@@ -1811,7 +1813,7 @@ function stepBattle(dt){
   const stillMoving=men.filter(m=>m.alive&&(EVS[m.state]&&m.state!=="flee"||m.state==="run"||m.state==="crouch"||m.state==="climb"||m.state==="gather"||m.state==="cut"||m.state==="hold"||m.state==="rally")).length;
   const inMelee=b.mel.filter(m=>m.alive).length;
   if(b.e<=0&&!b.over&&(cur.ca||0)>0&&!b.caDone){ b.caDone=1; startCounter(); }
-  if(b.e<=0&&!b.over&&!b.caPending){ b.over=true; men.forEach(m=>{if(m.alive&&(m.state==="run"||EVS[m.state])){m.state="wait";m.dir=1;}}); setTimeout(()=>result(true),900); }
+  if(b.e<=0&&!b.over&&!b.caPending){ b.over=true; men.forEach(m=>{if(m.alive&&(m.state==="run"||EVS[m.state])){m.state="wait";m.dir=1;}}); slowmo=0.5; setTimeout(()=>slowmo=1,850); cam.shake=Math.max(cam.shake||0,3); setTimeout(()=>result(true),900); }
   else if(men.filter(m=>m.alive).length===0&&!b.over){ b.over=true; setTimeout(()=>result(false),1600); }
   else if(stillMoving===0&&inMelee===0&&b.e>0&&!b.over){ b.over=true; setTimeout(()=>result(false),1600); }
   // camera follows the mass
@@ -2180,8 +2182,8 @@ function result(win){ $("tools")&&$("tools").classList.add("hide");
     flagRaise={x:trenchX(done+1),t:0};
     // v1.0: normal wins are quiet. v1.1: FORTRESS wins are a real celebration.
     const grand=!!lvl.fort;
-    if(!grand){ const zh=S.lang==="zh"; men.forEach((m,i)=>{ if(m.alive&&i%3===0){ m.state="cheer"; m.jump=0; } }); SFX.play("cheer",0.35,{gap:1}); AU.bugle&&setTimeout(()=>AU.bugle(0.5),600); cam.tz=Math.max(cam.tz,1.1);
-      setTimeout(()=>big(zh?"阵地拿下":"LINE TAKEN",`${LV[done][0]} · ${fmtT(lvTime)}`,2200),500); }
+    if(!grand){ const zh=S.lang==="zh"; men.forEach((m,i)=>{ if(m.alive&&i%3===0){ m.state="cheer"; m.jump=0; } }); SFX.play("cheer",0.35,{gap:1}); AU.bugle&&setTimeout(()=>AU.bugle(0.5),600); cam.tz=Math.max(cam.tz,1.1); startVictoryFX(trenchX(done+1),surv,false);
+      setTimeout(()=>big(zh?"阵地拿下":"LINE TAKEN",`${LV[done][0]} · ${fmtT(lvTime)}`,2400,true),500); }
     if(grand){ const zh=S.lang==="zh"; men.forEach(m=>{if(m.alive){m.state="cheer";m.jump=Math.random()*2;}}); startVictoryFX(trenchX(done+1),surv,true); AU.fanfare(); cam.shake=4;
       setTimeout(()=>victoryBanner(zh?"要塞陷落":"FORTRESS TAKEN",zh?"整个战区的钟声都响了":"Every church bell behind the line is ringing",LV[done][0]),900); }
     setTimeout(()=>{
