@@ -442,7 +442,20 @@ const AU={ctx:null,master:null,music:null,
  startAmb(){ // wind bed + distant guns
    const c=this.ctx;const s=c.createBufferSource();s.buffer=this.nb;s.loop=true;const f=c.createBiquadFilter();f.type="lowpass";f.frequency.value=380;const g=c.createGain();g.gain.value=0.05;s.connect(f);f.connect(g);g.connect(this.master);s.start();
    const lfo=c.createOscillator();lfo.frequency.value=0.07;const lg=c.createGain();lg.gain.value=160;lfo.connect(lg);lg.connect(f.frequency);lfo.start();
-   const far=()=>{ if(mode!=="charge"&&mode!=="melee"){ const t=this.now(); if(Math.random()<0.5)this.noise(t,2.4,55,0.4,0.35,"lowpass"); else for(let i=0;i<5;i++)this.noise(t+i*0.09,0.08,700,1,0.035); } setTimeout(far,2500+Math.random()*5000); }; far(); },
+   // rain bed (chapter weather)
+   const rs=c.createBufferSource();rs.buffer=this.nb;rs.loop=true;const rf=c.createBiquadFilter();rf.type="highpass";rf.frequency.value=2500;this.rainG=c.createGain();this.rainG.gain.value=0;rs.connect(rf);rf.connect(this.rainG);this.rainG.connect(this.master);rs.start();
+   // BATTLEFIELD SOUNDSCAPE: distant drumfire, far MG bursts, rifle pops, shouts, crows, far whistles
+   const far=()=>{ const t=this.now(), busy=(mode==="charge"||mode==="melee"||mode==="barrage");
+     const r=Math.random();
+     if(r<0.3){ const n=1+Math.floor(Math.random()*4); for(let i=0;i<n;i++){ this.noise(t+i*(0.25+Math.random()*0.5),2.6,48+Math.random()*30,0.5,0.28,"lowpass"); this.tone(t+i*0.4,40,1.2,0.12,"sine",null,25);} }
+     else if(r<0.5){ const n=6+Math.floor(Math.random()*10),f=500+Math.random()*400; for(let i=0;i<n;i++)this.noise(t+i*0.085,0.07,f,1.2,0.04,"bandpass"); }
+     else if(r<0.68){ for(let i=0;i<3;i++)this.noise(t+Math.random()*1.5,0.1,1600,0.8,0.05,"bandpass"); }
+     else if(r<0.78){ const f=380+Math.random()*200; this.tone(t,f,0.5,0.018,"sawtooth",null,f*0.8); this.tone(t+0.05,f*1.5,0.45,0.01,"sawtooth",null,f*1.2); }
+     else if(r<0.86&&lvl&&lvl.ch!==2){ for(let i=0;i<2;i++){this.tone(t+i*0.35,720,0.18,0.012,"sawtooth",null,560);} }
+     else if(r<0.92){ this.tone(t,2700,0.35,0.01,"square"); }
+     const rain=(lvl&&lvl.ch===1)?0.05:(lvl&&lvl.ch===3)?0.015:0; this.rainG.gain.setTargetAtTime(rain,t,1);
+     setTimeout(far,(busy?500:1200)+Math.random()*(busy?1200:2600)); }; far(); },
+ incoming(d){ if(!this.ctx)return; const t=this.now(); this.tone(t,1400+Math.random()*300,d,0.035,"sine",null,380); this.noise(t,d,2000,3,0.03); },
  fanfare(){ if(!this.ctx)return; const t=this.now()+0.05; const N=[[523,0,.22],[659,.22,.22],[784,.44,.22],[1047,.66,1.4],[784,.66,1.4],[659,.66,1.4]];
    for(const [f,st,d] of N){ const o=this.ctx.createOscillator();o.type="sawtooth";o.frequency.value=f;const lp=this.ctx.createBiquadFilter();lp.type="lowpass";lp.frequency.setValueAtTime(900,t+st);lp.frequency.linearRampToValueAtTime(3200,t+st+0.1);
      const g=this.ctx.createGain();g.gain.setValueAtTime(0.0001,t+st);g.gain.exponentialRampToValueAtTime(0.09,t+st+0.04);g.gain.setValueAtTime(0.08,t+st+d*0.8);g.gain.exponentialRampToValueAtTime(0.0001,t+st+d);o.connect(lp);lp.connect(g);g.connect(this.master);o.start(t+st);o.stop(t+st+d+0.1);}
@@ -1007,6 +1020,13 @@ function drawRagdoll(r){
 /* particles */
 const parts=[];
 function puff(x,z,h,n,col,spd,life,size,grav=-20){for(let i=0;i<n;i++)parts.push({x,z:z+(Math.random()-0.5)*0.02,h,vx:(Math.random()-0.5)*spd,vh:Math.random()*spd*0.8,life:life*(0.6+Math.random()*0.6),t:0,col,size:size*(0.6+Math.random()*0.8),grav});}
+const shells=[];
+function shell(x,z,big=1,cb,enemy=false){ const dur=1.1+Math.random()*0.4; shells.push({x0:x+(enemy?1:-1)*(700+Math.random()*300),x,z,t:0,dur,big,cb,enemy}); AU.incoming&&AU.incoming(dur); }
+function stepShells(dt){ for(let i=shells.length-1;i>=0;i--){ const sh=shells[i]; sh.t+=dt; if(sh.t>=sh.dur){ shells.splice(i,1); explosion(sh.x,sh.z,sh.big); if(sh.cb)sh.cb(); } } }
+function drawShells(){ for(const sh of shells){ const u=sh.t/sh.dur; const tr=[]; for(let k=0;k<6;k++){ const uu=Math.max(0,u-k*0.035); const x=sh.x0+(sh.x-sh.x0)*uu, h=Math.sin(uu*Math.PI*0.5+Math.PI*0.5)*0+ (1-uu*uu)*520; tr.push(P(x,sh.z,h)); }
+  cx.strokeStyle="rgba(230,220,200,0.35)"; cx.lineWidth=3*tr[0][2]; cx.beginPath(); tr.forEach((p,k)=>k?cx.lineTo(p[0],p[1]):cx.moveTo(p[0],p[1])); cx.stroke();
+  const [sx,sy,s]=tr[0]; cx.fillStyle="#1a140c"; cx.beginPath(); cx.ellipse(sx,sy,5*s,2.4*s,0.6*(sh.enemy?-1:1),0,7); cx.fill();
+  if(u>0.8){ const [gx,gy,gs]=P(sh.x,sh.z); cx.fillStyle=`rgba(0,0,0,${(u-0.8)*1.2})`; cx.beginPath(); cx.ellipse(gx,gy,26*gs*sh.big,6*gs,0,0,7); cx.fill(); } } }
 function explosion(x,z,big=1){
   puff(x,z,0,Math.round(16*big),"fire",220*big,0.35,14*big,0);
   puff(x,z,0,Math.round(22*big),"dirt",380*big,1.1,5,-700);
@@ -1234,7 +1254,7 @@ function runBarrage(done){
     i++; AU.tone(AU.now(),300,0.6,0.05,"sine",null,80); // incoming whistle
     setTimeout(()=>{
       const luck=Math.random(), stack=Math.min(1,0.25+i*0.18); const red=Math.max(0.03,luck*0.45*stack+0.03); total=1-(1-total)*(1-red);
-      for(let j=0;j<4+i;j++) setTimeout(()=>explosion(ex-220+Math.random()*280,laneZ(Math.random()),1.2),j*140);
+      for(let j=0;j<4+i;j++) setTimeout(()=>shell(ex-220+Math.random()*320,laneZ(Math.random()),1.2),j*120);
       cur.mg=Math.max(0,cur.mg*(1-red)); cur.rf=Math.max(0,cur.rf*(1-red)); cur.sh=Math.max(0,cur.sh*(1-red)); cur.gr=Math.max(1,Math.round(cur.gr*(1-red*0.6)));
       const mk=Math.round(mines.filter(m=>m.live).length*red); let c=0; for(const m of mines){if(m.live&&c<mk){m.live=false;c++;setTimeout(()=>explosion(m.x,m.z,0.6),300+c*120);}}
       cur.mn=mines.filter(m=>m.live).length;
@@ -1365,7 +1385,7 @@ function stepBattle(dt){
     for(const m of running){ if(m.alive&&Math.random()<rfRate*dt*hitK(m,bx)) killMan(m,"rf"); }
     // enemy shelling
     if(cur.sh>0.05){ b.shT-=dt; if(b.shT<=0){ b.shT=(3.2/cur.sh)*(0.6+Math.random()*0.8); const tg=pick(running); const sx=tg.x+(Math.random()-0.5)*120, sz=Math.max(0.05,Math.min(1,tg.z+(Math.random()-0.5)*0.2));
-       explosion(sx,sz,1.3); for(const o of running){ if(o.alive&&Math.abs(o.x-sx)<55&&Math.abs(o.z-sz)<0.14&&Math.random()<0.75)killMan(o,"shell"); } } }
+       shell(sx,sz,1.3,()=>{ for(const o of men){ if(o.alive&&o.state==="run"&&Math.abs(o.x-sx)<55&&Math.abs(o.z-sz)<0.14&&Math.random()<0.75*(FORM[o.form||1].fire>1?1.2:1))killMan(o,"shell"); } },true); } }
   }
   // gas visuals
   if(Math.random()<0.5)for(const g of b.gasZones)puff(g.x+(Math.random()-0.5)*g.w*2,Math.random(),0,1,"gas",15,4,70,3);
@@ -1388,9 +1408,10 @@ function stepBattle(dt){
   $("hud").innerHTML=`<span>${IC.man.replace('<svg','<svg width=22 height=22 style="vertical-align:-3px"')} ${alive.length}</span><span style="color:#c8432f">${IC.skull.replace('<svg','<svg width=22 height=22 style="vertical-align:-3px"')} ${b.dead}</span><span>${IC.gr.replace('<svg','<svg width=22 height=22 style="vertical-align:-3px"')} ${Math.max(0,Math.round(b.e))}</span>${b.pinned?`<span style="color:#d8b060">⬇ ${b.pinned}</span>`:""}`;
 }
 
+function trenchLines(i){ return i<0?1:Math.min(4,1+Math.floor((i+1)/4)); }
 function hitK(m,bx){ const p=Math.max(0,Math.min(1,(m.x-bx)/SEGL())); return (0.45+1.45*Math.pow(p,1.6))*FORM[m.form||1].fire*(m.vet?0.62:1); }
 function pinMan(m){ if(!m.alive)return; m.alive=false; m.pinned=true; m.state="prone"; battle.pinned++; if(Math.random()<0.3)say(m,pick(S.lang==="zh"?["我不行了…","趴下！","妈妈…"]:["I can't…","Get down!","Mother…"]),1.4); }
-function shockNear(x,z){ for(const o of men){ if(o.alive&&o.state==="run"&&Math.abs(o.x-x)<70&&Math.abs(o.z-z)<0.16){ o.mor-= (o.vet?4:9)*(0.6+Math.random()*0.8); } } }
+function shockNear(x,z){ for(const o of men){ if(o.alive&&o.state==="run"&&Math.abs(o.x-x)<70&&Math.abs(o.z-z)<0.16){ o.mor-= (o.vet?2:5.5)*(0.6+Math.random()*0.8)*(FORM[o.form||1].melee>1?0.8:1); } } }
 function joinMelee(m){ const b=battle; b.mel.push(m); m.phase=Math.random()*6; if(!b.melee){ b.melee=true; big(L_().melee,"",1100); AU.cheer(); cam.shake=6; slowmo=0.55; setTimeout(()=>slowmo=1,900); } if(Math.random()<0.12)say(m,pick(S.lang==="zh"?["刺刀！","杀！","冲进去！"]:["Bayonets!","At them!","Into the trench!"]),1.1); }
 function meleeTick(){
   const b=battle, ex=trenchX(S.lvl+1); const al=b.mel.filter(m=>m.alive); if(!al.length)return;
@@ -1401,7 +1422,7 @@ function meleeTick(){
   const rnd=x=>Math.floor(x)+(Math.random()<x-Math.floor(x)?1:0);
   let k=Math.min(b.e,rnd(kOur*(0.7+Math.random()*0.6))), kk=Math.min(al.length,rnd(kEn*(0.7+Math.random()*0.6)));
   b.e-=k; b.eKilled+=k; cur.gr=b.e; b.supp=Math.min(0.9,A/(A+E)*1.15);
-  b.front=Math.min(160,(1-b.e/Math.max(1,b.e0))*160); // fight moves deeper into the trench system
+  const FD=(trenchLines(S.lvl)-1)*85+40; b.front=Math.min(FD,(1-b.e/Math.max(1,b.e0))*FD); // fight moves deeper into the trench system
   let ve=enemies.filter(x=>x.alive); for(let i=0;i<Math.min(k,ve.length);i++){ const en=ve[Math.floor(Math.random()*ve.length)]; if(en.alive){en.alive=false;makeRagdoll(en.x,en.z,-1,pal.en,false,[8+Math.random()*6,6+Math.random()*6],true);puff(en.x,en.z,40,4,"blood",60,0.5,2,-400);} }
   ve=enemies.filter(x=>x.alive); while(ve.length<Math.min(b.e,24)){const n={x:ex+b.front+Math.random()*50,z:laneZ(Math.random()),phase:0,alive:true,flash:0};enemies.push(n);ve.push(n);}
   enemies.forEach(en=>{if(en.alive&&en.x<ex+b.front-10)en.x+=6;});
@@ -1714,7 +1735,7 @@ function frame(now){
   }
   if(montage){ montage.t+=rdt; if(montage.t>montage.dur){montage=null;$("hud").style.opacity=1;BGM.play("charge");} }
   if(mode==="charge"||mode==="melee")stepBattle(dt);
-  stepRagdolls(dt); stepParts(dt); BGM.step(rdt);
+  stepRagdolls(dt); stepParts(dt); stepShells(dt); stepWeather(rdt); BGM.step(rdt);
   for(const e of enemies){e.phase+=dt;if(e.flash>0)e.flash-=dt;}
   // enemy idle fire during plan (ambience)
   if((mode==="plan"||mode==="menu")&&Math.random()<rdt*0.5){ const e=pick(enemies.filter(e=>e.alive)); if(e){e.flash=0.08; if(mode==="plan")AU.shot(0.05);} }
@@ -1726,7 +1747,7 @@ function frame(now){
   drawGround();
   const L0=Math.max(0,S.lvl-6);
   // past strongholds (captured) + current
-  for(let i=L0;i<=S.lvl+1;i++){ drawTrench(trenchX(i), i<=S.lvl?1:-1, i===S.lvl+1?S.lvl:null); }
+  for(let i=L0;i<=S.lvl+1;i++){ const dl=trenchLines(i-1); for(let k=dl-1;k>=1;k--) drawTrench(trenchX(i)+(i<=S.lvl?-1:1)*k*85, i<=S.lvl?1:-1, null); drawTrench(trenchX(i), i<=S.lvl?1:-1, i===S.lvl+1?S.lvl:null); }
   // captured markers
   for(const h of S.hist){ const x=trenchX(h.lvl+1); if(Math.abs(x-cam.x)>W*2)continue; const [sx,sy,s]=P(x+20,0.12);
     
@@ -1748,13 +1769,13 @@ function frame(now){
   for(const e of enemies) if(e.alive) ents.push({z:e.z,d:()=>{const [sx,sy,s]=P(e.x,e.z,-18);drawMan(sx,sy,s,-1,e.phase,mode==="melee"?"melee":"aim",pal.en,{enemy:true,flash:e.flash>0});}});
   if(battle&&battle.tanks&&(mode==="charge"||mode==="melee")) for(const tk of battle.tanks) ents.push({z:tk.z,d:()=>drawTank(tk)});
   ents.push({z:MIDZ+0.02,d:drawBerm}); ents.sort((a,b)=>a.z-b.z); drawParts(false); for(const e of ents)e.d(); drawParts(true);
-  drawTracers(rdt);
+  drawTracers(rdt); drawShells();
   // flag raise
   if(flagRaise){flagRaise.t+=rdt; const [sx,sy,s]=P(flagRaise.x,0.5); drawFlag(sx,sy,s*1.6,130,time,Math.min(1,flagRaise.t/2.2)); if(flagRaise.t>8)flagRaise=null;}
   // foreground layer: big dark near silhouettes (depth!)
   groundFog();
   drawVictoryFX(rdt);
-  drawForeground();
+  drawForeground(); drawWeather();
   // bubbles
   drawBubbles(rdt);
   // color grade & vignette & grain
@@ -1766,6 +1787,18 @@ function frame(now){
   grain();
   requestAnimationFrame(frame);
 }
+/* WEATHER per chapter: 0 summer haze+pollen, 1 rain, 2 snow, 3 fog, 4 dusk embers */
+const wx=[]; let wxKind=-1;
+function stepWeather(dt){ const k=Math.min(4,Math.floor(S.lvl/8)); if(k!==wxKind){wxKind=k;wx.length=0;}
+  const N=k===1?220:k===2?160:k===4?40:k===0?25:0;
+  while(wx.length<N)wx.push({x:Math.random()*W,y:Math.random()*H,v:0.5+Math.random(),r:Math.random()});
+  for(const p of wx){ if(k===1){p.y+=900*p.v*dt;p.x-=180*dt;} else if(k===2){p.y+=60*p.v*dt;p.x+=Math.sin(time+p.r*9)*20*dt-15*dt;} else if(k===4){p.y-=30*p.v*dt;p.x+=10*dt;} else {p.y+=8*dt;p.x+=12*p.v*dt;}
+    if(p.y>H+10){p.y=-10;p.x=Math.random()*W*1.2;} if(p.y<-10){p.y=H+5;} if(p.x<-20)p.x=W+10; if(p.x>W+20)p.x=-10; } }
+function drawWeather(){ const k=wxKind; if(k===1){ cx.strokeStyle="rgba(200,210,220,0.28)"; cx.lineWidth=1; cx.beginPath(); for(const p of wx){cx.moveTo(p.x,p.y);cx.lineTo(p.x-5*p.v,p.y+22*p.v);} cx.stroke(); cx.fillStyle="rgba(60,70,80,0.12)"; cx.fillRect(0,0,W,H); }
+  else if(k===2){ cx.fillStyle="rgba(250,250,255,0.8)"; for(const p of wx){cx.fillRect(p.x,p.y,2+p.v*1.8,2+p.v*1.8);} }
+  else if(k===3){ const g=cx.createLinearGradient(0,H*0.3,0,H); g.addColorStop(0,"rgba(150,170,110,0)"); g.addColorStop(0.5,"rgba(150,170,110,0.18)"); g.addColorStop(1,"rgba(120,140,90,0.28)"); cx.fillStyle=g; cx.fillRect(0,0,W,H); }
+  else if(k===4){ for(const p of wx){cx.fillStyle=`rgba(255,${150+p.r*80|0},60,${0.5+0.4*Math.sin(time*4+p.r*9)})`;cx.fillRect(p.x,p.y,2,2);} }
+  else if(k===0){ cx.fillStyle="rgba(255,245,200,0.5)"; for(const p of wx){cx.fillRect(p.x,p.y,1.5,1.5);} } }
 function drawForeground(){
   const par=1.6, z=1.25; const s=scaleZ(z)*1.4;
   const baseY=H+10;
