@@ -631,12 +631,11 @@ const cam={x:0,tx:0,zoom:1,tz:1,tilt:0.25,tt:0.25,shake:0,y:0,ty:0};
 /* DUAL-DEPTH composition: 4 bands = sky / far landscape / MID battle zone (z 0..0.5) / NEAR battle zone (z 0.55..1).
    A raised berm at z≈0.5 separates the two battle zones. Near zone figures are much larger. */
 const MIDZ=0.5, NEARZ=0.56;
-function laneZ(u){ return u<0.58 ? 0.05+u/0.58*0.42 : NEARZ+0.02+(u-0.58)/0.42*0.40; }
-function scaleZ(z){const b=(Math.min(W,H*1.9)/1100)*cam.zoom; return b*(z<=MIDZ ? 0.38+z*0.9 : 1.05+(z-MIDZ)*1.5);}
+function laneZ(u){ return 0.06+u*0.9; }
+function scaleZ(z){const b=(Math.min(W,H*1.9)/1100)*cam.zoom; return b*(0.36+1.44*Math.pow(Math.max(0,z),1.08));}
 function horizon(){return H*(0.36-0.08*cam.tilt)+cam.y;}
 function groundY(z){const h=horizon(), tf=0.8+0.4*cam.tilt;
-  if(z<=MIDZ) return h+H*0.05+(z/MIDZ)*H*0.19*tf;
-  const y0=h+H*0.05+H*0.19*tf; return y0+H*0.05+Math.pow((z-MIDZ)/(1-MIDZ),1.1)*H*0.30*tf;}
+  return h+H*0.05+Math.pow(Math.max(0,z),1.25)*H*0.56*tf;}
 function P(x,z,h=0){const s=scaleZ(z);return [W/2+(x-cam.x)*s, groundY(z)-h*s, s];}
 
 /* palettes per chapter */
@@ -825,86 +824,71 @@ function drawGround(){
 /* trench drawing (own/enemy) at world x, spanning depth */
 /* TRENCH — detailed: zig-zag fire bays, plank revetment, firing step, duckboards, sandbag parapet + parados,
    dugout doors, ladders, periscope, crates, iron sheets, lantern posts, wire pickets in front. Drawn per depth zone. */
+/* TRENCH v2 — one continuous fire trench with bays & traverses; men wait INSIDE (see drawManInTrench). Flat fills = fast. */
+const TR_D=34, TR_W=30;
+function trenchOff(x,z){ const seed=Math.round(x)%9973; const bay=Math.floor(z*12+seed); return (bay%2?9:-9)+Math.sin(z*9+seed)*3; }
 function drawTrench(x,side,level){
-  const seed=Math.round(x)%9973, D=26, Wd=24;
-  const zones=[[0.03,0.49,20],[0.555,1.06,16]];
-  const off=z=>{const bay=Math.floor(z*14+seed);return (bay%2?10:-10)+Math.sin(z*9+seed)*4;};
-  for(const [z0,z1,n] of zones){
-    const S_=[];for(let i=0;i<=n;i++){const z=z0+(z1-z0)*i/n;S_.push({z,x:x+off(z)});}
-    const Q=(o,z,h)=>P(o,z,h);
-    // 1) hole
-    cx.fillStyle="#140e08";cx.beginPath();
-    S_.forEach((q,i)=>{const p=Q(q.x-Wd,q.z,0);i?cx.lineTo(p[0],p[1]):cx.moveTo(p[0],p[1]);});
-    for(let i=S_.length-1;i>=0;i--){const q=S_[i],p=Q(q.x+Wd,q.z,0);cx.lineTo(p[0],p[1]);}cx.fill();
-    // 2) floor + duckboards
-    for(let i=0;i<n;i++){const A=S_[i],B=S_[i+1];
-      const a1=Q(A.x-Wd*0.8,A.z,-D),a2=Q(A.x+Wd*0.8,A.z,-D),b1=Q(B.x-Wd*0.8,B.z,-D),b2=Q(B.x+Wd*0.8,B.z,-D);
-      cx.fillStyle="#2a1f14";cx.beginPath();cx.moveTo(a1[0],a1[1]);cx.lineTo(b1[0],b1[1]);cx.lineTo(b2[0],b2[1]);cx.lineTo(a2[0],a2[1]);cx.fill();
-      cx.strokeStyle="rgba(120,92,58,0.8)";cx.lineWidth=Math.max(1,2.2*a1[2]);
-      for(let k=0;k<3;k++){const t=k/3;const u1=[a1[0]+(b1[0]-a1[0])*t,a1[1]+(b1[1]-a1[1])*t],u2=[a2[0]+(b2[0]-a2[0])*t,a2[1]+(b2[1]-a2[1])*t];
-        cx.beginPath();cx.moveTo(u1[0]+(u2[0]-u1[0])*0.25,u1[1]);cx.lineTo(u1[0]+(u2[0]-u1[0])*0.75,u2[1]);cx.stroke();}
+  const seed=Math.round(x)%9973, D=TR_D, Wd=TR_W, n=30, z0=0.0, z1=1.1;
+  const S_=[];for(let i=0;i<=n;i++){const z=z0+(z1-z0)*i/n;S_.push({z,x:x+trenchOff(x,z)});}
+  const Q=P; const lx=q=>q.x-Wd, rx=q=>q.x+Wd;
+  // spoil / churned earth band around the trench
+  cx.fillStyle="rgba(60,44,28,0.35)"; cx.beginPath(); S_.forEach((q,i)=>{const p=Q(q.x-Wd-34,q.z,0);i?cx.lineTo(p[0],p[1]):cx.moveTo(p[0],p[1]);}); for(let i=n;i>=0;i--){const p=Q(S_[i].x+Wd+40,S_[i].z,0);cx.lineTo(p[0],p[1]);} cx.fill();
+  // hole
+  cx.fillStyle="#120c07";cx.beginPath();S_.forEach((q,i)=>{const p=Q(lx(q),q.z,0);i?cx.lineTo(p[0],p[1]):cx.moveTo(p[0],p[1]);});for(let i=n;i>=0;i--){const p=Q(rx(S_[i]),S_[i].z,0);cx.lineTo(p[0],p[1]);}cx.fill();
+  for(let i=0;i<n;i++){const A=S_[i],B=S_[i+1];
+    // floor + duckboards (A-frames)
+    const a1=Q(lx(A)+4,A.z,-D),a2=Q(rx(A)-4,A.z,-D),b1=Q(lx(B)+4,B.z,-D),b2=Q(rx(B)-4,B.z,-D);
+    cx.fillStyle="#2b2016";cx.beginPath();cx.moveTo(a1[0],a1[1]);cx.lineTo(b1[0],b1[1]);cx.lineTo(b2[0],b2[1]);cx.lineTo(a2[0],a2[1]);cx.fill();
+    cx.fillStyle="#6a5236"; const m1=Q(A.x-8,A.z,-D+1),m2=Q(A.x+8,A.z,-D+1),m3=Q(B.x+8,B.z,-D+1),m4=Q(B.x-8,B.z,-D+1);
+    cx.beginPath();cx.moveTo(m1[0],m1[1]);cx.lineTo(m2[0],m2[1]);cx.lineTo(m3[0],m3[1]);cx.lineTo(m4[0],m4[1]);cx.fill();
+    cx.strokeStyle="#3a2a18";cx.lineWidth=Math.max(0.6,1.2*m1[2]);for(let k=0;k<4;k++){const t=k/4;cx.beginPath();cx.moveTo(m1[0]+(m4[0]-m1[0])*t,m1[1]+(m4[1]-m1[1])*t);cx.lineTo(m2[0]+(m3[0]-m2[0])*t,m2[1]+(m3[1]-m2[1])*t);cx.stroke();}
+    // two walls: parapet side revetted with planks + posts, parados side with wattle/earth
+    for(const sd of [-side,side]){ const wx=q=>q.x+sd*Wd; const t1=Q(wx(A),A.z,0),t2=Q(wx(B),B.z,0),c1=Q(wx(A),A.z,-D),c2=Q(wx(B),B.z,-D);
+      cx.fillStyle= sd===side ? "#5e4630" : "#4a3824"; cx.beginPath();cx.moveTo(t1[0],t1[1]);cx.lineTo(t2[0],t2[1]);cx.lineTo(c2[0],c2[1]);cx.lineTo(c1[0],c1[1]);cx.fill();
+      cx.strokeStyle= sd===side ? "rgba(25,16,8,0.6)" : "rgba(25,16,8,0.35)"; cx.lineWidth=Math.max(0.6,1*t1[2]);
+      for(let k=1;k<(sd===side?6:4);k++){const f=k/(sd===side?6:4);cx.beginPath();cx.moveTo(t1[0]+(c1[0]-t1[0])*f,t1[1]+(c1[1]-t1[1])*f);cx.lineTo(t2[0]+(c2[0]-t2[0])*f,t2[1]+(c2[1]-t2[1])*f);cx.stroke();}
+      cx.fillStyle="#2a1c0e"; if(i%2===0)cx.fillRect(t1[0]-1.6*t1[2],t1[1]-5*t1[2],3.2*t1[2],c1[1]-t1[1]+5*t1[2]);
+      if(sd===side){ // firing step
+        const f1=Q(wx(A)-side*8,A.z,-D*0.5),f2=Q(wx(B)-side*8,B.z,-D*0.5); cx.strokeStyle="#7a5a38"; cx.lineWidth=Math.max(1,3.4*t1[2]); cx.beginPath();cx.moveTo(f1[0],f1[1]);cx.lineTo(f2[0],f2[1]);cx.stroke(); }
     }
-    // 3) revetment face (wall under the parapet side) with posts and boards
-    const wx=q=>q.x+side*Wd;
-    for(let i=0;i<n;i++){const A=S_[i],B=S_[i+1];
-      const t1=Q(wx(A),A.z,0),t2=Q(wx(B),B.z,0),b1=Q(wx(A),A.z,-D),b2=Q(wx(B),B.z,-D);
-      const g=cx.createLinearGradient(0,t1[1],0,b1[1]);g.addColorStop(0,"#6e5234");g.addColorStop(1,"#3a2a18");cx.fillStyle=g;
-      cx.beginPath();cx.moveTo(t1[0],t1[1]);cx.lineTo(t2[0],t2[1]);cx.lineTo(b2[0],b2[1]);cx.lineTo(b1[0],b1[1]);cx.fill();
-      cx.strokeStyle="rgba(30,20,10,0.7)";cx.lineWidth=Math.max(0.7,1.1*t1[2]);
-      for(let k=1;k<5;k++){const f=k/5;cx.beginPath();cx.moveTo(t1[0]+(b1[0]-t1[0])*f,t1[1]+(b1[1]-t1[1])*f);cx.lineTo(t2[0]+(b2[0]-t2[0])*f,t2[1]+(b2[1]-t2[1])*f);cx.stroke();}
-      cx.fillStyle="#2a1c0e";cx.fillRect(t1[0]-1.8*t1[2],t1[1]-4*t1[2],3.6*t1[2],b1[1]-t1[1]+4*t1[2]);
-      // firing step
-      const f1=Q(wx(A)-side*7,A.z,-D*0.55),f2=Q(wx(B)-side*7,B.z,-D*0.55);cx.strokeStyle="#5a4028";cx.lineWidth=Math.max(1,3*t1[2]);cx.beginPath();cx.moveTo(f1[0],f1[1]);cx.lineTo(f2[0],f2[1]);cx.stroke();
-      // props on the wall
-      const r=hash(seed*31+i*7+(z0>0.5?100:0));
-      if(r>0.72){ // dugout door
-        const m=Q(wx(A)+(wx(B)-wx(A))*0.5,(A.z+B.z)/2,-D*0.1);const w=12*m[2],h=18*m[2];
-        cx.fillStyle="#0a0604";cx.fillRect(m[0]-w/2,m[1],w,h);cx.fillStyle="#4a3420";cx.fillRect(m[0]-w/2-2*m[2],m[1]-2*m[2],w+4*m[2],2.5*m[2]);cx.fillRect(m[0]-w/2-2*m[2],m[1],2*m[2],h);cx.fillRect(m[0]+w/2,m[1],2*m[2],h);
-        if(r>0.86){cx.fillStyle="rgba(255,190,90,0.5)";cx.beginPath();cx.arc(m[0],m[1]+h*0.6,3*m[2],0,7);cx.fill();}
-      } else if(r<-0.8){ // corrugated iron sheet
-        cx.fillStyle="#5a5650";cx.beginPath();cx.moveTo(t1[0],t1[1]);cx.lineTo(t2[0],t2[1]);cx.lineTo(t2[0],t2[1]+(b2[1]-t2[1])*0.7);cx.lineTo(t1[0],t1[1]+(b1[1]-t1[1])*0.7);cx.fill();
-        cx.strokeStyle="rgba(0,0,0,0.3)";for(let k=0;k<6;k++){const f=k/6;cx.beginPath();cx.moveTo(t1[0]+(t2[0]-t1[0])*f,t1[1]+(t2[1]-t1[1])*f);cx.lineTo(t1[0]+(t2[0]-t1[0])*f,t1[1]+(t2[1]-t1[1])*f+(b1[1]-t1[1])*0.7);cx.stroke();}
-      }
+    const r=hash(seed*31+i*7);
+    if(r>0.78){ // dugout entrance in the parados wall
+      const q={x:(A.x+B.x)/2}; const m=Q(q.x-side*Wd,(A.z+B.z)/2,-D*0.15); const w=13*m[2],h=D*0.8*m[2];
+      cx.fillStyle="#070403";cx.fillRect(m[0]-w/2,m[1],w,h);cx.fillStyle="#4a3420";cx.fillRect(m[0]-w/2-2*m[2],m[1]-3*m[2],w+4*m[2],3*m[2]);
+      if(r>0.88){cx.fillStyle="rgba(255,190,90,0.45)";cx.beginPath();cx.arc(m[0],m[1]+h*0.55,3.2*m[2],0,7);cx.fill();}
     }
-    // 4) parados (rear low bank) + parapet (sandbags, 4 rows, tied ends)
-    for(const [sd,rows,col] of [[-side,2,["#7a6a4c","#8c7b58"]],[side,4,["#9a8862","#b09c72"]]]){
-      for(let i=0;i<=n*2;i++){ const z=z0+(z1-z0)*i/(n*2); const q={x:x+off(z)};
-        const [sx,sy,sc]=P(q.x+sd*(Wd+8),z,0);
-        for(let r=0;r<rows;r++){ const bw=17*sc,bh=6.5*sc, ox=(r%2)*bw*0.45, oy=-bh*r*0.85-bh*0.4;
-          const g=cx.createLinearGradient(0,sy+oy-bh*0.6,0,sy+oy+bh*0.6);g.addColorStop(0,col[1]);g.addColorStop(1,col[0]);cx.fillStyle=g;
-          cx.beginPath();cx.ellipse(sx+ox,sy+oy,bw*0.62,bh*0.6,0,0,7);cx.fill();
-          cx.fillStyle="rgba(40,30,18,0.35)";cx.beginPath();cx.ellipse(sx+ox+bw*0.5,sy+oy,bw*0.08,bh*0.4,0,0,7);cx.fill();
-          cx.fillStyle="rgba(0,0,0,0.22)";cx.fillRect(sx+ox-bw*0.6,sy+oy+bh*0.35,bw*1.2,bh*0.2);
-        }
-      }
-    }
-    // 5) props above ground: ladders, periscope, crates, lantern posts
-    for(let i=0;i<n;i+=1){ const r=hash(seed*13+i*5+(z0>0.5?50:0)); const z=z0+(z1-z0)*(i+0.5)/n; const q=x+off(z);
-      const [sx,sy,sc]=P(q+side*(Wd-2),z,0);
-      if(side===1&&r>0.45){ // scaling ladder
-        cx.strokeStyle="#3a2814";cx.lineWidth=Math.max(1,2*sc);const lx=sx-6*sc,ly=sy+D*sc*0.9;
-        cx.beginPath();cx.moveTo(lx,ly);cx.lineTo(lx+10*sc,sy-14*sc);cx.moveTo(lx+7*sc,ly);cx.lineTo(lx+17*sc,sy-14*sc);cx.stroke();
-        for(let k=1;k<6;k++){const f=k/6;cx.beginPath();cx.moveTo(lx+10*sc*f,ly+(sy-14*sc-ly)*f);cx.lineTo(lx+7*sc+10*sc*f,ly+(sy-14*sc-ly)*f);cx.stroke();}
-      } else if(r<-0.7){ // periscope
-        cx.fillStyle="#2a2016";cx.fillRect(sx-1.5*sc,sy-30*sc,3*sc,26*sc);cx.fillRect(sx-1.5*sc,sy-30*sc,side*6*sc,3*sc);
-        cx.fillStyle="rgba(200,220,255,0.6)";cx.fillRect(sx+side*4*sc,sy-29.5*sc,1.2*sc,2*sc);
-      } else if(r>0.3&&r<0.4){ // crates
-        const [cx2,cy2,c2]=P(q-side*(Wd+18),z,0);cx.fillStyle="#6a5030";cx.fillRect(cx2-8*c2,cy2-12*c2,16*c2,12*c2);cx.fillStyle="#5a4024";cx.fillRect(cx2-2*c2,cy2-20*c2,13*c2,8*c2);
-        cx.strokeStyle="rgba(0,0,0,0.35)";cx.lineWidth=1;cx.strokeRect(cx2-8*c2,cy2-12*c2,16*c2,12*c2);
-      } else if(r>-0.2&&r<-0.12){ // lantern post
-        const [lx,ly,lc]=P(q-side*(Wd+10),z,0);cx.fillStyle="#2a2016";cx.fillRect(lx,ly-40*lc,2.4*lc,40*lc);cx.fillRect(lx,ly-40*lc,8*lc,2*lc);
-        const gl=cx.createRadialGradient(lx+8*lc,ly-34*lc,0,lx+8*lc,ly-34*lc,14*lc);gl.addColorStop(0,"rgba(255,200,110,0.55)");gl.addColorStop(1,"rgba(255,200,110,0)");cx.fillStyle=gl;cx.beginPath();cx.arc(lx+8*lc,ly-34*lc,14*lc,0,7);cx.fill();
-        cx.fillStyle="#e8b060";cx.fillRect(lx+6.5*lc,ly-37*lc,3*lc,4*lc);
-      }
-    }
-    // 6) wire belt in front (both sides get some; enemy's is thick)
-    const wireN = side===-1 ? n : Math.floor(n/2);
-    for(let i=0;i<wireN;i++){ const z=z0+(z1-z0)*(i+0.3)/wireN; const [sx,sy,sc]=P(x-side*(-90)+(side===-1?-40:30)+Math.sin(i*3+seed)*18,z,0);
-      cx.strokeStyle="#241a10";cx.lineWidth=Math.max(1,1.8*sc);cx.beginPath();cx.moveTo(sx,sy);cx.lineTo(sx+2*sc,sy-24*sc);cx.moveTo(sx+18*sc,sy);cx.lineTo(sx+16*sc,sy-22*sc);cx.stroke();
-      cx.strokeStyle="rgba(40,30,20,0.75)";cx.lineWidth=Math.max(0.6,0.8*sc);cx.beginPath();
-      for(let j=0;j<=24;j++){const a=j*0.8;cx.lineTo(sx-6*sc+j*1.3*sc+Math.cos(a)*5*sc,sy-12*sc+Math.sin(a)*8*sc);}cx.stroke();}
   }
+  // sandbag parapet (front, high) and parados (rear, low): flat 2-tone bags
+  for(const [sd,rows,c0,c1] of [[-side,2,"#6e5f44","#8a7a58"],[side,4,"#8f7e5c","#b3a078"]]){
+    for(let i=0;i<=n*2;i++){ const z=z0+(z1-z0)*i/(n*2); const [sx,sy,sc]=P(x+trenchOff(x,z)+sd*(Wd+8),z,0);
+      for(let r2=0;r2<rows;r2++){ const bw=17*sc,bh=6.5*sc, ox=(r2%2)*bw*0.45, oy=-bh*r2*0.85-bh*0.4;
+        cx.fillStyle=c0; cx.beginPath();cx.ellipse(sx+ox,sy+oy,bw*0.62,bh*0.6,0,0,7);cx.fill();
+        cx.fillStyle=c1; cx.beginPath();cx.ellipse(sx+ox-bw*0.05,sy+oy-bh*0.15,bw*0.5,bh*0.34,0,0,7);cx.fill(); } } }
+  // ladders every bay on our side, periscopes, stakes; enemy: loopholes & steel plates
+  for(let i=0;i<n;i++){ const r=hash(seed*13+i*5); const z=z0+(z1-z0)*(i+0.5)/n; const q=x+trenchOff(x,z);
+    const [sx,sy,sc]=P(q+side*(Wd-4),z,0);
+    if(side===1&&i%2===0){ cx.strokeStyle="#3e2c16";cx.lineWidth=Math.max(1,2.2*sc);const bx0=sx-10*sc,by0=sy+D*sc*0.95;
+      cx.beginPath();cx.moveTo(bx0,by0);cx.lineTo(bx0+12*sc,sy-16*sc);cx.moveTo(bx0+8*sc,by0);cx.lineTo(bx0+20*sc,sy-16*sc);cx.stroke();
+      for(let k=1;k<7;k++){const f=k/7;cx.beginPath();cx.moveTo(bx0+12*sc*f,by0+(sy-16*sc-by0)*f);cx.lineTo(bx0+8*sc+12*sc*f,by0+(sy-16*sc-by0)*f);cx.stroke();} }
+    else if(side===-1&&r>0.2){ cx.fillStyle="#3a3a36"; cx.fillRect(sx-6*sc,sy-26*sc,12*sc,9*sc); cx.fillStyle="#0a0806"; cx.fillRect(sx-1.5*sc,sy-23*sc,3*sc,3*sc); }
+    if(r<-0.75){ cx.fillStyle="#2a2016";cx.fillRect(sx-1.5*sc,sy-34*sc,3*sc,30*sc);cx.fillRect(sx-1.5*sc,sy-34*sc,side*7*sc,3*sc); }
+  }
+  // wire belt in front
+  const wireN = side===-1 ? 22 : 9;
+  for(let i=0;i<wireN;i++){ const z=0.04+1.0*(i+0.3)/wireN; const [sx,sy,sc]=P(x+side*90+(side===-1?-40:30)+Math.sin(i*3+seed)*18,z,0);
+    cx.strokeStyle="#241a10";cx.lineWidth=Math.max(1,1.8*sc);cx.beginPath();cx.moveTo(sx,sy);cx.lineTo(sx+2*sc,sy-24*sc);cx.moveTo(sx+18*sc,sy);cx.lineTo(sx+16*sc,sy-22*sc);cx.stroke();
+    cx.strokeStyle="rgba(40,30,20,0.75)";cx.lineWidth=Math.max(0.6,0.8*sc);cx.beginPath();
+    for(let j=0;j<=24;j++){const a=j*0.8;cx.lineTo(sx-6*sc+j*1.3*sc+Math.cos(a)*5*sc,sy-12*sc+Math.sin(a)*8*sc);}cx.stroke();}
 }
+// traverse blocks (earth + sandbags across the trench every other bay) — depth-sorted so they hide men behind them
+function traverseEnts(ents,x,side){ for(let k=1;k<12;k+=2){ const z=k/12; ents.push({z:z+0.001,d:()=>{
+    const q=x+trenchOff(x,z-0.01); const a=P(q-TR_W,z,0), b=P(q+TR_W,z,0); const s=a[2];
+    cx.fillStyle="#5a4630"; cx.beginPath(); cx.moveTo(a[0],a[1]+TR_D*s*0.2); cx.lineTo(a[0],a[1]-6*s); cx.lineTo(b[0],b[1]-6*s); cx.lineTo(b[0],b[1]+TR_D*s*0.2); cx.fill();
+    for(let j=0;j<5;j++){ const t=j/4; const x0=a[0]+(b[0]-a[0])*t; cx.fillStyle="#9a8862"; cx.beginPath(); cx.ellipse(x0,a[1]-7*s,9*s,4*s,0,0,7); cx.fill(); cx.fillStyle="#b3a078"; cx.beginPath(); cx.ellipse(x0-1*s,a[1]-8.2*s,7*s,2.2*s,0,0,7); cx.fill(); } }}); } }
+// a soldier standing on the trench floor: lowered by trench depth and clipped at the ground line, so only helmet & shoulders show
+function drawManInTrench(m,lift){ const [sx,sy,s]=P(m.x,m.z,0); const depth=TR_D*(1-lift)*0.95;
+  cx.save(); cx.beginPath(); cx.rect(sx-120*s,0,240*s,sy+1*s); cx.clip();
+  drawMan(sx,sy+depth*s,s,m.dir,m.phase,m.state==="climb"?"run":"idle",manCols(m),{vet:m.vet,v:m.v}); cx.restore(); }
 
 /* ============================================================
    SOLDIERS — silhouette + ragdoll
@@ -1112,7 +1096,7 @@ function setupFront(){
   pal=chapterPal(S.lvl);
   // enemies
   enemies=[];const ex=trenchX(S.lvl+1); const vis=Math.min(28,cur.gr);
-  for(let i=0;i<vis;i++){enemies.push({x:ex+10+Math.random()*30,z:laneZ(Math.random()),phase:Math.random()*6,alive:true,flash:0});}
+  for(let i=0;i<vis;i++){const z=laneZ(Math.random()); enemies.push({x:ex+trenchOff(ex,z)+(Math.random()-0.5)*30,z,phase:Math.random()*6,alive:true,flash:0});}
   enemies.sort((a,b)=>a.z-b.z);
   // mines
   const r=rng(S.lvl*991+7); for(let i=0;i<cur.mn;i++){mines.push({x:trenchX(S.lvl)+300+r()*(SEGL()-520),z:laneZ(r()),live:true});}
@@ -1120,10 +1104,10 @@ function setupFront(){
 }
 function reinfCinema(k){ const zh=S.lang==="zh"; big(`+${k}`, zh?(k>=60?"一整个营开进了前线":"援军开进战壕"):(k>=60?"A whole battalion marches up":"Reinforcements march in"),2200); AU.bugle();
   if(mode!=="menu")return; const bx=trenchX(S.lvl); const n=Math.min(60,k);
-  for(let i=0;i<n;i++){ const m=mkMan(cam.x-(W/2)/scaleZ(0.8)-40-i*18,laneZ(0.6+Math.random()*0.4),false); m.arriving=true; m.tx=bx-20-Math.random()*60; m.state="run"; m.speed=120+Math.random()*20; men.push(m);} sortMen(); cam.tt=0.4; cam.tz=0.95; }
+  for(let i=0;i<n;i++){ const m=mkMan(cam.x-(W/2)/scaleZ(0.8)-40-i*18,laneZ(0.6+Math.random()*0.4),false); m.arriving=true; m.tin=1; m.tx=bx+trenchOff(bx,m.z)+(Math.random()-0.5)*24; m.state="run"; m.speed=120+Math.random()*20; men.push(m);} sortMen(); cam.tt=0.4; cam.tz=0.95; }
 function worldVisibleIdle(){ // soldiers idling in own trench on menu
   men=[];const n=Math.min(40,S.reserve);const bx=trenchX(S.lvl);
-  for(let i=0;i<n;i++){men.push(mkMan(bx-10-Math.random()*20,laneZ(Math.random()),i<Math.min(S.vets,n)));}
+  for(let i=0;i<n;i++){const z=0.95-i*0.022; const m=mkMan(bx+trenchOff(bx,z)+(Math.random()-0.5)*24,z,i<Math.min(S.vets,n)); m.intrench=true; men.push(m);}
   men.forEach(m=>{m.state=Math.random()<0.5?"idle":"crouch";});
   sortMen();
 }
@@ -1235,7 +1219,9 @@ function syncMen(reform){ // make visible men match waves (add queued arrivals /
   men=men.filter(m=>!m.sent||waves[m.wave]);
   pushQueue=pushList.length;
 }
-function slotZ(i,f){ // fill NEAR → FAR: first ~40 in the near zone, overflow goes to the far zone
+function slotZ(i,f){ const dz=f===0?0.03:f===1?0.019:0.011; const per=Math.floor(0.88/dz); return 0.95-(i%per)*dz-(Math.floor(i/per)%2)*dz*0.5; }
+function slotRank(i,f){ const dz=f===0?0.03:f===1?0.019:0.011; return Math.floor(i/Math.floor(0.88/dz)); }
+function slotZ_old(i,f){ // fill NEAR → FAR: first ~40 in the near zone, overflow goes to the far zone
   const fz=FORM[f].zw; const cap=f===2?60:f===1?44:34;
   if(i<cap){ const u=((i*0.618)%1); return NEARZ+0.02+ (0.5-fz/2 + u*fz)*0.40; }
   const u=(((i-cap)*0.618)%1); return 0.05+(0.5-fz/2+u*fz)*0.42; }
@@ -1243,9 +1229,10 @@ function pushOne(){
   const q=pushList.shift(); pushQueue=pushList.length; if(!q)return;
   const bx=trenchX(S.lvl); const w=waves[q.w]; if(!w)return;
   const idx=men.filter(m=>m.sent&&m.wave===q.w).length;
-  const zz=slotZ(idx,w.f); const m=mkMan(Math.min(bx-120, cam.x-(W/2)/scaleZ(zz)-30-Math.random()*60),zz,q.vet); m.sent=true; m.arriving=true; m.wave=q.w;
-  m.tx=bx-8-q.w*46-Math.random()*FORM[w.f].xj; m.state="run"; m.speed=260;
-  men.push(m); sortMen(); if(Math.random()<0.5)AU.thud(); if(Math.random()<0.15)AU.clang();
+  const zz=slotZ(idx,w.f); const lines=trenchLines(S.lvl-1); const tl=bx-Math.min(q.w,lines-1)*85;
+  const x=tl+trenchOff(tl,zz)+ (slotRank(idx,w.f)%2?-12:8) + (Math.random()-0.5)*Math.min(14,FORM[w.f].xj);
+  const m=mkMan(x,zz,q.vet); m.sent=true; m.arriving=false; m.wave=q.w; m.tx=x; m.intrench=true; m.state="idle"; m.pop=0;
+  men.push(m); sortMen(); if(Math.random()<0.3)AU.thud();
 }
 function holdBtnF(el,fn){ let iv=null,to=null; const go=()=>{AU.init();fn();AU.click();}; const stop=()=>{clearTimeout(to);clearInterval(iv);};
   el.onpointerdown=(e)=>{e.preventDefault();go();to=setTimeout(()=>{iv=setInterval(go,70);},380);}; el.onpointerup=el.onpointerleave=stop; }
@@ -1397,7 +1384,8 @@ function stepBattle(dt){
   const running=alive.filter(m=>m.state==="run");
   // advance soldiers
   for(const m of alive){
-    if(m.state==="crouch"){ m.delay-=dt; if(m.delay<=0&&!montage){m.state="run"; if(Math.random()<0.05)say(m,S.lang==="zh"?"冲啊！":"Go! Go!",1.2);} continue; }
+    if(m.state==="climb"){ m.lift=Math.min(1,(m.lift||0)+dt*1.7); m.phase+=dt*8; m.x+=dt*TR_W*1.6; if(m.lift>=1){m.state="run";m.intrench=false;} continue; }
+    if(m.state==="crouch"){ m.delay-=dt; if(m.delay<=0&&!montage){m.state="climb";m.lift=0; if(Math.random()<0.1)SFX.play("mud",0.3,{gap:0.1,dur:0.5}); if(Math.random()<0.05)say(m,S.lang==="zh"?"冲啊！":"Go! Go!",1.2);} continue; }
     if(m.state==="run"){
       let sp=m.speed; for(const g of b.gasZones)if(Math.abs(m.x-g.x)<g.w)sp*=0.8;
       if(cur.wr>0&&m.x>bx+SEGL()*0.55&&m.x<bx+SEGL()*0.62)sp*=Math.max(0.3,1-cur.wr*0.22);
@@ -1771,10 +1759,10 @@ function frame(now){
   if(mode==="charge"&&!montage){cam.tt=Math.min(0.85,0.35+battle.t*0.07); cam.tz=Math.max(0.78,1.1-battle.t*0.05);}  // camera rises with the charge
   const shx=(Math.random()-0.5)*cam.shake, shy=(Math.random()-0.5)*cam.shake; cam.shake*=0.9;
   // push queue (soldiers entering one by one)
-  if(mode==="plan"&&pushList.length>0){pushT-=rdt; if(pushT<=0){ pushOne(); pushT=Math.max(0.02,0.16-pushList.length*0.005);} }
+  if(mode==="plan"&&pushList.length>0){ for(let k=0;k<Math.min(pushList.length,25);k++)pushOne(); }
   // update men
   for(const m of men){ if(!m.alive)continue;
-    if(m.arriving){ m.x+=m.speed*rdt; m.phase+=rdt*18; if(m.x>=m.tx){m.x=m.tx;m.arriving=false;m.state=Math.random()<0.5?"crouch":"idle";} }
+    if(m.arriving){ m.x+=m.speed*rdt; m.phase+=rdt*18; if(m.x>=m.tx){m.x=m.tx;m.arriving=false;if(m.tin)m.intrench=true;m.state=Math.random()<0.5?"crouch":"idle";} }
     if(m.state==="cheer"){m.phase+=rdt*6;}
     if(m.state==="melee"){m.phase+=rdt*4;}
     if((mode==="menu"||mode==="plan")&&!m.arriving&&Math.random()<rdt*0.004&&bubbles.length<2)say(m,pick(L_().chatter),2.4);
@@ -1810,11 +1798,13 @@ function frame(now){
   const ents=[];
   for(const r of ragdolls) ents.push({z:r.z,d:()=>drawRagdoll(r)});
   for(const m of men) if(m.pinned) ents.push({z:m.z,d:()=>{const [sx,sy,s]=P(m.x,m.z);cx.save();cx.translate(sx,sy+3*s);cx.rotate(1.42);drawMan(0,0,s*0.95,1,0,"crouch",manCols(m),{vet:m.vet,v:m.v});cx.restore();}});
-  for(const m of men) if(m.alive) ents.push({z:m.z,d:()=>{const [sx,sy,s]=P(m.x,m.z,m.state==="cheer"?Math.abs(Math.sin(m.jump||0))*14:0);drawMan(sx,sy,s,m.dir,m.phase,m.stumble>0?"crouch":m.state==="wait"?"crouch":m.state==="cheer"?"cheer":(m.arriving?"run":m.state),manCols(m),{vet:m.vet,v:m.v});
+  if(mode!=="menu"||true){ traverseEnts(ents,trenchX(S.lvl),1); traverseEnts(ents,trenchX(S.lvl+1),-1); }
+  for(const m of men) if(m.alive&&m.intrench) ents.push({z:m.z,d:()=>drawManInTrench(m,m.state==="climb"?m.lift:0)});
+  for(const m of men) if(m.alive&&!m.intrench) ents.push({z:m.z,d:()=>{const [sx,sy,s]=P(m.x,m.z,m.state==="cheer"?Math.abs(Math.sin(m.jump||0))*14:0);drawMan(sx,sy,s,m.dir,m.phase,m.stumble>0?"crouch":m.state==="wait"?"crouch":m.state==="cheer"?"cheer":(m.arriving?"run":m.state),manCols(m),{vet:m.vet,v:m.v});
      if(m.state==="cheer"){ /* rifle raised */ }}});
-  for(const e of enemies) if(e.alive) ents.push({z:e.z,d:()=>{const [sx,sy,s]=P(e.x,e.z,-18);drawMan(sx,sy,s,-1,e.phase,mode==="melee"?"melee":"aim",pal.en,{enemy:true,flash:e.flash>0});}});
+  for(const e of enemies) if(e.alive) ents.push({z:e.z,d:()=>{const fight=battle&&battle.melee&&!battle.over; const [sx,sy,s]=P(e.x,e.z,0); cx.save(); if(!fight){cx.beginPath();cx.rect(sx-120*s,0,240*s,sy+1*s);cx.clip();} drawMan(sx,sy+(fight?0:TR_D*0.55)*s,s,-1,e.phase,fight?"melee":"aim",pal.en,{enemy:true,flash:e.flash>0}); cx.restore();}});
   if(battle&&battle.tanks&&(mode==="charge"||mode==="melee")) for(const tk of battle.tanks) ents.push({z:tk.z,d:()=>drawTank(tk)});
-  ents.push({z:MIDZ+0.02,d:drawBerm}); ents.sort((a,b)=>a.z-b.z); drawParts(false); for(const e of ents)e.d(); drawParts(true);
+  ents.sort((a,b)=>a.z-b.z); drawParts(false); for(const e of ents)e.d(); drawParts(true);
   drawTracers(rdt); drawShells();
   // flag raise
   if(flagRaise){flagRaise.t+=rdt; const [sx,sy,s]=P(flagRaise.x,0.5); drawFlag(sx,sy,s*1.6,130,time,Math.min(1,flagRaise.t/2.2)); if(flagRaise.t>8)flagRaise=null;}
