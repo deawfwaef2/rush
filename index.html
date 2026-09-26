@@ -179,9 +179,9 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 .card .mech{text-align:left;font-size:14px;line-height:1.55;font-style:normal}
 .card .mech li{margin:4px 0 4px 18px}
 .stats{display:flex;gap:18px;justify-content:center;margin:12px 0;font-size:20px}
-#bigtxt{position:absolute;left:0;right:0;top:34%;text-align:center;font-size:min(13vw,104px);color:#f2e6c8;text-shadow:0 6px 0 #000,0 0 50px #000;pointer-events:none;letter-spacing:.1em;opacity:0;transition:opacity .3s}
+#bigtxt{position:absolute;left:50%;top:15%;transform:translateX(-50%);max-width:92vw;text-align:center;font-size:min(5.4vw,48px);color:#f2e6c8;text-shadow:0 3px 0 #000,0 0 22px #000;pointer-events:none;letter-spacing:.14em;opacity:0;transition:opacity .35s;padding:4px 34px 6px;background:linear-gradient(90deg,#0000,#000a 18%,#000a 82%,#0000)}
 #bigtxt.show{opacity:1}
-#bigtxt small{display:block;font-size:20px;letter-spacing:.3em;margin-top:6px;opacity:.9;font-family:Georgia}
+#bigtxt small{display:block;font-size:14px;letter-spacing:.28em;margin-top:2px;opacity:.9;font-family:Georgia}
 #hud{position:absolute;left:50%;transform:translateX(-50%);top:72px;display:flex;gap:18px;font-size:22px;background:#0008;padding:4px 16px;border-radius:20px}
 #toast{position:absolute;left:50%;top:24%;transform:translateX(-50%);background:#14110dee;border:1px solid var(--brass2);padding:8px 18px;border-radius:4px;font-size:16px;opacity:0;transition:opacity .3s;pointer-events:none!important}
 #toast.show{opacity:1}
@@ -1372,7 +1372,7 @@ function setupFront(){
   pal=chapterPal(S.lvl);
   // enemies
   enemies=[];const ex=trenchX(S.lvl+1); const vis=Math.min(28,cur.gr);
-  for(let i=0;i<vis;i++){const z=laneZ(Math.random()); enemies.push({x:ex+trenchOff(ex,z)+(Math.random()-0.5)*30,z,phase:Math.random()*6,alive:true,flash:0});}
+  for(let i=0;i<vis;i++){const z=laneZ(Math.min(1,Math.max(0,(i+0.5+(Math.random()-0.5)*0.7)/vis))); enemies.push({x:ex+trenchOff(ex,z)+(Math.random()-0.5)*30,z,phase:Math.random()*6,alive:true,flash:0});}
   enemies.sort((a,b)=>a.z-b.z);
   // mines
   belts=[]; { const nb=Math.round(cur.wr||0); const pos=[0.52,0.66,0.40]; for(let i=0;i<nb;i++) belts.push({x:trenchX(S.lvl)+SEGL()*pos[i%3],cut:0,seed:i*7+S.lvl}); }
@@ -1384,7 +1384,7 @@ function reinfCinema(k){ const zh=S.lang==="zh"; big(`+${k}`, zh?(k>=60?"一整�
   for(let i=0;i<n;i++){ const m=mkMan(cam.x-(W/2)/scaleZ(0.8)-40-i*18,laneZ(0.6+Math.random()*0.4),false); m.arriving=true; m.tin=1; m.tx=bx+trenchOff(bx,m.z)+(Math.random()-0.5)*24; m.state="run"; m.speed=120+Math.random()*20; men.push(m);} sortMen(); cam.tt=0.4; cam.tz=0.95; }
 function worldVisibleIdle(){ // soldiers idling in own trench on menu
   men=[];const n=Math.min(40,S.reserve);const bx=trenchX(S.lvl);
-  for(let i=0;i<n;i++){const z=0.95-i*0.022; const m=mkMan(bx+trenchOff(bx,z)+(Math.random()-0.5)*24,z,i<Math.min(S.vets,n)); m.intrench=true; men.push(m);}
+  for(let i=0;i<n;i++){const z=slotZ(i,1); const m=mkMan(bx+trenchOff(bx,z)+(Math.random()-0.5)*16,z,i<Math.min(S.vets,n)); m.intrench=true; men.push(m);}
   men.forEach(m=>{m.state=Math.random()<0.5?"idle":"crouch";});
   sortMen();
 }
@@ -1552,8 +1552,11 @@ function syncMen(reform){ // make visible men match waves (add queued arrivals /
   men=men.filter(m=>!m.sent||waves[m.wave]);
   pushQueue=pushList.length;
 }
-function slotZ(i,f){ const dz=f===0?0.03:f===1?0.019:0.011; const per=Math.floor(0.88/dz); return 0.95-(i%per)*dz-(Math.floor(i/per)%2)*dz*0.5; }
-function slotRank(i,f){ const dz=f===0?0.03:f===1?0.019:0.011; return Math.floor(i/Math.floor(0.88/dz)); }
+/* v1.3: men spread along the WHOLE trench (golden-ratio fill: any count is evenly spread, existing men never move when more are added).
+   A second rank only starts when a rank is full. Line length is ~1.5x the old one (old fill started at the near end and bunched). */
+const SLOT_MIN=[0.03,0.02,0.014];
+function slotZ(i,f){ const per=Math.floor(0.86/SLOT_MIN[f||0]); const r=Math.floor(i/per), j=i-r*per; return 0.08+((0.5+j*0.6180339+r*0.309)%1)*0.86; }
+function slotRank(i,f){ return Math.floor(i/Math.floor(0.86/SLOT_MIN[f||0])); }
 function slotZ_old(i,f){ // fill NEAR → FAR: first ~40 in the near zone, overflow goes to the far zone
   const fz=FORM[f].zw; const cap=f===2?60:f===1?44:34;
   if(i<cap){ const u=((i*0.618)%1); return NEARZ+0.02+ (0.5-fz/2 + u*fz)*0.40; }
@@ -1726,7 +1729,7 @@ function stepBattle(dt){
   const running=alive.filter(m=>m.state==="run"||m.state==="cut");
   // advance soldiers
   for(const m of alive){
-    if(m.state==="climb"){ m.lift=Math.min(1,(m.lift||0)+dt*1.7); m.phase+=dt*8; m.x+=dt*TR_W*1.6; if(m.lift>=1){m.state="run";m.intrench=false; const u=((men.indexOf(m)*0.618+m.phase*0.1)%1); m.zt=Math.max(0.05,Math.min(0.97,0.52+(u-0.5)*Math.min(0.94,0.5+(battle?battle.sent:30)/140)*1.0*FORM[m.form||1].zw));} continue; }
+    if(m.state==="climb"){ m.lift=Math.min(1,(m.lift||0)+dt*1.7); m.phase+=dt*8; m.x+=dt*TR_W*1.6; if(m.lift>=1){m.state="run";m.intrench=false; const u=((men.indexOf(m)*0.618+m.phase*0.1)%1); m.zt=Math.max(0.05,Math.min(0.97,0.52+(m.z-0.52)*Math.max(0.5,FORM[m.form||1].zw)+(u-0.5)*0.05));} continue; }
     if(m.state==="crouch"){ m.delay-=dt; if(m.delay<=0&&!montage){m.state="climb";m.lift=0; if(Math.random()<0.1)SFX.play("mud",0.3,{gap:0.1,dur:0.5}); if(Math.random()<0.05)say(m,S.lang==="zh"?"冲啊！":"Go! Go!",1.2);} continue; }
     if(m.state==="rally"){ const o=b.off; if(!o||!o.alive||!o.halt){ m.state="run"; m.stumble=Math.random()*0.3; if(o&&o.alive&&o.boost)m.mor=Math.min(120,m.mor+25); continue; } const d=m.rx-m.x; if(Math.abs(d)>2){m.x+=Math.sign(d)*Math.min(Math.abs(d),dt*120); m.phase+=dt*8;} m.mor=Math.min(110,m.mor+dt*6); continue; }
     if(m.state==="hold"){ if(battle.flared){ m.state="run"; m.hold2=false; m.stumble=Math.random()*0.5; } continue; }
@@ -1765,9 +1768,12 @@ function stepBattle(dt){
     // machine guns
     const mgRate=cur.mg*0.028*smokeF*tankF*(1500/SEGL())/mf(); // per soldier per second
     b.mgT-=dt; if(cur.mg>0.05&&b.mgT<=0){ b.mgT=0.09; AU.mg(1,0.12+Math.min(0.2,cur.mg*0.03));
-      const tgt=pick(running); const nest=enemies[Math.floor(Math.random()*enemies.length)]||{x:ex,z:0.5};
+      let tgt=pick(running); for(let k=0;k<2;k++){ const o=pick(running); if((o.dens||0)>(tgt.dens||0))tgt=o; } const nest=enemies[Math.floor(Math.random()*enemies.length)]||{x:ex,z:0.5};
       tracer(ex+8,nest.z,40,tgt.x+(Math.random()-0.5)*30,tgt.z,20+Math.random()*40); if(nest)nest.flash=0.06; }
-    for(const m of running){ if(m.alive&&Math.random()<mgRate*dt*hitK(m,bx)) killMan(m,"mg"); }
+    // v1.3: the DENSER the crowd, the more a machine gun kills (3x3 grid of 45u x 0.05z cells)
+    const DG=new Map(), dk=(m,a,b)=>((Math.floor(m.x/45)+a)*4096+(Math.floor(m.z/0.05)+b)); for(const m of running){ const k=dk(m,0,0); DG.set(k,(DG.get(k)||0)+1); }
+    const dens=m=>{ let n=0; for(let a=-1;a<=1;a++)for(let c=-1;c<=1;c++){ n+=DG.get(dk(m,a,c))||0; } return n; };
+    for(const m of running){ if(!m.alive)continue; m.dens=dens(m); const df=Math.max(0.55,Math.min(2.4,0.55+0.13*(m.dens-1))); if(Math.random()<mgRate*dt*hitK(m,bx)*df) killMan(m,"mg"); }
     // rifles
     const rfRate=cur.rf*0.0065*smokeF*(1500/SEGL())/mf();
     b.rfT-=dt; if(cur.rf>0.05&&b.rfT<=0){b.rfT=0.5/Math.max(0.3,cur.rf)*2; AU.shot(0.15); const e=pick(enemies.filter(e=>e.alive))||null; if(e){e.flash=0.08;const tgt=pick(running);tracer(e.x,e.z,48,tgt.x,tgt.z,40);}}

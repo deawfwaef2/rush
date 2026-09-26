@@ -302,3 +302,8 @@ COMBAT / PERF
 - Resting ragdolls are baked into a tight sprite (bakeCorpse, max 14 bakes/frame) and blitted; live ragdolls still simulate/draw as paths.
 - Particles: cached soft radial sprites (softSpr) + globalAlpha instead of arc paths + per-particle rgba strings; puff() caps parts (900 soft / 1400 hard).
 - #hud innerHTML only written when its text changes.
+## v1.3f spread + MG density (2026-09-26, agent A)
+- slotZ: golden-ratio fill along the WHOLE trench depth (0.08..0.94), stable when men are added; new rank only when a rank is full (SLOT_MIN per formation). Menu idle men + enemies (stratified) spread the same way.
+- Climb-out: runners keep their own lane (zt = centre + (z-centre)*max(0.5,FORM.zw)) instead of converging into a centre blob.
+- MG lethality x local crowd density (3x3 grid, df 0.55..2.4) and the gunner's tracer target prefers the densest knot -> dense crowds die faster (user request).
+- #bigtxt captions shrunk to a slim band at 15% height (they covered the whole battlefield).
