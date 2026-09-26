@@ -1316,7 +1316,7 @@ function toPlan(){
   AU.init(); AU.click();
   mode="pan"; $("menu").classList.add("hide"); $("hud").classList.add("hide");
   setupFront(); men=[]; pushQueue=0; pushList=[]; waves=[{r:0,v:0,f:1,d:0}]; wSel=0;
-  cam.tx=trenchX(S.lvl)+SEGL()*0.42; cam.tz=0.82; cam.tt=0.45;
+  cam.tx=trenchX(S.lvl)+SEGL()*0.2; cam.tz=0.9; cam.tt=0.45;
   setTimeout(()=>{ if(mode!=="pan")return; mode="plan"; $("plan").classList.remove("hide"); hazRows(); buildSupports(); buildPresets(); setSend(Math.min(S.reserve, Math.max(0, Math.ceil(lvl.gr*2)))); CG.gameplayStart(); updTop();
     if(lvl.fort) big(`⚠ ${L_().fortress}`,L_().fortTip,2200); if(S.reserve<Math.max(5,lvl.gr)) setTimeout(adOffer,900);
     const ch=Math.floor(S.lvl/8); if(S.lvl%8===0 && !S["seenCh"+ch]){S["seenCh"+ch]=1;save();chapterCard(ch);} else if(!S.tut) setTimeout(startTut,400); },1300);
