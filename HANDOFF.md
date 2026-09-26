@@ -40,3 +40,9 @@
 - Win rule: survivors → some stay to hold trench (25% of garrison), rest return as veterans. Unsent reserve kept.
 - Test: `?debug` in URL → settings has +1 day / +1 lvl buttons. Headless test script used playwright.
 - TODO next: multi-lane routes (ch3+), better soldier art, more chatter, real BGM option, balance pass, end-of-chapter scenery transition.
+
+---
+## Feedback round 2 (2026-09-26) → v0.4
+User said: figures & scenes too crude; icons unclear → ALWAYS show text name + one-line mechanic next to icons; default ENGLISH always; split-screen must NOT pause/slow the game; after a win go straight to the next level (no main menu); write info as text; title = "CHARGE" (EN) / "冲锋" (ZH).
+Done: new tapered-limb soldiers w/ rim light, puttees, pack, vet red scarf; scene: clouds, god rays, town/church skyline, windmills, smoke columns, treeline, telegraph poles, craters/puddles/debris/grass; trench planks. Save key now `charge_save_v2`.
+Note for agents: read_file may not see freshly written screenshots — copy them to a new filename in ~/shots first.
