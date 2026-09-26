@@ -1425,7 +1425,7 @@ function setupFront(){
   pal=chapterPal(S.lvl);
   // enemies
   enemies=[];const ex=trenchX(S.lvl+1); const vis=Math.min(28,cur.gr);
-  for(let i=0;i<vis;i++){const z=laneZ(Math.min(1,Math.max(0,(i+0.5+(Math.random()-0.5)*0.7)/vis))); enemies.push({x:ex+trenchOff(ex,z)+(Math.random()-0.5)*30,z,phase:Math.random()*6,alive:true,flash:0});}
+  for(let i=0;i<vis;i++){const z=0.03+0.97*Math.min(1,Math.max(0,(i+0.5+(Math.random()-0.5)*0.7)/vis)); enemies.push({x:ex+trenchOff(ex,z)+(Math.random()-0.5)*30,z,phase:Math.random()*6,alive:true,flash:0});}
   enemies.sort((a,b)=>a.z-b.z);
   // mines
   belts=[]; { const nb=Math.round(cur.wr||0); const pos=[0.52,0.66,0.40]; for(let i=0;i<nb;i++) belts.push({x:trenchX(S.lvl)+SEGL()*pos[i%3],cut:0,seed:i*7+S.lvl}); }
@@ -1608,8 +1608,8 @@ function syncMen(reform){ // make visible men match waves (add queued arrivals /
 /* v1.3: men spread along the WHOLE trench (golden-ratio fill: any count is evenly spread, existing men never move when more are added).
    A second rank only starts when a rank is full. Line length is ~1.5x the old one (old fill started at the near end and bunched). */
 const SLOT_MIN=[0.03,0.02,0.014];
-function slotZ(i,f){ const per=Math.floor(0.86/SLOT_MIN[f||0]); const r=Math.floor(i/per), j=i-r*per; return 0.08+((0.5+j*0.6180339+r*0.309)%1)*0.86; }
-function slotRank(i,f){ return Math.floor(i/Math.floor(0.86/SLOT_MIN[f||0])); }
+function slotZ(i,f){ const per=Math.floor(0.97/SLOT_MIN[f||0]); const r=Math.floor(i/per), j=i-r*per; return 0.03+((0.5+j*0.6180339+r*0.309)%1)*0.97; } // round 13: WHOLE depth, near foreground to far side
+function slotRank(i,f){ return Math.floor(i/Math.floor(0.97/SLOT_MIN[f||0])); }
 function slotZ_old(i,f){ // fill NEAR → FAR: first ~40 in the near zone, overflow goes to the far zone
   const fz=FORM[f].zw; const cap=f===2?60:f===1?44:34;
   if(i<cap){ const u=((i*0.618)%1); return NEARZ+0.02+ (0.5-fz/2 + u*fz)*0.40; }
@@ -1782,7 +1782,7 @@ function stepBattle(dt){
   const running=alive.filter(m=>m.state==="run"||m.state==="cut");
   // advance soldiers
   for(const m of alive){
-    if(m.state==="climb"){ m.lift=Math.min(1,(m.lift||0)+dt*1.7); m.phase+=dt*8; m.x+=dt*TR_W*1.6; if(m.lift>=1){m.state="run";m.intrench=false; const u=((men.indexOf(m)*0.618+m.phase*0.1)%1); m.zt=Math.max(0.05,Math.min(0.97,0.52+(m.z-0.52)*Math.max(0.5,FORM[m.form||1].zw)+(u-0.5)*0.05));} continue; }
+    if(m.state==="climb"){ m.lift=Math.min(1,(m.lift||0)+dt*1.7); m.phase+=dt*8; m.x+=dt*TR_W*1.6; if(m.lift>=1){m.state="run";m.intrench=false; const u=((men.indexOf(m)*0.618+m.phase*0.1)%1); m.zt=Math.max(0.03,Math.min(1.0,m.z+(u-0.5)*0.02));} continue; }
     if(m.state==="crouch"){ m.delay-=dt; if(m.delay<=0&&!montage){m.state="climb";m.lift=0; if(Math.random()<0.1)SFX.play("mud",0.3,{gap:0.1,dur:0.5}); if(Math.random()<0.05)say(m,S.lang==="zh"?"冲啊！":"Go! Go!",1.2);} continue; }
     if(m.state==="rally"){ const o=b.off; if(!o||!o.alive||!o.halt){ m.state="run"; m.stumble=Math.random()*0.3; if(o&&o.alive&&o.boost)m.mor=Math.min(120,m.mor+25); continue; } const d=m.rx-m.x; if(Math.abs(d)>2){m.x+=Math.sign(d)*Math.min(Math.abs(d),dt*120); m.phase+=dt*8;} m.mor=Math.min(110,m.mor+dt*6); continue; }
     if(m.state==="hold"){ if(battle.flared){ m.state="run"; m.hold2=false; m.stumble=Math.random()*0.5; } continue; }
@@ -1793,7 +1793,7 @@ function stepBattle(dt){
       if(m.hold>0){m.hold-=dt;sp*=0.08;} if(m.boostT>0){m.boostT-=dt;sp*=m.boostF||1.2;}
       if(m.stumble>0){m.stumble-=dt;sp*=0.05;} else if(Math.random()<dt*0.04){m.stumble=0.35+Math.random()*0.4; if(Math.random()<0.3)say(m,pick(S.lang==="zh"?["起来！","继续跑！","别停！"]:["Up!","Keep going!","Don't stop!"]),1);}
       if(m.hold2&&!battle.flared&&m.x>=deadX()-10-((m.z*531)%1)*50){ m.state="hold"; if(!battle.holdMsg){battle.holdMsg=1; toast(S.lang==="zh"?"待命波次已在死角卧倒——准备好后发射信号弹。":"Holding waves are down in the dead ground — fire the flare when ready.");} continue; }
-      if(b.off&&b.off.alive&&m.fol){ const o=b.off; if(o.halt){ m.state="rally"; m.rx=o.x-20-((m.z*733)%1)*90; continue; } const ahead=m.x-(o.x+30+((m.z*311)%1)*40); if(ahead>0)sp*=Math.max(0.05,1-ahead/60); else sp*=Math.min(1.25,1+(-ahead)/300); const dz=o.z+((m.z*917)%1-0.5)*0.35-m.z; m.z+=Math.sign(dz)*Math.min(Math.abs(dz),dt*0.12); }
+      if(b.off&&b.off.alive&&m.fol){ const o=b.off; if(o.halt){ m.state="rally"; m.rx=o.x-20-((m.z*733)%1)*90; continue; } const ahead=m.x-(o.x+30+((m.z*311)%1)*40); if(ahead>0)sp*=Math.max(0.05,1-ahead/60); else sp*=Math.min(1.25,1+(-ahead)/300); }
       m.x+=sp*dt; m.phase+=dt*sp*0.075*(m.v?m.v.gaitF:1); if(m.zt!=null){ const dz=m.zt-m.z; m.z+=Math.sign(dz)*Math.min(Math.abs(dz),dt*0.16); }
       if(m.x>=ex-150-((m.z*977)%1)*40){b.reached++; if(b.e>0&&b.assault){m.state="melee";m.mx=ex-40+Math.random()*50+b.front; joinMelee(m);} else if(b.e>0){m.state="gather";m.gx=m.x; if(!b.gatherMsg){b.gatherMsg=1;toast(S.lang==="zh"?"先头部队在铁丝网前隐蔽，等待后续部队…":"Leading men take cover at the wire, waiting for the rest…");}} else {m.state="wait";}}
       // morale: low morale men go to ground (pinned = lost)
@@ -1928,6 +1928,7 @@ function drawAimMarks(){ for(const m of men){ if(!(m.aim>0)||!m.alive)continue; 
   for(const [dx,dy] of [[-1,-1],[1,-1],[-1,1],[1,1]]){ const x0=sx+dx*ww/2, y0=cy+dy*hh/2; cx.beginPath(); cx.moveTo(x0,y0-dy*L); cx.lineTo(x0,y0); cx.lineTo(x0-dx*L,y0); cx.stroke(); }
   cx.fillStyle=c; cx.fillRect(sx-ww/2,cy-hh/2-8,ww*k,3); } }
 /* ============ SUPPLY DEPOT: reinforcement points (RP) buy the NEXT charge's loadout ============ */
+const RP_ON=false; // round 13: the user does not want the RP / depot mechanism -> switched off (UI hidden, no gains, no loadout effects)
 const SHOP=[
  {k:"rum",  c:1, at:0,  n:["Rum ration","朗姆酒配给"], d:["+15 morale for everyone this charge.","本次冲锋全员士气+15。"]},
  {k:"cov",  c:1, at:1,  n:["Extra cover","额外掩护"], d:["+2 take-cover charges (click the aimed-shot box).","+2次掩护（点击被瞄准的方框）。"]},
@@ -1939,7 +1940,7 @@ const SHOP=[
  {k:"smk",  c:2, at:9,  n:["Smoke canisters","烟幕罐"], d:["+1 smoke screen.","+1次烟幕。"]}];
 function shopItems(){ return SHOP.filter(it=>S.lvl>=it.at); }
 function buyCost(){ let c=0; for(const it of SHOP) c+=(S.buy&&S.buy[it.k]||0)*it.c; return c; }
-function updDepotB(){ const b=$("depotB"); if(!b)return; const zh=S.lang==="zh"; const n=Object.values(S.buy||{}).reduce((a,v)=>a+v,0);
+function updDepotB(){ const b=$("depotB"); if(!b)return; if(!RP_ON){ b.style.display="none"; return; } const zh=S.lang==="zh"; const n=Object.values(S.buy||{}).reduce((a,v)=>a+v,0);
   b.innerHTML=`<span>${zh?"补给站":"SUPPLY DEPOT"}</span><b>${S.rp||0} RP</b>${n?`<i>${zh?"已配置":"loaded"} ${n}</i>`:""}`; b.onclick=openDepot; }
 function openDepot(){ AU.click&&AU.click(); const ov=$("ov"); ov.classList.remove("hide"); const zh=S.lang==="zh"; S.buy=S.buy||{};
   const draw=()=>{ const left=(S.rp||0); ov.innerHTML=`<div class="card depot"><div class="date">${zh?"补给站 · 为下一次冲锋配置":"SUPPLY DEPOT · loadout for the next charge"}</div><h2 class="stencil">${left} RP</h2>
@@ -1950,7 +1951,7 @@ function openDepot(){ AU.click&&AU.click(); const ov=$("ov"); ov.classList.remov
      if(a>0&&(S.rp||0)>=it.c&&q<3){ S.buy[it.k]=q+1; S.rp-=it.c; } else if(a<0&&q>0){ S.buy[it.k]=q-1; S.rp+=it.c; } save(); AU.click&&AU.click(); draw(); });
    $("depOk").onclick=()=>{ ov.classList.add("hide"); updDepotB(); }; };
   draw(); }
-function applyLoadout(){ const B=S.buy||{}; const b=battle; if(!b)return; const rec=men.filter(m=>m.sent&&!m.vet&&!m.eng);
+function applyLoadout(){ if(!RP_ON){ S.buy={}; return; } const B=S.buy||{}; const b=battle; if(!b)return; const rec=men.filter(m=>m.sent&&!m.vet&&!m.eng);
   let i=0; const take=(n,type)=>{ for(let k=0;k<n&&i<rec.length;k++,i++) rec[i].type=type; };
   take(4*(B.bomb||0),"bomb"); take(2*(B.lewis||0),"lewis");
   if(B.eng){ let n=2*B.eng; for(const m of men){ if(n<=0)break; if(m.sent&&!m.vet&&!m.eng&&!m.type&&(m.wave||0)===0){ m.eng=true; n--; } } }
@@ -2204,12 +2205,12 @@ function result(win){ $("tools")&&$("tools").classList.add("hide");
   mode="result"; CG.gameplayStop(); slowmo=1;
   const b=battle; const t=L_(); const surv=men.filter(m=>m.alive).length; if(b.fled){ S.reserve+=b.fled; } { const el=$("evFeed"); if(el)el.innerHTML=""; }
   if(b.strb&&b.pinned){ const rec=Math.floor(b.pinned*0.5*Math.min(1,b.strb)); S.reserve+=rec; b.recovered=rec; }
-  S.rp=(S.rp||0)+(win?2+(lvl.fort?3:0):1);
+  if(RP_ON)S.rp=(S.rp||0)+(win?2+(lvl.fort?3:0):1);
   S.lost+=b.dead; S.lastMoraleD = win ? (lvl.fort?30:18) : -20; if(!win&&b.dead>b.sent*0.8)S.lastMoraleD-=5; S.morale=Math.max(0,Math.min(100,S.morale+S.lastMoraleD)); S.moraleT=Date.now();
   if(win){
     CG.happy();
     const zhM=S.lang==="zh"; const merits=[]; if(b.shock)merits.push(zhM?"集中突击":"Massed assault"); if(b.flared&&b.holdMsg)merits.push(zhM?"信号弹协同":"Flare timing"); if(b.offUsed&&!b.offDied)merits.push(zhM?"军官指挥":"Officer's lead"); if(b.sent&&b.dead/b.sent<0.35)merits.push(zhM?"低伤亡":"Low losses"); if(!b.pinned&&!b.fled)merits.push(zhM?"无人溃散":"Nobody broke"); if((b.covUsed||0)>=2)merits.push(zhM?"眼疾手快":"Quick reflexes");
-    b.merits=merits; S.rp+=merits.length; b.rpGain=2+(lvl.fort?3:0)+merits.length; const vetGain=surv>0?Math.min(surv,Math.max(1,Math.floor(surv*(0.25+0.05*merits.length)))):0; const need=Math.max(1,Math.ceil(b.e0*0.6)); const hold=Math.min(surv-vetGain,need); const rear=surv-vetGain-hold;
+    b.merits=merits; if(RP_ON){ S.rp+=merits.length; b.rpGain=2+(lvl.fort?3:0)+merits.length; } const vetGain=surv>0?Math.min(surv,Math.max(1,Math.floor(surv*(0.25+0.05*merits.length)))):0; const need=Math.max(1,Math.ceil(b.e0*0.6)); const hold=Math.min(surv-vetGain,need); const rear=surv-vetGain-hold;
     const pst=perfStars(rear,b.sent), gain=perfGain(lvl.reward,pst); b.pst=pst; b.gain=gain; const base=lvl.reward;   // v1.3 PERFECTION
     S.vets+=vetGain; S.reserve+=vetGain;
     S.hist.push({lvl:S.lvl,day:S.day,lost:b.dead,sent:b.sent,st:pst,gain});

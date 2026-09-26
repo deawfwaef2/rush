@@ -344,3 +344,7 @@ Standing rules from this round:
 - Formation must occupy the WHOLE depth of the field (near foreground to far side) during trench wait, charge, gather and melee. No convergence to the centre lane (not by climb-out, officer following, melee pairing or camera).
 - No instant spawning or position snapping anywhere in battle: every figure walks/climbs/rises into place (enemy reinforcements included).
 - No RP: no RP gains, no depot UI, no RP lines in reports; purchased-loadout effects disabled.
+## v1.4a RP off + full-depth formation (2026-09-27, agent A)
+- RP_ON=false (next to SHOP): depot button hidden, applyLoadout() no-op (clears S.buy), no S.rp gains, no "Reinforcement points earned" row. Merits still give +5% vets each.
+- Formation uses the WHOLE depth: slotZ/slotRank span z 0.03..1.0; climb-out keeps each man's lane (no squeeze); officer following no longer pulls men into his lane; defenders placed 0.03..1.0.
+  Measured (lvl 6, 150 men, line): charge z-range 0.03..0.99 at 6/11/16 s (was 0.19..0.87); men in the bottom 20% of the screen doubled.
