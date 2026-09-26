@@ -190,3 +190,7 @@ NEW wishes:
 - trenchCols(): palette-aware trench colours (berm, burlap bags x4, lit/shadow strips, walls, floor, cut); winter = snow caps on top course.
 - Parapet/parados now: earth berm polygon + lit crest + brick-bond sandbag courses (rounded bags w/ highlight + shadow), traverses same style; comm trenches/support line earthy with spoil lip instead of black strips/blobs.
 - Men waiting in trench drawn in shadow (trenchShadeCache darkened cols). Global rim light 0.55→0.22 (men looked like pale blobs).
+
+## v1.1i per-level set pieces
+- SETP[i] per level (by level name): road, windmill, orchard, chapel/church, poplars, canal+lock, farm+crows, brewery+chimney, red house (red door), mud pools, duckboard path, crater field, railway embankment, dead wood, frozen pools, night grade + lanterns, pond, pines (snow caps), quarry cliff, gas bell post, mustard flowers, pillboxes, ghost village/town, sunken road, meadow, river, dry canal. drawSetFlat() after ground; pushSetEnts() tall objects depth-sorted (anchored at EA=bx+0.42·L so visible in plan view); setNightGrade(); ridges seeded per level.
+- smoke: lvl3/200 win, lvl13/300 loss (wire+engineers level, expected hard without engineers), no errors.
