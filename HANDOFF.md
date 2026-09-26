@@ -291,3 +291,7 @@ COMBAT / PERF
 - Counter-attack: when garrison hits 0, startCounter() adds 18%·e0·ca fresh enemies after 1.4s; waiting men re-enter melee (b.caPending blocks the win).
 - BUG FIX: morale cascade — shockNear hit EVERY runner within 70px (−5.5 each) → 100+ men pinned in dense crowds. Now max 5 nearest, −4 (vet −1.5), and runners regain +1.2 morale/s.
 - Balance note: lvl 21 with 320 men (no supports) still wiped out before melee — needs a balance pass.
+
+## v1.3d chapter sub-areas
+- PAL2 {1: Flanders lowlands, 3: ruined town, 4: open country morning}: chapterPal() returns it for levels 5-8 (idx%8>=4) of those chapters → whole palette/sky/ground changes. Chapters 0 and 2 keep one area (feature unique to some chapters).
+- subAreaCut(ch): first time entering level 5 of such a chapter → full black screen "Weeks later / <sector name> / A new sector of the front", fades out after 2.6s (S.seenSub<ch>). Triggered at the start of toPlan so the new scene is revealed from black.

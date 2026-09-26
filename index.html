@@ -273,6 +273,7 @@ body.cgon #hud,body.cgon #menu,body.cgon #top,body.cgon #advisor,body.cgon #adba
 .shop .nm{font-weight:bold;font-size:14px}.shop .nm em{float:right;font-style:normal;color:#7a5a1a}.shop .ds{font-size:11px;opacity:.8;min-height:28px}
 .shop .qq{display:flex;align-items:center;gap:8px;justify-content:flex-end}.shop .qq button{width:28px;height:26px;border-radius:4px;border:1px solid #0004;background:#fff6;font-size:16px;cursor:pointer}.shop .qq b{min-width:16px;text-align:center}
 @media (max-width:700px){.shop{grid-template-columns:1fr}}
+#blk{position:fixed;inset:0;background:#000;z-index:80;display:flex;align-items:center;justify-content:center;text-align:center;color:#efe4cc;opacity:1;transition:opacity .9s}#blk.out{opacity:0}#blk small{display:block;font:italic 16px Georgia;color:#bba;margin-bottom:10px}#blk b{display:block;font:40px Impact,sans-serif;letter-spacing:.08em}#blk i{display:block;margin-top:8px;font:13px Georgia;letter-spacing:.2em;text-transform:uppercase;color:#998}
 </style>
 </head>
 <body>
@@ -1338,7 +1339,15 @@ let insets=[];     // split-screen cinematics
 let slowmo=1, montage=null;
 let battle=null;
 
-function chapterPal(i){return PAL[CHAPTERS[Math.min(4,Math.floor(i/8))].pal];}
+/* Sub-areas: in some chapters levels 5-8 move to a completely different sector (blackout transition + new palette/scenery). */
+const PAL2={
+ 1:{name:{en:"Flanders lowlands",zh:"佛兰德低地"},sky:["#4e5560","#7a8390","#a4acb2"],sun:"#cfd6dc",far:"#5c6268",mid:"#3f4448",near:"#2a2c2c",ground:["#4a4438","#35302a","#1f1b16"],fog:"rgba(150,160,170,",us:["#5b5a3a","#2a2a18"],vet:["#8a6a2e","#3d2c12"],en:["#5a6470","#2a3038"],tint:"rgba(40,60,90,0.12)"},
+ 3:{name:{en:"The ruined town",zh:"废墟城镇"},sky:["#6a6258","#9a8e7c","#bfb29a"],sun:"#e8dcc0",far:"#7a7060",mid:"#554c40",near:"#3a3228",ground:["#6a5c48","#4c4234","#2e281e"],fog:"rgba(190,175,150,",us:["#4e5a36","#222814"],vet:["#80622a","#36270e"],en:["#566070","#262c36"],tint:"rgba(120,90,50,0.08)"},
+ 4:{name:{en:"Open country, morning",zh:"清晨的开阔原野"},sky:["#6f8aa0","#c7c9b8","#efe2c0"],sun:"#fff4d8",far:"#8a9478",mid:"#5d6a48",near:"#3a4430",ground:["#6f7a48","#505a34","#2e3420"],fog:"rgba(220,225,200,",us:["#5a5a36","#26261a"],vet:["#9a6a2a","#40280e"],en:["#4e5664","#22262e"],tint:"rgba(255,230,180,0.05)"}};
+function chapterPal(i){ const ch=Math.min(4,Math.floor(i/8)); if(i%8>=4&&PAL2[ch])return PAL2[ch]; return PAL[CHAPTERS[ch].pal];}
+function subAreaCut(ch,done){ const d=document.createElement("div"); d.id="blk"; const zh=S.lang==="zh"; const n=PAL2[ch].name[S.lang];
+  d.innerHTML=`<div><small>${zh?"数周之后":"Weeks later"}</small><b>${n}</b><i>${zh?"新的战区":"A new sector of the front"}</i></div>`; document.body.appendChild(d);
+  SFX.play&&SFX.play("booms_far",0.4,{fixed:1,dur:3}); setTimeout(()=>d.classList.add("out"),2600); setTimeout(()=>{d.remove(); done&&done();},3500); }
 
 function setupFront(){
   lvl=levelDef(S.lvl); cur=JSON.parse(JSON.stringify(lvl));
@@ -1626,6 +1635,7 @@ function toPlan(){
   BGM.play("calm");
   if(S.done){showEnd();return;}
   AU.init(); AU.click();
+  { const ch0=Math.floor(S.lvl/8); if(S.lvl%8===4 && PAL2[ch0] && !S["seenSub"+ch0]){ S["seenSub"+ch0]=1; save(); subAreaCut(ch0); } }
   mode="pan"; $("menu").classList.add("hide"); $("hud").classList.add("hide");
   setupFront(); men=[]; pushQueue=0; pushList=[]; waves=[{r:0,v:0,f:1,d:0}]; wSel=0;
   cam.tx=trenchX(S.lvl)+SEGL()*0.2; cam.tz=0.9; cam.tt=0.45;
