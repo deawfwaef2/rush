@@ -399,3 +399,8 @@ User LIKES this version (v1.4b). Requests:
 3. Package again (ZIPs).
 4. Write everything needed for the CrazyGames submission form: game name, description, controls, tags, etc.
 5. The last sentence was cut off ("而且你再对...") - ask the user what they meant.
+## v1.4f round-15 fixes (2026-09-27, agent A)
+- Edge-scroll only when the cursor is on the battlefield canvas itself (e.target===cv, below the top-bar band) and has rested 0.35 s in the 4% edge strip.
+  Panels, buttons, cards, the top bar and modals never move the camera; passing through the edge on the way to a button does nothing. Keys A/D/arrows still pan.
+- Developer mode REMOVED at the user's request (settings row, DEV +1d button, +1 day / +1 lvl / morale / tutorial buttons, unused ?debug const). Do not re-add it.
+- Settings reset: two-step in-game confirm (window.confirm may be blocked in portal iframes); on Playgama it also overwrites the bridge.storage save.

@@ -40,7 +40,6 @@ b{font-weight:700}
 #bAdW .lb2{font-size:12px;line-height:1.2}
 #bAdW .lb2 b{font-size:14px;color:#f3d890}
 #bAdW.used{filter:grayscale(1);opacity:.5;box-shadow:none}
-#bDev{background:#3a1010;border-color:#a33;color:#fbb;font-size:11px;width:auto;padding:0 10px;font-family:monospace}
 /* ---------- buttons ---------- */
 .btn{cursor:pointer;border:none;color:#1b140c;background:linear-gradient(#f0dfb2,#b99a5d);border-radius:4px;padding:10px 22px;font-size:20px;box-shadow:inset 0 1px 0 #fff8,0 3px 0 #5e4a2a,0 6px 14px #0008;font-family:inherit}
 .btn:active{transform:translateY(3px);box-shadow:0 0 0 #5e4a2a}
@@ -305,7 +304,6 @@ body.cgon #hud,body.cgon #menu,body.cgon #top,body.cgon #advisor,body.cgon #adba
     <div class="chip" id="cDay"></div>
     <div class="chip" id="cClock"></div>
     <div class="grow"></div><div id="topStrip"></div>
-    <div class="ibtn hide" id="bDev">DEV +1d</div>
     <div id="bAdW"><div class="ic" id="bAd"></div><div class="lb2" id="adLbl"></div></div>
     <div class="ibtn" id="bSound"></div>
     <div class="ibtn" id="bSet"></div>
@@ -367,7 +365,6 @@ body.cgon #hud,body.cgon #menu,body.cgon #top,body.cgon #advisor,body.cgon #adba
 /* ============================================================
    RUSH — single-file game. See HANDOFF.md / ADS.md
    ============================================================ */
-const DEBUG = /debug/.test(location.search);
 const DAY_MS = 24*3600*1000;          // real time per "day" of reinforcements
 const START_TROOPS = 100, START_INCOME = 100;   // v1.3: daily draft x3 (starts at 100/day)
 
@@ -492,7 +489,7 @@ const SAVE_KEY="charge_save_v3";
 let S;
 function newSave(){return {rp:2,lvl:0,reserve:START_TROOPS,vets:0,income:START_INCOME,lastPay:Date.now(),day:1,adDay:0,
   supDay:0,sup:{art:0,snp:0,smk:0,tnk:0},hist:[],lost:0,start:Date.now(),playMs:0,lang:"en",
-  snd:1,mus:1,done:false,lvlDay:1,lvlLost:0,morale:60,moraleT:Date.now(),tut:0,dev:0,lastGain:0,econ:3,stars:{}}}
+  snd:1,mus:1,done:false,lvlDay:1,lvlLost:0,morale:60,moraleT:Date.now(),tut:0,lastGain:0,econ:3,stars:{}}}
 function load(){try{S=JSON.parse(localStorage.getItem(SAVE_KEY))}catch(e){} if(!S||typeof S.lvl!=="number")S=newSave(); S=Object.assign(newSave(),S);
   if(S.econ!==3){ S.income=START_INCOME+Math.max(0,(S.income||20)-20)*3; S.econ=3; } if(!S.stars)S.stars={}; }
 function save(){ const j=JSON.stringify(S); if(AD&&AD.store(j))return; try{localStorage.setItem(SAVE_KEY,j)}catch(e){} }
@@ -1568,7 +1565,6 @@ function updTop(){ updStrip(); updClock(); updDepotB();
   $("cDay").innerHTML=`<div class="ic">${IC.cal}</div><div class="vv"><span class="lb">${t.lblDay}</span><b>${S.day}</b></div>`;
   const used=adLeft()<=0; $("bAdW").classList.toggle("used",used);
   $("adLbl").innerHTML=used?`<b>${t.adUsed}</b><br>${zh?"每天3次":"3 per day"}`:`<b>${t.lblAd}</b><br>+${adMen()} · ${adLeft()}/3`;
-  $("bDev").classList.toggle("hide",!S.dev);
   const ch=$("charge"); if(ch){ ch.classList.toggle("refuse",S.morale<=2); }
 }
 function failBtnUpd(){ const F=(S.fails||{})[S.lvl]||[]; const el=$("failBtn"); if(!el)return; const zh=S.lang==="zh"; el.classList.toggle("hide",!F.length); if(!F.length)return;
@@ -2514,19 +2510,16 @@ function openSettings(){
   <div class="set-row"><span>${t.time}</span><span>${fmtT(Date.now()-S.start)} · ${S.day}d · ${IC.skull.replace('<svg','<svg width=16 height=16 style="filter:invert(1) brightness(.2)"')} ${S.lost}</span></div>
   <div class="set-row"><span>${S.lang==="zh"?"画质":"Graphics"}</span><span>${[["a",S.lang==="zh"?"自动":"Auto"],["h",S.lang==="zh"?"高":"High"],["m",S.lang==="zh"?"中":"Med"],["l",S.lang==="zh"?"低":"Low"]].map(([k,n])=>`<button class="btn sm ${(S.gfx||"a")===k?"":"dim"}" data-gfx="${k}">${n}</button>`).join(" ")}</span></div>
   <div class="set-row"><span style="opacity:.6">${t.reset}</span><button class="btn dim" id="sRst">↺</button></div>
-  <div class="set-row"><span>${S.lang==="zh"?"开发者模式":"Developer mode"}</span><button class="btn ${S.dev?"":"dim"}" id="sDev">${S.dev?"ON":"OFF"}</button></div>
-  ${S.dev?`<div class="set-row"><span>DEV</span><span><button class="btn sm" id="sDay">+1 ${S.lang==="zh"?"天":"day"}</button> <button class="btn sm" id="sWin">+1 lvl</button> <button class="btn sm" id="sMor">${S.lang==="zh"?"士气":"Morale"} ±</button> <button class="btn sm" id="sTut">Tutorial</button></span></div>`:""}
   <button class="btn red" id="sOk">✓</button></div>`;
   $("sEn").onclick=()=>{S.lang="en";S.langPicked=1;save();applyTexts();openSettings();refreshTexts();};
   $("sZh").onclick=()=>{S.lang="zh";S.langPicked=1;save();applyTexts();openSettings();refreshTexts();};
   $("sSnd").onclick=()=>{S.snd^=1;save();AU.set();applyTexts();openSettings();};
   $("sMus").onclick=()=>{S.mus^=1;save();AU.set();openSettings();};
-  $("sRst").onclick=()=>{if(confirm("Reset all progress?")){localStorage.removeItem(SAVE_KEY);location.reload();}};
+  $("sRst").onclick=()=>{ const b=$("sRst"); if(!b.dataset.arm){ b.dataset.arm=1; b.classList.remove("dim"); b.classList.add("red"); b.textContent=S.lang==="zh"?"再点一次确认重置":"Click again to reset"; setTimeout(()=>{ if(b.isConnected){ delete b.dataset.arm; b.textContent="↺"; b.classList.add("dim"); b.classList.remove("red"); } },3500); return; }
+    try{localStorage.removeItem(SAVE_KEY);}catch(e){} const done=()=>location.reload();
+    if(AD.prov==="playgama"){ clearTimeout(AD._st); S=newSave(); try{ Promise.resolve(bridge.storage.set([SAVE_KEY],[JSON.stringify(S)])).then(done,done); }catch(e){ done(); } } else done(); };
   $("sOk").onclick=()=>{ov.classList.add("hide");};
   ov.querySelectorAll("[data-gfx]").forEach(b=>b.onclick=()=>{ S.gfx=b.dataset.gfx; save(); if(S.gfx==="a"){ QMAX=2; } else { QUAL={h:2,m:1,l:0}[S.gfx]; resize(); } openSettings(); });
-  $("sDev").onclick=()=>{S.dev^=1;save();updTop();openSettings();};
-  if(S.dev){$("sDay").onclick=()=>{giveDay();updTop();toast("+1 day");};$("sWin").onclick=()=>{S.hist.push({lvl:S.lvl,day:S.day,lost:0});S.income+=levelDef(S.lvl).reward;S.lvl=Math.min(NLV-1,S.lvl+1);save();ov.classList.add("hide");toMenu();};
-    $("sMor").onclick=()=>{S.morale=S.morale>50?0:100;S.moraleT=Date.now();save();updTop();openSettings();}; $("sTut").onclick=()=>{S.tut=0;save();ov.classList.add("hide");toPlan();};}
 }
 function refreshTexts(){ if(mode==="menu")toMenu(); if(mode==="plan"){hazRows();buildSupports();advisor();} }
 
@@ -2623,7 +2616,6 @@ function moraleCard(){ const t=L_(),zh=S.lang==="zh",ov=$("ov"); ov.classList.re
    <ul class="mech"><li>${zh?"胜利：士气 +18（要塞 +30）":"Victory: +18 (fortress +30)"}</li><li>${zh?"失败：士气 −20，惨败再 −5":"Defeat: −20, a massacre −5 more"}</li><li>${zh?"士气会随时间慢慢回到 50":"Over time it always drifts back to 50"}</li><li>${zh?"士气为 0 时，士兵拒绝冲锋":"At 0 the men refuse to charge"}</li></ul>
    <button class="btn" id="mOk" style="margin-top:10px">OK</button></div>`; $("mOk").onclick=()=>ov.classList.add("hide"); }
 $("cTimer").onclick=reinfCard; $("cTroops").onclick=reinfCard; $("cMorale").onclick=moraleCard;
-$("bDev").onclick=()=>{AU.init();giveDay();updTop();reinfCinema(dailyMen());if(mode==="plan"){buildSupports();setSend(sendN);}};
 // --- tutorial ---
 const TUT={en:[
  ["#right","THE ENEMY","This is what waits across no man's land. Tap any line to see exactly how it works."],
@@ -2660,10 +2652,15 @@ addEventListener("pointermove",e=>{ if(drag&&drag.look){ lookOff=Math.max(-SEGL(
 addEventListener("pointerup",()=>{drag=null;});
 cv.addEventListener("wheel",e=>{ if(mode==="menu"){cam.tx=Math.min(trenchX(S.lvl)+400,Math.max(-300,cam.tx+e.deltaY+e.deltaX));} },{passive:true});
 // mouse at left edge pans back
-let edge=0, lookOff=0; addEventListener("mousemove",e=>{ edge = (e.clientX<W*0.05?-1:e.clientX>W*0.95?1:0); });
-document.addEventListener("mouseleave",()=>edge=0);
-addEventListener("keydown",e=>{ if(e.code==="ArrowLeft"||e.code==="KeyA")edge=-1; if(e.code==="ArrowRight"||e.code==="KeyD")edge=1; });
-addEventListener("keyup",e=>{ if(["ArrowLeft","ArrowRight","KeyA","KeyD"].includes(e.code))edge=0; });
+/* camera edge-scroll (v1.4f): ONLY when the cursor is on the battlefield itself (e.target is the canvas) - never over panels,
+   buttons, cards or the top bar - and only after resting 0.35 s in the edge strip, so moving to a button never drags the view. */
+let edge=0, lookOff=0, mEdge=0, mEdgeT=0, kEdge=0, topB=0, topBT=0;
+function topBand(){ const n=performance.now(); if(n-topBT>1000){ topBT=n; const t=document.getElementById("top"); topB=t?t.getBoundingClientRect().bottom:0; } return topB; }
+addEventListener("mousemove",e=>{ mEdge = (e.target===cv && e.clientY>topBand()+6) ? (e.clientX<W*0.04?-1:e.clientX>W*0.96?1:0) : 0; });   // the top bar band counts as interface too
+document.addEventListener("mouseleave",()=>{ mEdge=0; });
+addEventListener("blur",()=>{ mEdge=0; kEdge=0; });
+addEventListener("keydown",e=>{ if(e.code==="ArrowLeft"||e.code==="KeyA")kEdge=-1; if(e.code==="ArrowRight"||e.code==="KeyD")kEdge=1; });
+addEventListener("keyup",e=>{ if(["ArrowLeft","ArrowRight","KeyA","KeyD"].includes(e.code))kEdge=0; });
 addEventListener("keydown",e=>{ if(e.code==="Space"&&mode==="plan")startCharge(); });
 
 /* ============================================================
@@ -2673,6 +2670,7 @@ let last=performance.now(), secT=0;
 function frame(now){
   if(AD.paused){ last=now; requestAnimationFrame(frame); return; }
   let rdt=Math.min(0.05,(now-last)/1000); last=now; perfTick(rdt); const dt=rdt*slowmo; time+=dt;
+  mEdgeT = mEdge ? mEdgeT+rdt : 0; edge = kEdge || (mEdgeT>0.35 ? mEdge : 0);
   $("edL").classList.toggle("on",edge<0); $("edR").classList.toggle("on",edge>0);
   // payday
   if((mode==="plan"||mode==="charge"||mode==="melee"||mode==="barrage")&&!chCG){ S.clock=(S.clock||0)+rdt*1000; (S.lvlT=S.lvlT||{})[S.lvl]=(S.lvlT[S.lvl]||0)+rdt*1000; clockT+=rdt; if(clockT>0.25){clockT=0; updClock();} }
