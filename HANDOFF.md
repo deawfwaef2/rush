@@ -60,3 +60,23 @@ TODO: multi-lane routes (ch3+), better enemy trench/insets, chapter scenery tran
 User: edge-of-screen mouse pans camera; terrain still crude; REMOVE advisor; UI too small; units must not pop/float in; trenches too simple; victory FX must be bigger/more satisfying; master-level UI; SFX + BGM (online music ok); artillery/sniper animations play only AFTER pressing CHARGE; supports selectable in quantity (multiple).
 Done (v0.6a–e): no advisor; edge/arrow/drag pan (menu+plan); supports queued with −/+ and executed after CHARGE (bombardment phase with per-shot result); UI zoom (UIZ); men walk in from off-screen; music audio/calm.mp3 + audio/charge.mp3 (Kevin MacLeod CC-BY, see CREDITS.md — keep credit!); detailed trenches; v0.6e: far patchwork fields, painterly ground mottling, ruts, drifting ground fog, VICTORY FX (signal flares, gold burst+rays, tossed helmets, falling paper, jumping men, ribbon+medal banner, count-up stat tiles).
 AGENT NOTES: `.git/config` is not persisted → after a workspace reset run `git remote add origin https://<user>:<token>@github.com/deawfwaef2/rush.git` and `git fetch`; ALWAYS check `git log origin/main` before pushing — remote may be ahead of the local workspace (a stopped session can still have pushed). Also set git user.name/email again. Playwright may need `python3 -m playwright install-deps chromium`.
+
+---
+## Feedback round 5 (2026-09-26) → v0.7  (verbatim-ish summary of user wishes; keep for future agents)
+PERF IS TOP PRIORITY ("好卡" said 3x). Never regress perf: soldiers are drawn via sprite cache (`SPR`, drawMan→drawImage). New art for soldiers must go through drawMan0 so it gets cached. Test with 600+ men.
+Gameplay wishes:
+- WAVE FRAMES (冲击波帧) from LEVEL 1: player defines waves (frames); each wave = count, unit type (recruit / veteran; later elite, flamethrower, engineer), spacing (loose/normal/dense), delay. Dense → warning. Simple UI. Order matters (elites later, flamers after, engineers for wire). Too loose = lose melee; too dense = MG/shell slaughter. Real WW1 feel, no unrealistic blobs.
+- Recruits & veterans are SEPARATE counts/choices. Veterans die less.
+- Hit chance rises the closer to the enemy line.
+- Per-soldier MORALE: low morale men go prone and stop ("pinned") = counted as LOSS.
+- Melee: more exciting; numerical superiority gives ratio bonus; wave density matters; melee suppresses enemy fire.
+- Trenches have DEPTH (several lines, not one line); later levels more lines, enemy outpost houses in front, a buffer zone where our side fires first (free damage).
+- Victory stats clear: sent / killed / pinned / survived / held garrison / sent to rear, + a remark rating troop efficiency (overkill / efficient / pyrrhic).
+- Failed attacks: the enemy position shows a record of every failed wave config per attempt.
+- Charge animation differs by troop count; reinforcement arrival cinematic scaled by count.
+- Soldier fill order: near → far. Far battle zone appears only when crowd is large (camera pulls out, new far zone). Same for enemy.
+- Flag: master-level design, green + emblem.
+- Out of troops → popup ad offer (in-world "telegram"). Ads: up to 3 per day, each = +1 day of troops.
+- Better ambience: battlefield soundscape (distant artillery, MG echoes, shouts, whistles, wind, rain).
+- Weather changes per chapter. Artillery shells animated (arc, flash, dirt). Longer levels.
+- Historical realism over simplification.
