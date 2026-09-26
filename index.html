@@ -67,6 +67,18 @@ b{font-weight:700}
 .rep{margin:10px 0 6px;text-align:left;font-size:13px}.rep table{width:100%;border-collapse:collapse}.rep td{padding:3px 6px;border-bottom:1px solid #ffffff14}.rep td:last-child{text-align:right;font-family:Impact,sans-serif;font-size:17px}.rep td small{font-family:Georgia;font-size:10px;opacity:.7}.rep .red{color:#e87a5a}.rep .gold{color:#f0c870}.rep .rem{margin-top:8px;padding:7px 9px;background:#0005;border-left:3px solid var(--brass);font-style:italic;line-height:1.4}
 .fails{grid-column:1/-1;width:100%;margin-top:8px;font-size:11px;border-top:1px solid #ffffff18;padding-top:6px}.fails .ft{color:#e87a5a;letter-spacing:.15em;margin-bottom:3px}.fails .fr{padding:2px 0;color:var(--ink)}.fails .fr i{color:var(--dim);margin:0 3px 0 1px}.fails .fr span{color:#e8a080;margin-left:4px}
 .ov .card{max-height:96vh;overflow:auto}
+.strip{margin:2px 0 6px;padding:6px 6px 4px;background:#0004;border:1px solid #ffffff14;border-radius:6px;font-size:11px;letter-spacing:0}
+.strip .sh{color:var(--dim);margin-bottom:4px}.strip .sh b{color:#f0c870;font-family:Impact,sans-serif;font-size:15px;letter-spacing:.05em}
+.strip .nodes{display:flex;justify-content:space-between;align-items:flex-end;position:relative}
+.strip .nodes:before{content:"";position:absolute;left:10px;right:10px;bottom:11px;height:2px;background:#ffffff22}
+.strip .nd{position:relative;width:24px;text-align:center}
+.strip .nd span{display:block;width:22px;height:22px;border-radius:50%;background:#2a2217;border:1px solid #6a5a3a;font:12px/21px Impact,sans-serif;color:#bba}
+.strip .nd i{display:block;height:15px;font-style:normal;font-size:11px;line-height:15px;white-space:nowrap;margin-left:-6px;margin-right:-6px}
+.strip .nd.done span{background:#3d5a2a;border-color:#8fa060;color:#e8f0d0}
+.strip .nd.cur span{background:#a8321f;border-color:#f3d890;color:#fff;box-shadow:0 0 0 3px #f3d89044}
+.strip .nd.fort span{border-radius:3px;border-width:2px}
+.strip .nd.cg span{border-style:double;border-width:3px}
+.strip .lg{margin-top:4px;color:#f0c870}.strip .lg span{display:block;color:var(--dim);font-size:10px}
 #left{left:12px;top:72px;width:270px;max-height:calc(100vh - 160px);overflow:auto}
 #waveTabs{display:flex;gap:4px;margin-bottom:6px;flex-wrap:wrap}
 #waveTabs button{flex:1;min-width:44px;height:38px;border-radius:5px;border:1px solid var(--line);background:linear-gradient(#3a3226,#1f1a13);color:var(--ink);font-family:Impact,sans-serif;font-size:15px;letter-spacing:.06em;cursor:pointer;line-height:1;position:relative}
@@ -253,7 +265,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
     </div>
     <div class="panel" id="right">
       <div class="ph"><span id="lblEnemy">ENEMY</span><span id="lvlName"></span></div>
-      <div id="hzList"></div>
+      <div id="strip"></div><div id="hzList"></div>
       <div id="reward"></div>
       <div id="fort" class="hide"></div>
     </div>
@@ -1155,6 +1167,17 @@ function updTop(){
 }
 function failsHTML(){ const F=(S.fails||{})[S.lvl]; if(!F||!F.length)return ""; const zh=S.lang==="zh"; const fl=zh?["散","横","密"]:["L","Ln","D"];
   return `<div class="fails"><div class="ft">✝ ${zh?"此阵地失败的冲锋":"FAILED ATTACKS HERE"}</div>`+F.map((f,i)=>`<div class="fr"><b>#${i+1}</b> ${zh?"第":"D"}${f.day}${zh?"天":""} · ${f.w.map((w,j)=>`W${j+1} ${w.r}${w.v?"+★"+w.v:""}<i>${fl[w.f]}</i>`).join(" ")} <span>✝${f.dead} ⬇${f.pin} · ${zh?"残敌":"left"} ${f.e}</span></div>`).join("")+`</div>`; }
+const ROM=["I","II","III","IV","V","VI"];
+function lvlCode(i){ return ROM[Math.floor(i/8)]+"-"+(i%8+1); }
+function lvlTags(i){ const t=[]; const k=i%8; if(k===2)t.push("cg"); if(k===7)t.push("fort");
+  if([2,3,8,9,24,32].includes(i))t.push("new");
+  return t; }
+const TAGI={cg:"🎬",fort:"🏰",new:"✦"};
+function stripHTML(){ const ch=Math.floor(S.lvl/8), zh=S.lang==="zh"; let h=`<div class="strip"><div class="sh">${CHAPTERS[Math.min(4,ch)][S.lang]} · <b>${lvlCode(S.lvl)}</b></div><div class="nodes">`;
+  for(let k=0;k<8;k++){ const i=ch*8+k; if(i>=NLV)break; const tg=lvlTags(i); const st=i<S.lvl?"done":i===S.lvl?"cur":"";
+    h+=`<div class="nd ${st} ${tg.join(" ")}" title="${LV[i][0]}"><i>${tg.map(x=>TAGI[x]).join("")}</i><span>${k+1}</span></div>`; }
+  const tg=lvlTags(S.lvl); const nm={cg:zh?"章节影片":"chapter film",fort:zh?"要塞":"fortress",new:zh?"新机制":"new mechanic"};
+  return h+`</div><div class="lg">${tg.length?tg.map(x=>TAGI[x]+" "+nm[x]).join(" · "):""}<span>🎬 ${nm.cg} · 🏰 ${nm.fort} · ✦ ${nm.new}</span></div></div>`; }
 function hazRows(){
   const t=L_(), rows=[];
   const add=(k,v,max)=>{ if(lvl[k]>0||v>0) rows.push(`<div class="hz" id="hz_${k}" data-k="${k}">${ico(k)}<span class="nm">${t.hz[k]}</span><span class="val">${k==="gr"||k==="mn"?Math.round(v):Math.round(v*10)/10}</span><div class="bar"><i style="width:${Math.min(100,v/max*100)}%"></i></div><div class="ds">${t.hzD[k]} <span class="inf">ⓘ</span></div></div>`); };
@@ -1163,7 +1186,7 @@ function hazRows(){
   $("reward").innerHTML=`${ico("truck","b")}<div><div class="t">${t.rewardT}</div><div class="v">+${lvl.reward} ${S.lang==="zh"?"人 / 天":"men / day"}</div><div class="t">${S.income} → ${S.income+lvl.reward}</div></div>`+failsHTML();
   $("sendD").textContent=t.spent;
   const f=$("fort"); f.classList.toggle("hide",!lvl.fort); f.textContent=`⚠ ${t.fortress} · ${t.fortTip}`;
-  $("lvlName").textContent=`${LV[S.lvl][0]} · ${S.lvl+1}/${NLV}`;
+  $("lvlName").textContent=`${lvlCode(S.lvl)} · ${LV[S.lvl][0]}`; $("strip").innerHTML=stripHTML();
 }
 function buildSupports(){
   const t=L_(),el=$("supports");el.innerHTML="";
@@ -1322,7 +1345,7 @@ function toMenu(){
   setupFront(); worldVisibleIdle();
   cam.tx=trenchX(S.lvl)-250; cam.tz=1.25; cam.tt=0.15;
   const ch=CHAPTERS[Math.min(4,Math.floor(S.lvl/8))];
-  $("menuHint").textContent=S.lang==="zh"?"← 拖动画面查看攻克的阵地":"← drag to look back at captured lines"; $("frontinfo").innerHTML= S.done? L_().endT : `${ch[S.lang]} · ${LV[S.lvl][0]}`;
+  $("menuHint").textContent=S.lang==="zh"?"← 拖动画面查看攻克的阵地":"← drag to look back at captured lines"; $("frontinfo").innerHTML= S.done? L_().endT : `${ch[S.lang]} · ${lvlCode(S.lvl)} ${LV[S.lvl][0]}`+`<div style='max-width:420px;margin:8px auto 0'>${stripHTML()}</div>`;
   $("subtitle").textContent=ch.year;
 }
 function toPlan(){
