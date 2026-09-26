@@ -137,3 +137,19 @@ TODO next: plan camera should frame own trench better; unit types; enemy outpost
 - Emoji removed: SVI svg icons (cg/fort/new/warn); ▶ uses text variation selector.
 - Veteran bug: holdBtnF auto-repeat never stopped because buildWaves destroyed the button → global HOLDS stop on window pointerup; vetRow built once (buildVetRow) w/ pips; waves clamped to available men.
 - Chapter CG: only the SKIP button (#cgSkip) skips.
+
+---
+## Feedback round 9 (2026-09-26) → v1.1+  (same list as round 8 re-sent, plus NEW mechanics)
+Still open from round 8: master-level trench art; melee teleport bugs; CG quality + CG slow/laggy (perf!); SKIP button only.
+NEW wishes:
+- Each LEVEL should feel different: terrain + classic scenery varies subtly per level (not just per chapter).
+- Every NEW mechanic → popup explaining it when first met; enemy panel shows an icon/hint of what unlocks AFTER this level.
+- Units too clumped → more depth spread (use the whole depth of the field).
+- FORTRESS victory should be grander (normal victory stays quiet).
+- FAILURE stats UI is bad → put elsewhere, clearer numbers.
+- Men who reach the enemy wire must not wait too long (they were near-invulnerable while waiting).
+- Performance must improve; CG slow/laggy.
+- Skill/strategy: different operations with different outcomes; reward skilful play.
+- MID-GAME unlock: GENERAL/OFFICER (strategic resource, 1 per charge). Player controls him with WASD; troops follow him. Terrain has safe zones (dead ground / shell craters) where you can halt, regroup, and re-order the charge. Officer can die → short cinematic, then troops continue on original order.
+- MID-GAME unlock: SIGNAL FLARE: order waves to move to a buffer/safe zone and WAIT, then fire flare → all continue together.
+- MID-GAME: barbed wire belts on the route; ENGINEERS unit type cuts wire (otherwise men stall at wire and die).
