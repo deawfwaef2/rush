@@ -412,6 +412,12 @@ function mf(){ return 0.75+0.5*S.morale/100; }
 function moraleWord(){ const m=S.morale, zh=S.lang==="zh"; return m<=2?(zh?"拒绝冲锋":"Refusing"):m<20?(zh?"崩溃边缘":"Broken"):m<40?(zh?"低落":"Low"):m<60?(zh?"平稳":"Steady"):m<80?(zh?"高昂":"High"):(zh?"狂热":"Fired up"); }
 function moraleIncomeF(){ return S.morale>=70?1.1:S.morale<30?0.9:1; }
 function dailyMen(){ return Math.round(S.income*moraleIncomeF()); }
+function adLeft(){ const d=new Date().toDateString(); if(S.adDate!==d){S.adDate=d;S.adN=0;} return 3-(S.adN||0); }
+function adOffer(){ if(adLeft()<=0||mode!=="plan")return; const zh=S.lang==="zh",ov=$("ov"); ov.classList.remove("hide"); AU.click();
+  ov.innerHTML=`<div class="card tele"><div class="date">${zh?"电报 · 师部":"TELEGRAM · DIVISION HQ"}</div><h2 class="stencil">${zh?"兵力不足":"NO MEN LEFT"}</h2>
+  <p style="font-family:'Courier New',monospace;text-align:left;font-size:14px;line-height:1.6">${zh?"前线兵力枯竭 停 预备营可提前开拔 停 需要您批准 停":"FRONT LINE EXHAUSTED STOP RESERVE BATTALION CAN ENTRAIN NOW STOP AWAITING YOUR SIGNATURE STOP"}</p>
+  <div style="display:flex;gap:10px;justify-content:center"><button class="btn red" id="tAd">${IC.ad.replace('<svg','<svg width=20 height=20 style="vertical-align:-4px"')} +${dailyMen()} (${adLeft()}/3)</button><button class="btn" id="tNo">${zh?"等待":"Wait"}</button></div></div>`;
+  $("tNo").onclick=()=>ov.classList.add("hide"); $("tAd").onclick=()=>{ov.classList.add("hide");$("bAdW").onclick();}; }
 function payDays(){
   const now=Date.now(); let n=Math.floor((now-S.lastPay)/DAY_MS);
   if(n>0){ n=Math.min(n,7); S.lastGain=dailyMen()*n; S.reserve+=dailyMen()*n; S.day+=n; S.lastPay+=Math.floor((now-S.lastPay)/DAY_MS)*DAY_MS; refreshSupports(true); save(); return n;}
@@ -860,6 +866,24 @@ function seg(ax,ay,bx,by,w1,w2){ // tapered limb with round caps
   cx.beginPath();cx.moveTo(ax+nx*w1/2,ay+ny*w1/2);cx.lineTo(bx+nx*w2/2,by+ny*w2/2);cx.lineTo(bx-nx*w2/2,by-ny*w2/2);cx.lineTo(ax-nx*w1/2,ay-ny*w1/2);cx.fill();
   cx.beginPath();cx.arc(ax,ay,w1/2,0,7);cx.arc(bx,by,w2/2,0,7);cx.fill();}
 function limb(ax,ay,bx,by,w){seg(ax,ay,bx,by,w,w);}
+/* FLAG: regimental colour (green field, gold fringe, laurel + star + crossed rifles) — cached, waved by slices */
+const FLAGC=(()=>{ const c=document.createElement("canvas"); c.width=240; c.height=160; const g=c.getContext("2d");
+  const bg=g.createLinearGradient(0,0,0,160); bg.addColorStop(0,"#2f6a34"); bg.addColorStop(1,"#1d4a22"); g.fillStyle=bg; g.fillRect(0,0,240,160);
+  g.fillStyle="#173c1b"; for(let i=0;i<240;i+=6)g.fillRect(i,0,1,160);
+  g.strokeStyle="#d8b04a"; g.lineWidth=8; g.strokeRect(4,4,232,152); g.strokeStyle="#8a6a20"; g.lineWidth=1.5; g.strokeRect(12,12,216,136);
+  g.fillStyle="#e8c860"; for(let i=0;i<240;i+=8){g.beginPath();g.arc(i+4,158,3,0,7);g.fill();}
+  g.save(); g.translate(120,80);
+  g.strokeStyle="#e8c860"; g.lineWidth=5; g.lineCap="round"; for(const d of [-1,1]){ g.save(); g.rotate(d*0.7); g.beginPath(); g.moveTo(0,-52); g.lineTo(0,52); g.stroke(); g.fillStyle="#e8c860"; g.fillRect(-4,36,8,16); g.restore(); }
+  for(const d of [-1,1]) for(let i=0;i<9;i++){ const a=Math.PI/2+d*(0.35+i*0.28); const x=Math.cos(a)*44, y=Math.sin(a)*44; g.save(); g.translate(x,y); g.rotate(a+d*0.9); g.fillStyle=i%2?"#c9a040":"#e8c860"; g.beginPath(); g.ellipse(0,0,9,3.6,0,0,7); g.fill(); g.restore(); }
+  g.fillStyle="#f4ecd4"; g.beginPath(); for(let i=0;i<10;i++){const r=i%2?11:26,a=-Math.PI/2+i*Math.PI/5; g.lineTo(Math.cos(a)*r,Math.sin(a)*r);} g.closePath(); g.fill(); g.strokeStyle="#8a6a20"; g.lineWidth=1.5; g.stroke();
+  g.restore(); return c; })();
+function drawFlag(sx,sy,s,h,t,rise=1){ // pole base at sx,sy; flag height fraction rise
+  const ph=h*s, fw=62*s, fh=41*s; cx.strokeStyle="#241a10"; cx.lineWidth=Math.max(1.5,2.6*s); cx.beginPath(); cx.moveTo(sx,sy); cx.lineTo(sx,sy-ph); cx.stroke();
+  cx.fillStyle="#d8b04a"; cx.beginPath(); cx.arc(sx,sy-ph-2*s,2.6*s,0,7); cx.fill();
+  const top=sy-ph+(1-rise)*(ph-fh-4*s)+2*s, N=16;
+  for(let i=0;i<N;i++){ const u=i/N, amp=u*5*s, off=Math.sin(t*5-u*6)*amp, sh=0.75+0.25*Math.cos(t*5-u*6);
+    cx.globalAlpha=1; cx.drawImage(FLAGC,u*240,0,240/N+1,160,sx+u*fw,top+off,fw/N+0.6,fh);
+    cx.fillStyle=`rgba(0,0,0,${(1-sh)*0.9})`; cx.fillRect(sx+u*fw,top+off,fw/N+0.6,fh); } }
 /* PERF: sprite cache — each pose rendered once to an offscreen canvas, then blitted */
 const SPR=new Map(); let sprCount=0; const SPR_B=[0.4,0.8,1.6,3.2];
 const TAU=Math.PI*2;
@@ -1065,8 +1089,8 @@ function updTop(){
   $("cTimer").innerHTML=`<div class="ic">${IC.truck}</div><div class="vv"><span class="lb">${t.lblNext} · +${dailyMen()}</span><span>${fmtT(left)}</span><div class="tbar"><i style="width:${100-left/DAY_MS*100}%"></i></div></div>`;
   $("cMorale").innerHTML=`<div class="ic">${IC.morale}</div><div class="vv"><span class="lb">${t.morale} · ${moraleWord()}</span><b>${Math.round(S.morale)}</b><div class="mbar"><i style="width:${S.morale}%;background-position:${-S.morale*0}px 0"></i></div></div>`;
   $("cDay").innerHTML=`<div class="ic">${IC.cal}</div><div class="vv"><span class="lb">${t.lblDay}</span><b>${S.day}</b></div>`;
-  const used=S.adDay===S.day; $("bAdW").classList.toggle("used",used);
-  $("adLbl").innerHTML=used?`<b>${t.adUsed}</b><br>${zh?"每天一次":"once per day"}`:`<b>${t.lblAd}</b><br>+${dailyMen()} ${zh?"人 · 广告":"men · ad"}`;
+  const used=adLeft()<=0; $("bAdW").classList.toggle("used",used);
+  $("adLbl").innerHTML=used?`<b>${t.adUsed}</b><br>${zh?"每天3次":"3 per day"}`:`<b>${t.lblAd}</b><br>+${dailyMen()} · ${adLeft()}/3`;
   $("bDev").classList.toggle("hide",!S.dev);
   const ch=$("charge"); if(ch){ ch.classList.toggle("refuse",S.morale<=2); }
 }
@@ -1247,7 +1271,7 @@ function toPlan(){
   setupFront(); men=[]; pushQueue=0; pushList=[]; waves=[{r:0,v:0,f:1,d:0}]; wSel=0;
   cam.tx=trenchX(S.lvl)+SEGL()*0.42; cam.tz=0.82; cam.tt=0.45;
   setTimeout(()=>{ if(mode!=="pan")return; mode="plan"; $("plan").classList.remove("hide"); hazRows(); buildSupports(); buildPresets(); setSend(Math.min(S.reserve, Math.max(0, Math.ceil(lvl.gr*2)))); CG.gameplayStart(); updTop();
-    if(lvl.fort) big(`⚠ ${L_().fortress}`,L_().fortTip,2200);
+    if(lvl.fort) big(`⚠ ${L_().fortress}`,L_().fortTip,2200); if(S.reserve<Math.max(5,lvl.gr)) setTimeout(adOffer,900);
     const ch=Math.floor(S.lvl/8); if(S.lvl%8===0 && !S["seenCh"+ch]){S["seenCh"+ch]=1;save();chapterCard(ch);} else if(!S.tut) setTimeout(startTut,400); },1300);
 }
 function chapterCard(ch){
@@ -1548,8 +1572,8 @@ $("bBack").onclick=()=>{AU.click();toMenu();};
 $("bSet").onclick=()=>{AU.init();AU.click();openSettings();};
 $("bSound").onclick=()=>{AU.init();S.snd^=1;S.mus=S.snd;save();AU.set();applyTexts();};
 $("bAdW").onclick=()=>{ AU.init();
-  if(S.adDay===S.day){toast(L_().adUsed);return;}
-  CG.rewarded(ok=>{ if(!ok)return; S.adDay=S.day+1; giveDay(); S.adDay=S.day; save(); updTop(); toast(`${L_().adOk} +${S.income}`); if(mode==="menu")worldVisibleIdle(); if(mode==="plan"){buildSupports();setSend(sendN);} });
+  if(adLeft()<=0){toast(L_().adUsed);return;}
+  CG.rewarded(ok=>{ if(!ok)return; adLeft(); S.adN++; giveDay(); save(); updTop(); toast(`${L_().adOk} +${S.income}`); if(mode==="menu")worldVisibleIdle(); if(mode==="plan"){buildSupports();setSend(sendN);} });
 };
 // --- send panel: hold-to-repeat steppers, slider, presets ---
 function holdBtn(el,d){ let iv=null,to=null,n=0; const go=()=>{AU.init();setWave(wSel,waves[wSel].r+d*(n>12?5:1));AU.click();n++;};
@@ -1604,8 +1628,8 @@ function reinfCard(){ const t=L_(),zh=S.lang==="zh",ov=$("ov"); ov.classList.rem
    <tr><td>${t.morale} (${moraleWord()})</td><td>${mfI>1?"+10%":mfI<1?"−10%":"±0"}</td></tr>
    <tr style="font-size:18px"><td><b>${zh?"每天抵达":"Arriving each day"}</b></td><td>${dailyMen()}</td></tr></table>
    ${hist?`<div class="date" style="margin-top:6px">${zh?"最近的奖励":"RECENT REWARDS"}</div><table>${hist}</table>`:""}
-   <p style="font-size:13px">${zh?"援军每24小时抵达一次（离线也会累计，最多7天）。每天可看一次广告，立即领取下一天的援军。":"Men arrive every 24 hours, even while you're away (up to 7 days stored). Once a day you can watch an ad to get the next day's men now."}</p>
-   <div style="display:flex;gap:10px;justify-content:center"><button class="btn ${S.adDay===S.day?"dim":"red"}" id="rAd">${IC.ad.replace('<svg','<svg width=20 height=20 style="vertical-align:-4px;filter:none"')} +${dailyMen()}</button><button class="btn" id="rOk">OK</button></div></div>`;
+   <p style="font-size:13px">${zh?"援军每24小时抵达一次（离线也会累计，最多7天）。每天可看3次广告，每次立即领取一天的援军。":"Men arrive every 24 hours, even while you're away (up to 7 days stored). Up to 3 times a day you can watch an ad to get a day's men now."}</p>
+   <div style="display:flex;gap:10px;justify-content:center"><button class="btn ${adLeft()<=0?"dim":"red"}" id="rAd">${IC.ad.replace('<svg','<svg width=20 height=20 style="vertical-align:-4px;filter:none"')} +${dailyMen()}</button><button class="btn" id="rOk">OK</button></div></div>`;
   $("rOk").onclick=()=>ov.classList.add("hide"); $("rAd").onclick=()=>{ov.classList.add("hide");$("bAdW").onclick();}; }
 function moraleCard(){ const t=L_(),zh=S.lang==="zh",ov=$("ov"); ov.classList.remove("hide"); AU.click(); moraleTick();
   const f=mf();
@@ -1705,8 +1729,8 @@ function frame(now){
   for(let i=L0;i<=S.lvl+1;i++){ drawTrench(trenchX(i), i<=S.lvl?1:-1, i===S.lvl+1?S.lvl:null); }
   // captured markers
   for(const h of S.hist){ const x=trenchX(h.lvl+1); if(Math.abs(x-cam.x)>W*2)continue; const [sx,sy,s]=P(x+20,0.12);
-    cx.strokeStyle="#2a2016";cx.lineWidth=2*s;cx.beginPath();cx.moveTo(sx,sy);cx.lineTo(sx,sy-80*s);cx.stroke();
-    cx.fillStyle="#9a2a1c";cx.beginPath();cx.moveTo(sx,sy-80*s);cx.lineTo(sx+30*s,sy-72*s+Math.sin(time*3)*2*s);cx.lineTo(sx,sy-62*s);cx.fill();
+    
+    drawFlag(sx,sy,s*0.8,100,time+h.lvl);
     if(mode==="menu"&&h.lvl<S.lvl-0){ cx.fillStyle="rgba(20,16,12,0.75)";const tx=sx-40,ty=sy-130*s;cx.fillRect(tx,ty-22,110,36);
       cx.fillStyle="#efe4cc";cx.font="12px Georgia";cx.fillText(LV[h.lvl][0],tx+6,ty-8);cx.font="12px Georgia";cx.fillText(`☼${h.day}   ✝${h.lost}`,tx+6,ty+8);} }
   // mines (hidden: only faint)
@@ -1726,8 +1750,7 @@ function frame(now){
   ents.push({z:MIDZ+0.02,d:drawBerm}); ents.sort((a,b)=>a.z-b.z); drawParts(false); for(const e of ents)e.d(); drawParts(true);
   drawTracers(rdt);
   // flag raise
-  if(flagRaise){flagRaise.t+=rdt; const [sx,sy,s]=P(flagRaise.x,0.5); const hh=Math.min(1,flagRaise.t/2)*120*s; cx.strokeStyle="#1a140c";cx.lineWidth=3*s;cx.beginPath();cx.moveTo(sx,sy);cx.lineTo(sx,sy-130*s);cx.stroke();
-    cx.fillStyle="#b02a1a";cx.beginPath();cx.moveTo(sx,sy-hh-10*s);for(let i=0;i<=10;i++)cx.lineTo(sx+i*5*s,sy-hh-10*s+Math.sin(time*6+i*0.7)*3*s);cx.lineTo(sx+50*s,sy-hh+20*s);for(let i=10;i>=0;i--)cx.lineTo(sx+i*5*s,sy-hh+20*s+Math.sin(time*6+i*0.7)*3*s);cx.fill(); if(flagRaise.t>8)flagRaise=null;}
+  if(flagRaise){flagRaise.t+=rdt; const [sx,sy,s]=P(flagRaise.x,0.5); drawFlag(sx,sy,s*1.6,130,time,Math.min(1,flagRaise.t/2.2)); if(flagRaise.t>8)flagRaise=null;}
   // foreground layer: big dark near silhouettes (depth!)
   groundFog();
   drawVictoryFX(rdt);
