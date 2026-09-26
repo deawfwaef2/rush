@@ -267,3 +267,11 @@ COMBAT / PERF
 - PERF FINDING (CDP CPU profile, 300 men): ctx.restore() after per-man clip() = 52-65% of JS time. Fix next (v1.3b):
   crop with drawImage source rect, pre-mirrored sprites (no save/scale/restore), bake prone/corpses.
 - Tools (outside repo): /home/user/dev/shot.py (win scenario), prof.py, cpuprof.py (CDP profiler), ablate.py, jst.py.
+## v1.3b-1 perf: soldier sprites (2026-09-26)
+- drawMan: mirrored sprites baked into the cache (key has L/R) -> no save/translate/scale/restore per man.
+- opts.crop (screen y of ground line) crops in-trench men/enemies via drawImage SOURCE RECT -> no clip()/restore() (was 52-65% of JS time).
+- Sprites trimmed to tight alpha bbox (makeSprite, scratch canvas willReadFrequently) -> far less wasted fill-rate.
+- Body ARCHETYPES (8) + 2 tones replace ~720 random look combos (run cache thrashed at 300 men: 600-800 sprite renders/s). PHN run/melee 8 phases, cheer 6.
+- queueSpriteWarm() at startCharge + stepSpriteWarm(26) per frame during the montage; per-frame creation budget (28) falls back to neighbouring cached frames.
+- pinned men: state "prone" sprite (rotation baked). Montage men use crop too.
+- Result (headless software canvas, 300 men): plan JS 62 -> 15 ms/frame; charge sprite renders 600-800/s -> <100/s.

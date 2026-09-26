@@ -1093,8 +1093,8 @@ function traverseEnts(ents,x,side){ const seed=Math.round(x)%9973; for(let bay=M
 // a soldier standing on the trench floor: lowered by trench depth and clipped at the ground line, so only helmet & shoulders show
 const trenchShadeCache={}; function toHex(c){ if(c[0]==="#")return c; const m=c.match(/\d+/g); return "#"+m.slice(0,3).map(v=>(+v).toString(16).padStart(2,"0")).join(""); }
 function drawManInTrench(m,lift){ const [sx,sy,s]=P(m.x,m.z,0); if(sx<-80*s||sx>W+80*s)return; const depth=TR_D*(1-lift)*0.95;
-  const mc=manCols(m), sh=1-lift; const key2=mc[0]+mc[1]+(sh>0.5?1:0); let tc=trenchShadeCache[key2]; if(!tc){ tc=trenchShadeCache[key2]=sh>0.5?[shade(toHex(mc[0]),"#0e0a06",0.38),shade(toHex(mc[1]),"#0e0a06",0.3)]:mc; }
-  drawMan(sx,sy+depth*s,s,m.dir,m.phase,m.state==="climb"?"run":"idle",tc,{vet:m.vet,v:m.v,clipY:sy+1*s}); if(m.eng){ cx.fillStyle="#e8e0cc"; cx.fillRect(sx-3*s,sy-52*s,6*s,2.6*s); } }
+  const mc=manCols(m), sh=m.state==="climb"?0:1; const key2=mc[0]+mc[1]+(sh>0.5?1:0); let tc=trenchShadeCache[key2]; if(!tc){ tc=trenchShadeCache[key2]=sh>0.5?[shade(toHex(mc[0]),"#0e0a06",0.38),shade(toHex(mc[1]),"#0e0a06",0.3)]:mc; }
+  drawMan(sx,sy+depth*s,s,m.dir,m.phase,m.state==="climb"?"run":"idle",tc,{vet:m.vet,v:m.v,crop:sy+1*s}); if(m.eng&&depth<40){ cx.fillStyle="#e8e0cc"; cx.fillRect(sx-3*s,sy+(depth-52)*s,6*s,2.6*s); } }
 
 /* ============================================================
    SOLDIERS — silhouette + ragdoll
@@ -1125,39 +1125,68 @@ function drawFlag(sx,sy,s,h,t,rise=1){ // pole base at sx,sy; flag height fracti
     cx.globalAlpha=1; cx.drawImage(FLAGC,u*240,0,240/N+1,160,sx+u*fw,top+off,fw/N+0.6,fh);
     cx.fillStyle=`rgba(0,0,0,${(1-sh)*0.9})`; cx.fillRect(sx+u*fw,top+off,fw/N+0.6,fh); } }
 /* PERF: sprite cache — each pose rendered once to an offscreen canvas, then blitted */
-const SPR=new Map(); let sprCount=0; const SPR_B=[0.4,0.8,1.6,3.2];
+const SPR=new Map(); let sprCount=0, sprMade=0, sprFrame=0; const SPR_B=[0.6,1,1.6,2.6];
 const TAU=Math.PI*2;
+/* v1.3 PERF: body ARCHETYPES (was ~720 random look combos -> the run cache thrashed at 300 men). [stride,lean,hold,pack,cap,bandage] */
+const ARCH=[[1,0,0,1,0,0],[1.2,0.04,0,1,0,0],[0.8,-0.04,0.25,1,0,0],[1,0.04,-0.2,1,0,0],[1.2,0,0.25,0,0,0],[1,-0.04,0,1,1,0],[0.8,0,-0.2,1,0,1],[1.2,0.04,0,0,0,0]];
+function archetype(v){ const a=(Math.random()*ARCH.length)|0, A=ARCH[a]; v.a=a; v.stride=A[0]; v.lean=A[1]; v.hold=A[2]; v.pack=!!A[3]; v.cap=!!A[4]; v.bandage=!!A[5]; v.tone=Math.random()<0.5?-0.1:0.04; return v; }
+const PHN={run:8,melee:8,cheer:6};
+function sprKey(state,pb,cols,opts,V,R,d){ const vk=V.a!=null?"a"+V.a:((V.pack?1:0)+""+(V.cap?1:0)+(V.bandage?1:0)+Math.round(V.lean*12)+Math.round(V.stride*2.5)+Math.round(V.hold*4));
+  return cols[0]+cols[1]+state+pb+(opts.vet?1:0)+(opts.enemy?1:0)+vk+"_"+R+(opts.rim||"")+(d<0?"L":"R"); }
+/* pre-render the run cycle for the men about to charge (called during the over-the-top montage, a few per frame) */
+let sprWarmQ=[];
+function queueSpriteWarm(){ sprWarmQ=[]; const Rs=new Set(); for(const z of [0.1,0.5,0.95]){ const s=P(cam.x,z,0)[2]*DPR; let R=SPR_B[SPR_B.length-1]; for(const b of SPR_B){ if(b>=s*0.92){R=b;break;} } Rs.add(R); }
+  const seen=new Set(); for(const m of men){ if(!m.alive)continue; const V=m.v||DEFV, cols=manCols(m), k=cols[0]+cols[1]+(m.vet?1:0)+(V.a!=null?V.a:"x"); if(seen.has(k))continue; seen.add(k);
+    for(const R of Rs) for(let pb=0;pb<PHN.run;pb++) sprWarmQ.push([cols,{vet:m.vet},V,R,pb]); } }
+function stepSpriteWarm(n){ while(n-->0&&sprWarmQ.length){ const [cols,opts,V,R,pb]=sprWarmQ.pop(); const key=sprKey("run",pb,cols,opts,V,R,1); if(!SPR.has(key)) makeSprite(key,R,1,(pb+0.5)/PHN.run*TAU,"run",cols,opts,V); } }
+const DEFV={stride:1,lean:0,pack:true,cap:false,hold:0,w:1,h:1,bandage:false};
+let SPR_SCR=null;
+function makeSprite(key,R,d,ph,state,cols,opts,V){
+  if(sprCount>1600){ let k=0; for(const kk of SPR.keys()){ SPR.delete(kk); if(++k>=400)break; } sprCount=SPR.size; }
+  const W0=Math.ceil(170*R), H0=Math.ceil(150*R);
+  if(!SPR_SCR){ SPR_SCR=document.createElement("canvas"); SPR_SCR.width=480; SPR_SCR.height=430; SPR_SCR.g=SPR_SCR.getContext("2d",{willReadFrequently:true}); }
+  const scr=SPR_SCR; if(scr.width<W0||scr.height<H0){ scr.width=Math.max(scr.width,W0); scr.height=Math.max(scr.height,H0); }
+  const g=scr.g; g.setTransform(1,0,0,1,0,0); g.clearRect(0,0,W0,H0); g.scale(R,R);
+  const keep=cx; cx=g; const ax=d>0?75:95;   // mirrored sprites are baked (no per-draw save/scale/restore)
+  const o2=Object.assign({},opts,{flash:false,crop:null,v:Object.assign({},V,{h:1,w:1})});
+  try{ if(state==="prone"){ g.translate(ax,125); g.rotate(1.42*d); g.translate(-ax,-125); drawMan0(ax,125,0.95,d,ph,"crouch",cols,o2); }
+       else drawMan0(ax,125,1,d,ph,state,cols,o2); } finally { cx=keep; }
+  g.setTransform(1,0,0,1,0,0);
+  // tight bounding box -> blit only the figure (was a 170x150 rect that was ~85% transparent = wasted fill-rate)
+  const u32=new Uint32Array(g.getImageData(0,0,W0,H0).data.buffer); let x0=W0,y0=-1,x1=-1,y1=-1;
+  for(let y=0;y<H0;y++){ const row=y*W0; let l=-1; for(let x=0;x<W0;x++){ if((u32[row+x]>>>24)>4){l=x;break;} } if(l<0)continue;
+    let r=l; for(let x=W0-1;x>l;x--){ if((u32[row+x]>>>24)>4){r=x;break;} } if(l<x0)x0=l; if(r>x1)x1=r; if(y0<0)y0=y; y1=y; }
+  if(y0<0){ x0=0;y0=0;x1=1;y1=1; }
+  x0=Math.max(0,x0-1); y0=Math.max(0,y0-1); x1=Math.min(W0-1,x1+1); y1=Math.min(H0-1,y1+1);
+  const bw=x1-x0+1, bh=y1-y0+1, c=document.createElement("canvas"); c.width=bw; c.height=bh; c.getContext("2d").drawImage(scr,x0,y0,bw,bh,0,0,bw,bh);
+  c.ax=ax; c.ox=x0/R; c.oy=y0/R; c.sw=bw/R; c.sh=bh/R; c.R=R;
+  SPR.set(key,c); sprCount++; sprMade++; return c;
+}
 function drawMan(sx,sy,s,dir,phase,state,cols,opts={}){
   if(sx<-120*s||sx>W+120*s||sy<-20||sy>H+160*s)return;
   if(opts.nocache) return drawManRaw(sx,sy,s,dir,phase,state,cols,opts);
   const v=opts.v; const need=s*DPR*(v?Math.max(v.h,v.w):1);
-  let R=SPR_B[3]; for(const b of SPR_B){ if(b>=need){R=b;break;} }
-  if(need>SPR_B[3]*1.2) return drawManRaw(sx,sy,s,dir,phase,state,cols,opts);
+  if(need>SPR_B[SPR_B.length-1]*1.15) return drawManRaw(sx,sy,s,dir,phase,state,cols,opts);
+  let R=SPR_B[SPR_B.length-1]; for(const b of SPR_B){ if(b>=need*0.92){R=b;break;} }
   let pb=0, pn=1, ph=0;
-  if(state==="run"){pn=12;} else if(state==="melee"){pn=12;} else if(state==="cheer"){pn=8;} else if(opts.vet){pn=4;}
+  pn=PHN[state]||(opts.vet?4:1);
   if(pn>1){ const pp=((phase%TAU)+TAU)%TAU; pb=Math.floor(pp/TAU*pn)%pn; ph=(pb+0.5)/pn*TAU; }
-  const V=v||{stride:1,lean:0,pack:true,cap:false,hold:0,w:1,h:1,bandage:false};
-  const key=cols[0]+cols[1]+state+pb+(opts.vet?1:0)+(opts.enemy?1:0)+(V.pack?1:0)+(V.cap?1:0)+(V.bandage?1:0)+Math.round(V.lean*12)+Math.round(V.stride*2.5)+Math.round(V.hold*4)+"_"+R+(opts.rim||"");
+  const V=v||DEFV, d=dir<0?-1:1;
+  const key=sprKey(state,pb,cols,opts,V,R,d);
   let c=SPR.get(key);
-  if(!c){
-    if(sprCount>2600){SPR.clear();sprCount=0;}
-    c=document.createElement("canvas"); c.width=Math.ceil(170*R); c.height=Math.ceil(150*R);
-    const g=c.getContext("2d"); const keep=cx; cx=g; g.scale(R,R);
-    drawMan0(75,125,1,1,ph,state,cols,Object.assign({},opts,{flash:false,v:Object.assign({},V,{h:1,w:1})}));
-    cx=keep; SPR.set(key,c); sprCount++;
-  }
+  if(!c){ if(sprFrame>28){ // creation budget per frame: reuse a neighbouring cached frame instead of hitching
+      for(const R2 of SPR_B){ c=SPR.get(sprKey(state,pb,cols,opts,V,R2,d)); if(c)break; }
+      if(!c&&pn>1){ c=SPR.get(sprKey(state,(pb+1)%pn,cols,opts,V,R,d))||SPR.get(sprKey(state,(pb+pn-1)%pn,cols,opts,V,R,d)); } }
+    if(!c){ c=makeSprite(key,R,d,ph,state,cols,opts,V); sprFrame++; } }
   const wx=v?(v.w*0.5+0.5):1, hy=v?v.h:1;
-  const dw=170*s*wx, dh=150*s*hy;
-  // PERF v1.3b: pre-mirrored sprite (no save/scale/restore) + crop via source rect (no clip())
-  let cc=c; if(dir<0){ cc=c._m; if(!cc){ cc=document.createElement("canvas"); cc.width=c.width; cc.height=c.height; const g2=cc.getContext("2d"); g2.translate(c.width,0); g2.scale(-1,1); g2.drawImage(c,0,0); c._m=cc; } }
-  const dx0=dir>=0? sx-75*s*wx : sx-(170-75)*s*wx, dy0=sy-125*s*hy;
-  const cy=opts.clipY;
-  if(cy!==undefined){ const vis=cy-dy0; if(vis<=0) return; if(vis<dh){ const f=vis/dh; cx.drawImage(cc,0,0,cc.width,Math.max(1,cc.height*f),dx0,dy0,dw,vis); } else cx.drawImage(cc,dx0,dy0,dw,dh); }
-  else cx.drawImage(cc,dx0,dy0,dw,dh);
+  // in-trench figures are cropped with the drawImage SOURCE RECT (was save/clip/restore = 50-65% of JS time)
+  let shU=c.sh; if(opts.crop!=null){ shU=Math.min(c.sh,(opts.crop-sy)/(s*hy)+125-c.oy); if(shU<=0.5)return; }
+  cx.drawImage(c,0,0,c.width,Math.min(c.height,shU*R),sx-(c.ax-c.ox)*s*wx,sy-(125-c.oy)*s*hy,c.sw*s*wx,shU*s*hy);
   if(opts.flash){ const fx=sx+dir*58*s, fy=sy-58*s; cx.fillStyle="rgba(255,210,110,0.85)"; cx.beginPath(); cx.arc(fx,fy,7*s,0,7); cx.fill(); cx.fillStyle="#fffbe0"; cx.beginPath(); cx.arc(fx,fy,3*s,0,7); cx.fill(); }
 }
 function drawManRaw(sx,sy,s,dir,phase,state,cols,opts={}){
-  if(opts.clipY!==undefined){ const o2=Object.assign({},opts); delete o2.clipY; cx.save(); cx.beginPath(); cx.rect(sx-200*s,0,400*s,opts.clipY); cx.clip(); drawManRaw(sx,sy,s,dir,phase,state,cols,o2); cx.restore(); return; }
+  if(opts.crop!=null){ cx.save(); cx.beginPath(); cx.rect(sx-130*s,0,260*s,opts.crop); cx.clip(); const o=Object.assign({},opts,{crop:null}); drawManRaw(sx,sy,s,dir,phase,state,cols,o); cx.restore(); return; }
+  if(state==="prone"){ cx.save(); cx.translate(sx,sy); cx.rotate(1.42*(dir<0?-1:1)); drawManRaw(0,0,s*0.95,dir,phase,"crouch",cols,opts); cx.restore(); return; }
   const v=opts.v; if(v){ cx.save(); cx.translate(sx,sy); cx.scale(v.w*0.5+0.5,v.h); cx.translate(-sx,-sy); drawMan0(sx,sy,s,dir,phase,state,cols,opts); cx.restore(); } else drawMan0(sx,sy,s,dir,phase,state,cols,opts); }
 function drawMan0(sx,sy,s,dir,phase,state,cols,opts){
   const V=opts.v||{stride:1,lean:0,pack:true,cap:false,hold:0,w:1};
@@ -1327,7 +1356,7 @@ function worldVisibleIdle(){ // soldiers idling in own trench on menu
   sortMen();
 }
 function mkMan(x,z,vet){const q=Math.random;
-  const v={h:0.9+q()*0.2,w:0.9+q()*0.25,tone:(q()-0.5)*0.3,stride:0.8+q()*0.4,lean:(q()-0.5)*0.12,pack:q()<0.75,cap:q()<0.1,hold:q()<0.2?0.25:q()<0.35?-0.2:0,bandage:q()<0.08,gaitF:0.85+q()*0.3,shout:q()<0.15};
+  const v={h:0.9+q()*0.2,w:0.9+q()*0.25,tone:(q()-0.5)*0.3,stride:0.8+q()*0.4,lean:(q()-0.5)*0.12,pack:q()<0.75,cap:q()<0.1,hold:q()<0.2?0.25:q()<0.35?-0.2:0,bandage:q()<0.08,gaitF:0.85+q()*0.3,shout:q()<0.15}; archetype(v);
   return {x,z,dir:1,phase:q()*6,state:"idle",vet,alive:true,speed:(120+q()*40),delay:0,tx:x,chat:0,hitT:0,v,stumble:0};}
 const colCache={};
 function manCols(m){const base=m.vet?pal.vet:pal.us;const tq=m.v?Math.round(m.v.tone*13)/13:0;const key=base[0]+tq;if(!colCache[key]){const t=tq;colCache[key]=[t>0?shade(base[0],"#e8dcc0",t*0.6):shade(base[0],"#000000",-t*0.8),t>0?shade(base[1],"#bba888",t*0.3):shade(base[1],"#000000",-t*0.6)];}return colCache[key];}
@@ -1635,7 +1664,7 @@ function startCharge(){
   if(used.smk){for(let i=0;i<30+used.smk*20;i++)puff(bx+SEGL()*(0.3+Math.random()*0.5),0.1+Math.random()*0.9,0,1,"smokeW",20,9,90,2);}
   if(used.tnk){battle.tanks=[];for(let i=0;i<used.tnk;i++)battle.tanks.push({x:bx-60-i*140,z:[0.62,0.3,0.8][i%3],hp:1});battle.tank=battle.tanks[0];}
   // MONTAGE: close-up officer whistle, then bugle, then wide
-  montage={t:0,dur:4.2,seed:Math.random()*100}; SFX.play("heart",0.7,{fixed:1,dur:4}); SFX.play("clock",0.6,{fixed:1,delay:1.1,dur:1}); SFX.play("bolt",0.5,{delay:0.6});
+  montage={t:0,dur:4.2,seed:Math.random()*100}; queueSpriteWarm(); SFX.play("heart",0.7,{fixed:1,dur:4}); SFX.play("clock",0.6,{fixed:1,delay:1.1,dur:1}); SFX.play("bolt",0.5,{delay:0.6});
   setTimeout(()=>AU.whistle(),2150); setTimeout(()=>{SFX.play("mud",0.5,{dur:0.8});},3150); setTimeout(()=>{AU.cheer();AU.bugle();},3900);
   cam.tx=bx+80; cam.tz=sendN>44?0.9:1.1; cam.tt=0.3;
   { const zh=S.lang==="zh", n=sendN; const cap= n<15?(zh?"一个班翻出战壕":"A section goes over"): n<40?(zh?"一个排翻出战壕":"A platoon goes over"): n<120?(zh?"整个连翻出战壕":"The whole company goes over"):(zh?"整个营翻出战壕":"The battalion goes over");
@@ -2189,7 +2218,7 @@ function frame(now){
     if(m.state==="melee"){m.phase+=rdt*4;}
     if((mode==="menu"||mode==="plan")&&!m.arriving&&Math.random()<rdt*0.004&&bubbles.length<2)say(m,pick(L_().chatter),2.4);
   }
-  if(montage){ montage.t+=rdt; if(montage.t>montage.dur){const oe=montage.onEnd;montage=null;if(oe)oe();$("hud").style.opacity=1;BGM.play("charge");} }
+  sprFrame=0; if(montage){ stepSpriteWarm(26); montage.t+=rdt; if(montage.t>montage.dur){const oe=montage.onEnd;montage=null;if(oe)oe();$("hud").style.opacity=1;BGM.play("charge");} }
   if(mode==="charge"||mode==="melee")stepBattle(dt);
   { const vis=(mode==="plan"||mode==="menu")&&!chCGon(); if(vis!==frame.stripVis){ frame.stripVis=vis; const ts=$("topStrip"); if(ts) ts.style.visibility=vis?"":"hidden"; } }
   stepRagdolls(dt); stepParts(dt); stepShells(dt); stepWeather(rdt); BGM.step(rdt);
@@ -2225,13 +2254,13 @@ function frame(now){
   // depth-sorted entities
   const ents=[];
   for(const r of ragdolls) ents.push({z:r.z,d:()=>drawRagdoll(r)});
-  for(const m of men) if(m.pinned) ents.push({z:m.z,d:()=>{const [sx,sy,s]=P(m.x,m.z);cx.save();cx.translate(sx,sy+3*s);cx.rotate(1.42);drawMan(0,0,s*0.95,1,0,"crouch",manCols(m),{vet:m.vet,v:m.v});cx.restore();}});
+  for(const m of men) if(m.pinned) ents.push({z:m.z,d:()=>{const [sx,sy,s]=P(m.x,m.z);drawMan(sx,sy+3*s,s,1,0,"prone",manCols(m),{vet:m.vet,v:m.v});}});
   if(mode!=="menu"||true){ traverseEnts(ents,trenchX(S.lvl),1); traverseEnts(ents,trenchX(S.lvl+1),-1); }
   for(const m of men) if(m.alive&&m.intrench) ents.push({z:m.z,d:()=>drawManInTrench(m,m.state==="climb"?m.lift:0)});
   { const oe=drawOfficer(); if(oe)ents.push(oe); }
   for(const m of men) if(m.alive&&!m.intrench) ents.push({z:m.z,d:()=>{const [sx,sy,s]=P(m.x,m.z,m.state==="cheer"?0:0);drawMan(sx,sy,s,m.dir,m.phase,m.stumble>0?"crouch":(m.state==="wait"||m.state==="gather"||m.state==="rally"||m.state==="cut"||m.state==="hold")?"crouch":m.state==="cheer"?"cheer":(m.arriving?"run":m.state),manCols(m),{vet:m.vet,v:m.v});
      if(m.state==="cheer"){ /* rifle raised */ }}});
-  for(const e of enemies) if(e.alive) ents.push({z:e.z,d:()=>{const fight=battle&&battle.melee&&!battle.over; const [sx,sy,s]=P(e.x,e.z,0); drawMan(sx,sy+(fight?0:TR_D*0.85)*s,s,-1,e.phase,fight?"melee":"aim",pal.en,{enemy:true,flash:e.flash>0,clipY:fight?undefined:sy+1*s});}});
+  for(const e of enemies) if(e.alive) ents.push({z:e.z,d:()=>{const fight=battle&&battle.melee&&!battle.over; const [sx,sy,s]=P(e.x,e.z,0); drawMan(sx,sy+(fight?0:TR_D*0.85)*s,s,-1,e.phase,fight?"melee":"aim",pal.en,{enemy:true,flash:e.flash>0,crop:fight?null:sy+1*s});}});
   if(battle&&battle.tanks&&(mode==="charge"||mode==="melee")) for(const tk of battle.tanks) ents.push({z:tk.z,d:()=>drawTank(tk)});
   pushSetEnts(ents); ents.sort((a,b)=>a.z-b.z); drawParts(false); for(const e of ents)e.d(); drawParts(true);
   drawTracers(rdt); drawShells(); if(battle&&(mode==="charge"||mode==="melee"))drawAimMarks(); drawUnitMarks();
@@ -2456,7 +2485,7 @@ function drawMontWide(dawn,lt,t,bar,ih){
     for(const i of ord){ const f=(i*0.618)%1; const start=f*0.6; const u=Math.max(0,Math.min(1,(lt-start)/0.55)); if(u<=0)continue;
       const depth=((i*0.37)%1); const sc=S_*(0.28+depth*0.55); const x0=W*(0.02+((i*0.29)%1)*0.85); const x=x0+u*W*0.22*(0.5+depth); const lift=Math.min(1,u*3);
       const y=py+2*S_+depth*ih*0.2+(1-lift)*50*sc; const col=depth>0.6?["#17120d","#080605"]:["#2e271e","#15110b"];
-      cx.save(); if(lift<1){cx.beginPath();cx.rect(0,0,W,py+depth*ih*0.2);cx.clip();} drawMan(x,y,sc,1,t*14+i,lift<1?"crouch":"run",col,{v:{h:1,w:1,stride:1.1,lean:0.05,pack:true,cap:false,hold:0}}); cx.restore(); }
+      drawMan(x,y,sc,1,t*14+i,lift<1?"crouch":"run",col,{v:{h:1,w:1,stride:1.1,lean:0.05,pack:true,cap:false,hold:0},crop:lift<1?py+depth*ih*0.2:null}); }
     // wire stakes silhouettes foreground
     cx.strokeStyle="#0a0806"; cx.lineWidth=4*S_; for(let i=0;i<4;i++){ const x=W*(0.12+i*0.28); cx.beginPath(); cx.moveTo(x,H); cx.lineTo(x+6*S_,bar+ih*0.72); cx.stroke(); }
     cx.lineWidth=1.2*S_; cx.beginPath(); for(let x=0;x<W;x+=6)cx.lineTo(x,bar+ih*0.8+Math.sin(x*0.08)*10*S_); cx.stroke();
