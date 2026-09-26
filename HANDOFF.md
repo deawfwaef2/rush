@@ -275,3 +275,9 @@ COMBAT / PERF
 - queueSpriteWarm() at startCharge + stepSpriteWarm(26) per frame during the montage; per-frame creation budget (28) falls back to neighbouring cached frames.
 - pinned men: state "prone" sprite (rotation baked). Montage men use crop too.
 - Result (headless software canvas, 300 men): plan JS 62 -> 15 ms/frame; charge sprite renders 600-800/s -> <100/s.
+## v1.3b-2 perf: trench batching (2026-09-26)
+- drawTrench rewritten: every repeated element (floor, duckboard slats, wall planks, posts, bags by colour, lit/shadow strips, ladders, plates, wire) is built into Path2D batches -> ~30 fills/strokes per trench instead of ~3000. Stroke widths use 3 depth bands (bs[]).
+- trenchVisible(x) culls whole trench systems (incl. drawTrenchNet + traverseEnts); visible index range iA..iB per trench.
+- Headless (software canvas) 300 men lvl 10: JS per frame plan 62 -> 6 ms, charge 130-290 -> 6-11 ms.
+- COORDINATION NOTE: another agent session is pushing to this repo at the same time. ALWAYS `git fetch && git rebase origin/main` before push; never force-push.
+  I (agent A) am working next on: corpse baking, particle sprites, HUD diffing (v1.3b-3), then v1.3c spread/1.5x lines + near/far scenery, v1.3d random charge events.

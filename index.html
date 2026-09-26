@@ -1003,93 +1003,94 @@ function trenchOff(x,z){ const seed=Math.round(x)%9973; const u=z*12+seed, bay=M
 function drawCut(pts,w){ const TC=trenchCols(); cx.fillStyle=TC.cut; cx.beginPath(); pts.forEach((q,i)=>{const p=P(q[0],q[1]-w/900,0);i?cx.lineTo(p[0],p[1]):cx.moveTo(p[0],p[1]);}); for(let i=pts.length-1;i>=0;i--){const p=P(pts[i][0],pts[i][1]+w/900,0);cx.lineTo(p[0],p[1]);} cx.fill();
   cx.strokeStyle=TC.cutLit; cx.lineWidth=Math.max(1,2.4*P(pts[0][0],pts[0][1])[2]); cx.beginPath(); pts.forEach((q,i)=>{const p=P(q[0],q[1]+w/900,-4);i?cx.lineTo(p[0],p[1]):cx.moveTo(p[0],p[1]);}); cx.stroke();
   cx.strokeStyle=TC.berm; cx.lineWidth=Math.max(1.5,5*P(pts[0][0],pts[0][1])[2]); cx.beginPath(); pts.forEach((q,i)=>{const p=P(q[0],q[1]-w/900-0.006,2);i?cx.lineTo(p[0],p[1]):cx.moveTo(p[0],p[1]);}); cx.stroke(); }
+/* v1.3 PERF: whole trench systems are skipped when off-screen (a level draws up to ~20 trench lines) */
+function trenchVisible(x){ const a0=P(x-330,0,0)[0], b0=P(x+330,0,0)[0], a1=P(x-330,1.1,0)[0], b1=P(x+330,1.1,0)[0]; return !(Math.max(b0,b1)<-40||Math.min(a0,a1)>W+40); }
 function drawTrenchNet(x,side){ // communication trenches back to the support line + saps to listening posts
   const seed=Math.round(x)%9973; const back=-side*190;
-  cx.save(); for(const zc of [0.22,0.55,0.86]){ const z=zc+((seed%7)-3)*0.01; const pts=[]; for(let k=0;k<=8;k++){ const t=k/8; pts.push([x+trenchOff(x,z)-side*TR_W+back*t, z+Math.sin(t*6+seed)*0.012]); } drawCut(pts,10); }
+  for(const zc of [0.22,0.55,0.86]){ const z=zc+((seed%7)-3)*0.01; const pts=[]; for(let k=0;k<=8;k++){ const t=k/8; pts.push([x+trenchOff(x,z)-side*TR_W+back*t, z+Math.sin(t*6+seed)*0.012]); } drawCut(pts,10); }
   // support trench (simpler) behind
   const sp=[]; for(let k=0;k<=24;k++){ const z=k/24*1.08; sp.push([x+back+Math.sin(z*18+seed)*9, z]); }
   cx.fillStyle=trenchCols().cut; cx.beginPath(); sp.forEach((q,i)=>{const p=P(q[0]-12,q[1],0);i?cx.lineTo(p[0],p[1]):cx.moveTo(p[0],p[1]);}); for(let i=sp.length-1;i>=0;i--){const p=P(sp[i][0]+12,sp[i][1],0);cx.lineTo(p[0],p[1]);} cx.fill();
   cx.strokeStyle=trenchCols().berm; cx.lineWidth=Math.max(2,6*P(x+back,0.5)[2]); cx.beginPath(); sp.forEach((q,i)=>{const p=P(q[0]+side*18,q[1],2);i?cx.lineTo(p[0],p[1]):cx.moveTo(p[0],p[1]);}); cx.stroke();
-  // saps forward to listening posts
+  // saps forward to listening posts (bags batched into one path)
+  const bags=new Path2D();
   for(const zc of [0.38,0.72]){ const z=zc+((seed%5)-2)*0.012; const x0=x+trenchOff(x,z)+side*TR_W; const pts=[[x0,z],[x0+side*40,z+0.01],[x0+side*80,z-0.005]]; drawCut(pts,8);
-    const p=P(x0+side*86,z,0); cx.fillStyle=trenchCols().bag[1]; for(let a=0;a<7;a++){ cx.beginPath(); cx.ellipse(p[0]+Math.cos(a*0.9)*12*p[2],p[1]+Math.sin(a*0.9)*3*p[2]-3*p[2],7*p[2],3*p[2],0,0,7); cx.fill(); } }
-  cx.restore(); }
+    const p=P(x0+side*86,z,0); for(let a=0;a<7;a++){ const ex=p[0]+Math.cos(a*0.9)*12*p[2], ey=p[1]+Math.sin(a*0.9)*3*p[2]-3*p[2]; bags.moveTo(ex+7*p[2],ey); bags.ellipse(ex,ey,7*p[2],3*p[2],0,0,TAU); } }
+  cx.fillStyle=trenchCols().bag[1]; cx.fill(bags); }
 function trenchCols(){ const k=pal; if(trenchCols.k===k)return trenchCols.c; const g=k.ground, burl="#8a7652";
   const c={berm:shade(g[1],"#000000",0.18), bermLit:shade(g[0],"#000000",0.05), bag:[shade(burl,g[1],0.45),shade(burl,g[1],0.3),shade(burl,g[2],0.4),shade("#7a6a48",g[1],0.35)], bagLit:"rgba(255,240,210,0.22)", bagSh:"rgba(0,0,0,0.28)",
     wallF:shade(g[2],"#000000",0.25), wallB:shade(g[2],"#000000",0.4), floor:shade(g[2],"#000000",0.55), cut:shade(g[2],"#000000",0.6), cutLit:shade(g[0],"#000000",0.1), snow:k===PAL.winter};
   trenchCols.k=k; trenchCols.c=c; return c; }
+/* v1.3 PERF: drawTrench batches every repeated element into a handful of Path2D fills/strokes
+   (was ~3000 separate fill/stroke calls per trench, x up to 20 trenches per frame). Line widths use 3 depth bands. */
 function drawTrench(x,side,level){
-  drawTrenchNet(x,side); const seed=Math.round(x)%9973, D=TR_D, Wd=TR_W, n=52, z0=0.0, z1=1.1;
-  const S_=[];for(let i=0;i<=n;i++){const z=z0+(z1-z0)*i/n;S_.push({z,x:x+trenchOff(x,z)});}
-  const Q=P; const lx=q=>q.x-Wd, rx=q=>q.x+Wd;
-  // spoil / churned earth band around the trench
-  cx.fillStyle="rgba(60,44,28,0.35)"; cx.beginPath(); S_.forEach((q,i)=>{const p=Q(q.x-Wd-34,q.z,0);i?cx.lineTo(p[0],p[1]):cx.moveTo(p[0],p[1]);}); for(let i=n;i>=0;i--){const p=Q(S_[i].x+Wd+40,S_[i].z,0);cx.lineTo(p[0],p[1]);} cx.fill();
-  // hole
-  cx.fillStyle="#120c07";cx.beginPath();S_.forEach((q,i)=>{const p=Q(lx(q),q.z,0);i?cx.lineTo(p[0],p[1]):cx.moveTo(p[0],p[1]);});for(let i=n;i>=0;i--){const p=Q(rx(S_[i]),S_[i].z,0);cx.lineTo(p[0],p[1]);}cx.fill();
-  for(let i=0;i<n;i++){const A=S_[i],B=S_[i+1];
-    // floor + duckboards (A-frames)
-    const a1=Q(lx(A)+4,A.z,-D),a2=Q(rx(A)-4,A.z,-D),b1=Q(lx(B)+4,B.z,-D),b2=Q(rx(B)-4,B.z,-D);
-    cx.fillStyle=trenchCols().floor;cx.beginPath();cx.moveTo(a1[0],a1[1]);cx.lineTo(b1[0],b1[1]);cx.lineTo(b2[0],b2[1]);cx.lineTo(a2[0],a2[1]);cx.fill();
-    cx.fillStyle="#6a5236"; const m1=Q(A.x-8,A.z,-D+1),m2=Q(A.x+8,A.z,-D+1),m3=Q(B.x+8,B.z,-D+1),m4=Q(B.x-8,B.z,-D+1);
-    cx.beginPath();cx.moveTo(m1[0],m1[1]);cx.lineTo(m2[0],m2[1]);cx.lineTo(m3[0],m3[1]);cx.lineTo(m4[0],m4[1]);cx.fill();
-    cx.strokeStyle="#3a2a18";cx.lineWidth=Math.max(0.6,1.2*m1[2]);for(let k=0;k<4;k++){const t=k/4;cx.beginPath();cx.moveTo(m1[0]+(m4[0]-m1[0])*t,m1[1]+(m4[1]-m1[1])*t);cx.lineTo(m2[0]+(m3[0]-m2[0])*t,m2[1]+(m3[1]-m2[1])*t);cx.stroke();}
-    // two walls: parapet side revetted with planks + posts, parados side with wattle/earth
-    for(const sd of [-side,side]){ const wx=q=>q.x+sd*Wd; const t1=Q(wx(A),A.z,0),t2=Q(wx(B),B.z,0),c1=Q(wx(A),A.z,-D),c2=Q(wx(B),B.z,-D);
-      cx.fillStyle= sd===side ? trenchCols().wallF : trenchCols().wallB; cx.beginPath();cx.moveTo(t1[0],t1[1]);cx.lineTo(t2[0],t2[1]);cx.lineTo(c2[0],c2[1]);cx.lineTo(c1[0],c1[1]);cx.fill();
-      cx.strokeStyle= sd===side ? "rgba(25,16,8,0.6)" : "rgba(25,16,8,0.35)"; cx.lineWidth=Math.max(0.6,1*t1[2]);
-      for(let k=1;k<(sd===side?6:4);k++){const f=k/(sd===side?6:4);cx.beginPath();cx.moveTo(t1[0]+(c1[0]-t1[0])*f,t1[1]+(c1[1]-t1[1])*f);cx.lineTo(t2[0]+(c2[0]-t2[0])*f,t2[1]+(c2[1]-t2[1])*f);cx.stroke();}
-      cx.fillStyle="#2a1c0e"; if(i%2===0)cx.fillRect(t1[0]-1.6*t1[2],t1[1]-5*t1[2],3.2*t1[2],c1[1]-t1[1]+5*t1[2]);
-      if(sd===side){ // firing step
-        const f1=Q(wx(A)-side*8,A.z,-D*0.5),f2=Q(wx(B)-side*8,B.z,-D*0.5); cx.strokeStyle="#7a5a38"; cx.lineWidth=Math.max(1,3.4*t1[2]); cx.beginPath();cx.moveTo(f1[0],f1[1]);cx.lineTo(f2[0],f2[1]);cx.stroke(); }
-    }
-    const r=hash(seed*31+i*7);
-    if(r>0.78){ // dugout entrance in the parados wall
-      const q={x:(A.x+B.x)/2}; const m=Q(q.x-side*Wd,(A.z+B.z)/2,-D*0.15); const w=13*m[2],h=D*0.8*m[2];
-      cx.fillStyle="#070403";cx.fillRect(m[0]-w/2,m[1],w,h);cx.fillStyle="#4a3420";cx.fillRect(m[0]-w/2-2*m[2],m[1]-3*m[2],w+4*m[2],3*m[2]);
-      if(r>0.88){cx.fillStyle="rgba(255,190,90,0.45)";cx.beginPath();cx.arc(m[0],m[1]+h*0.55,3.2*m[2],0,7);cx.fill();}
-    }
-  }
-  // earth berm (parapet high on the enemy-facing side, parados low behind) with sandbag courses laid in brick bond
-  const TC=trenchCols();
+  if(!trenchVisible(x))return;
+  drawTrenchNet(x,side); const seed=Math.round(x)%9973, D=TR_D, Wd=TR_W, n=52, z1=1.1, TC=trenchCols();
+  const zs=new Array(n+1), qs=new Array(n+1), cxs=new Array(n+1);
+  for(let i=0;i<=n;i++){ const z=z1*i/n; zs[i]=z; qs[i]=x+trenchOff(x,z); cxs[i]=P(qs[i],z,0); }
+  // visible index range (screen x of the centreline, padded by the trench width)
+  let iA=n, iB=0; for(let i=0;i<=n;i++){ const p=cxs[i], pad=(Wd+60)*p[2]; if(p[0]+pad>=-20&&p[0]-pad<=W+20){ if(i<iA)iA=i; if(i>iB)iB=i; } }
+  if(iA>iB)return; iA=Math.max(0,iA-1); iB=Math.min(n,iB+1);
+  const bs=[P(x,z1/6,0)[2],P(x,z1/2,0)[2],P(x,z1*5/6,0)[2]], band=z=>Math.min(2,(z/z1*3)|0);
+  const B3=()=>[new Path2D(),new Path2D(),new Path2D()];
+  const strip=(path,oA,hA,oB,hB)=>{ for(let i=iA;i<=iB;i++){ const p=P(qs[i]+oA,zs[i],hA); i===iA?path.moveTo(p[0],p[1]):path.lineTo(p[0],p[1]); } for(let i=iB;i>=iA;i--){ const p=P(qs[i]+oB,zs[i],hB); path.lineTo(p[0],p[1]); } path.closePath(); };
+  const line=(ps,o,h)=>{ let prev=null, pb=-1; for(let i=iA;i<=iB;i++){ const p=P(qs[i]+o,zs[i],h), b=band(zs[i]); if(prev&&b===pb){ ps[b].lineTo(p[0],p[1]); } else { ps[b].moveTo(prev?prev[0]:p[0],prev?prev[1]:p[1]); ps[b].lineTo(p[0],p[1]); } prev=p; pb=b; } };
+  const strokeB=(ps,style,wf)=>{ cx.strokeStyle=style; for(let b=0;b<3;b++){ cx.lineWidth=wf(bs[b]); cx.stroke(ps[b]); } };
+  // spoil band + hole
+  let p1=new Path2D(); strip(p1,-Wd-34,0,Wd+40,0); cx.fillStyle="rgba(60,44,28,0.35)"; cx.fill(p1);
+  p1=new Path2D(); strip(p1,-Wd,0,Wd,0); cx.fillStyle="#120c07"; cx.fill(p1);
+  // floor + duckboards
+  p1=new Path2D(); strip(p1,-Wd+4,-D,Wd-4,-D); cx.fillStyle=TC.floor; cx.fill(p1);
+  p1=new Path2D(); strip(p1,-8,-D+1,8,-D+1); cx.fillStyle="#6a5236"; cx.fill(p1);
+  const slat=B3(); for(let i=iA;i<iB;i++){ const b=band(zs[i]); const m1=P(qs[i]-8,zs[i],-D+1),m2=P(qs[i]+8,zs[i],-D+1),m3=P(qs[i+1]+8,zs[i+1],-D+1),m4=P(qs[i+1]-8,zs[i+1],-D+1);
+    for(let k=0;k<4;k++){ const t=k/4; slat[b].moveTo(m1[0]+(m4[0]-m1[0])*t,m1[1]+(m4[1]-m1[1])*t); slat[b].lineTo(m2[0]+(m3[0]-m2[0])*t,m2[1]+(m3[1]-m2[1])*t); } }
+  strokeB(slat,"#3a2a18",s=>Math.max(0.6,1.2*s));
+  // walls: revetted parapet side (planks + posts + firing step), wattle/earth parados side
+  for(const sd of [-side,side]){ const front=sd===side, o=sd*Wd;
+    p1=new Path2D(); strip(p1,o,0,o,-D); cx.fillStyle=front?TC.wallF:TC.wallB; cx.fill(p1);
+    const pl=B3(), K=front?6:4; for(let k=1;k<K;k++) line(pl,o,-D*k/K); strokeB(pl,front?"rgba(25,16,8,0.6)":"rgba(25,16,8,0.35)",s=>Math.max(0.6,s));
+    const posts=new Path2D(); for(let i=iA;i<iB;i++){ if(i%2)continue; const t1=P(qs[i]+o,zs[i],0), c1y=P(qs[i]+o,zs[i],-D)[1]; posts.rect(t1[0]-1.6*t1[2],t1[1]-5*t1[2],3.2*t1[2],c1y-t1[1]+5*t1[2]); }
+    cx.fillStyle="#2a1c0e"; cx.fill(posts);
+    if(front){ const st=B3(); line(st,side*(Wd-8),-D*0.5); strokeB(st,"#7a5a38",s=>Math.max(1,3.4*s)); } }
+  // dugout entrances in the parados wall
+  const dg=new Path2D(), dl=new Path2D(), lamp=new Path2D();
+  for(let i=iA;i<iB;i++){ const r=hash(seed*31+i*7); if(r<=0.78)continue; const m=P((qs[i]+qs[i+1])/2-side*Wd,(zs[i]+zs[i+1])/2,-D*0.15); const w=13*m[2],h=D*0.8*m[2];
+    dg.rect(m[0]-w/2,m[1],w,h); dl.rect(m[0]-w/2-2*m[2],m[1]-3*m[2],w+4*m[2],3*m[2]); if(r>0.88){ lamp.moveTo(m[0]+3.2*m[2],m[1]+h*0.55); lamp.arc(m[0],m[1]+h*0.55,3.2*m[2],0,TAU); } }
+  cx.fillStyle="#070403"; cx.fill(dg); cx.fillStyle="#4a3420"; cx.fill(dl); cx.fillStyle="rgba(255,190,90,0.45)"; cx.fill(lamp);
+  // earth berms (parapet high on the enemy-facing side, parados low behind) with sandbag courses in brick bond
   for(const [sd,rows,bermH] of [[-side,2,7],[side,3,11]]){
-    // berm
-    cx.fillStyle=TC.berm; cx.beginPath();
-    for(let i=0;i<=n;i++){ const z=z0+(z1-z0)*i/n; const q=x+trenchOff(x,z); const p=P(q+sd*(Wd+2),z,0); i?cx.lineTo(p[0],p[1]):cx.moveTo(p[0],p[1]); }
-    for(let i=n;i>=0;i--){ const z=z0+(z1-z0)*i/n; const q=x+trenchOff(x,z); const p=P(q+sd*(Wd+26),z,bermH*0.5); cx.lineTo(p[0],p[1]); }
-    cx.fill();
-    cx.fillStyle=TC.bermLit; cx.beginPath();
-    for(let i=0;i<=n;i++){ const z=z0+(z1-z0)*i/n; const q=x+trenchOff(x,z); const p=P(q+sd*(Wd+10),z,bermH); i?cx.lineTo(p[0],p[1]):cx.moveTo(p[0],p[1]); }
-    for(let i=n;i>=0;i--){ const z=z0+(z1-z0)*i/n; const q=x+trenchOff(x,z); const p=P(q+sd*(Wd+22),z,bermH*0.55); cx.lineTo(p[0],p[1]); }
-    cx.fill();
-    // bags
-    for(let i=0;i<=n*2;i++){ const z=z0+(z1-z0)*i/(n*2); const [sx,sy,sc]=P(x+trenchOff(x,z)+sd*(Wd+7),z,0); if(sx<-60||sx>W+60)continue;
-      for(let r2=0;r2<rows;r2++){ const bw=15*sc,bh=5.6*sc, ox=((r2+i)%2)*bw*0.5-bw*0.5, oy=-bh*r2*0.92-bh*0.5-bermH*0.35*sc;
-        const hv=hash(seed*7+i*13+r2*29); cx.fillStyle=TC.bag[(hv*4)|0&3]||TC.bag[0];
-        cx.beginPath(); cx.moveTo(sx+ox+bh*0.4,sy+oy-bh*0.5); cx.lineTo(sx+ox+bw-bh*0.4,sy+oy-bh*0.5); cx.quadraticCurveTo(sx+ox+bw+bh*0.1,sy+oy,sx+ox+bw-bh*0.4,sy+oy+bh*0.5); cx.lineTo(sx+ox+bh*0.4,sy+oy+bh*0.5); cx.quadraticCurveTo(sx+ox-bh*0.1,sy+oy,sx+ox+bh*0.4,sy+oy-bh*0.5); cx.fill();
-        cx.fillStyle=TC.bagLit; cx.fillRect(sx+ox+bh*0.4,sy+oy-bh*0.5,bw-bh*0.8,Math.max(0.8,bh*0.22));
-        cx.fillStyle=TC.bagSh; cx.fillRect(sx+ox+bh*0.3,sy+oy+bh*0.3,bw-bh*0.6,Math.max(0.8,bh*0.2));
-        if(TC.snow&&r2===rows-1){ cx.fillStyle="rgba(240,244,248,0.9)"; cx.fillRect(sx+ox+bh*0.2,sy+oy-bh*0.7,bw-bh*0.4,bh*0.35); } } } }
-  // ladders every bay on our side, periscopes, stakes; enemy: loopholes & steel plates
-  for(let i=0;i<n;i++){ const r=hash(seed*13+i*5); const z=z0+(z1-z0)*(i+0.5)/n; const q=x+trenchOff(x,z);
-    const [sx,sy,sc]=P(q+side*(Wd-4),z,0);
-    if(side===1&&i%4===0){ cx.strokeStyle="#3e2c16";cx.lineWidth=Math.max(1,2.2*sc);const bx0=sx-10*sc,by0=sy+D*sc*0.95;
-      cx.beginPath();cx.moveTo(bx0,by0);cx.lineTo(bx0+12*sc,sy-16*sc);cx.moveTo(bx0+8*sc,by0);cx.lineTo(bx0+20*sc,sy-16*sc);cx.stroke();
-      for(let k=1;k<7;k++){const f=k/7;cx.beginPath();cx.moveTo(bx0+12*sc*f,by0+(sy-16*sc-by0)*f);cx.lineTo(bx0+8*sc+12*sc*f,by0+(sy-16*sc-by0)*f);cx.stroke();} }
-    else if(side===-1&&r>0.2){ cx.fillStyle="#3a3a36"; cx.fillRect(sx-6*sc,sy-26*sc,12*sc,9*sc); cx.fillStyle="#0a0806"; cx.fillRect(sx-1.5*sc,sy-23*sc,3*sc,3*sc); }
-    if(r<-0.75){ cx.fillStyle="#2a2016";cx.fillRect(sx-1.5*sc,sy-34*sc,3*sc,30*sc);cx.fillRect(sx-1.5*sc,sy-34*sc,side*7*sc,3*sc); }
-  }
-  // wire belt in front
-  const wireN = side===-1 ? 22 : 9;
-  for(let i=0;i<wireN;i++){ const z=0.04+1.0*(i+0.3)/wireN; const [sx,sy,sc]=P(x+side*90+(side===-1?-40:30)+Math.sin(i*3+seed)*18,z,0);
-    cx.strokeStyle="#241a10";cx.lineWidth=Math.max(1,1.8*sc);cx.beginPath();cx.moveTo(sx,sy);cx.lineTo(sx+2*sc,sy-24*sc);cx.moveTo(sx+18*sc,sy);cx.lineTo(sx+16*sc,sy-22*sc);cx.stroke();
-    cx.strokeStyle="rgba(40,30,20,0.75)";cx.lineWidth=Math.max(0.6,0.8*sc);cx.beginPath();
-    for(let j=0;j<=24;j++){const a=j*0.8;cx.lineTo(sx-6*sc+j*1.3*sc+Math.cos(a)*5*sc,sy-12*sc+Math.sin(a)*8*sc);}cx.stroke();}
+    p1=new Path2D(); strip(p1,sd*(Wd+2),0,sd*(Wd+26),bermH*0.5); cx.fillStyle=TC.berm; cx.fill(p1);
+    p1=new Path2D(); strip(p1,sd*(Wd+10),bermH,sd*(Wd+22),bermH*0.55); cx.fillStyle=TC.bermLit; cx.fill(p1);
+    const bagP=[new Path2D(),new Path2D(),new Path2D(),new Path2D()], lit=new Path2D(), shd=new Path2D(), snow=TC.snow?new Path2D():null;
+    for(let i=iA*2;i<=iB*2;i++){ const z=z1*i/(n*2); const [sx,sy,sc]=P(x+trenchOff(x,z)+sd*(Wd+7),z,0); if(sx<-60||sx>W+60)continue;
+      for(let r2=0;r2<rows;r2++){ const bw=15*sc,bh=5.6*sc, X=sx+((r2+i)%2)*bw*0.5-bw*0.5, Y=sy-bh*r2*0.92-bh*0.5-bermH*0.35*sc;
+        const idx=(hash(seed*7+i*13+r2*29)*4)|0, bp=bagP[idx>0?idx:0];
+        bp.moveTo(X+bh*0.4,Y-bh*0.5); bp.lineTo(X+bw-bh*0.4,Y-bh*0.5); bp.quadraticCurveTo(X+bw+bh*0.1,Y,X+bw-bh*0.4,Y+bh*0.5); bp.lineTo(X+bh*0.4,Y+bh*0.5); bp.quadraticCurveTo(X-bh*0.1,Y,X+bh*0.4,Y-bh*0.5); bp.closePath();
+        lit.rect(X+bh*0.4,Y-bh*0.5,bw-bh*0.8,Math.max(0.8,bh*0.22)); shd.rect(X+bh*0.3,Y+bh*0.3,bw-bh*0.6,Math.max(0.8,bh*0.2));
+        if(snow&&r2===rows-1) snow.rect(X+bh*0.2,Y-bh*0.7,bw-bh*0.4,bh*0.35); } }
+    for(let k=0;k<4;k++){ cx.fillStyle=TC.bag[k]; cx.fill(bagP[k]); } cx.fillStyle=TC.bagLit; cx.fill(lit); cx.fillStyle=TC.bagSh; cx.fill(shd); if(snow){ cx.fillStyle="rgba(240,244,248,0.9)"; cx.fill(snow); } }
+  // ladders every 4th bay on our side, steel loophole plates on theirs, stakes
+  const lad=B3(), plate=new Path2D(), hole=new Path2D(), stake=new Path2D();
+  for(let i=Math.max(0,iA-1);i<Math.min(n,iB+1);i++){ const r=hash(seed*13+i*5); const z=z1*(i+0.5)/n; const q=x+trenchOff(x,z); const [sx,sy,sc]=P(q+side*(Wd-4),z,0);
+    if(side===1&&i%4===0){ const L=lad[band(z)], bx0=sx-10*sc, by0=sy+D*sc*0.95, ty=sy-16*sc; L.moveTo(bx0,by0); L.lineTo(bx0+12*sc,ty); L.moveTo(bx0+8*sc,by0); L.lineTo(bx0+20*sc,ty);
+      for(let k=1;k<7;k++){ const f=k/7, yy=by0+(ty-by0)*f; L.moveTo(bx0+12*sc*f,yy); L.lineTo(bx0+8*sc+12*sc*f,yy); } }
+    else if(side===-1&&r>0.2){ plate.rect(sx-6*sc,sy-26*sc,12*sc,9*sc); hole.rect(sx-1.5*sc,sy-23*sc,3*sc,3*sc); }
+    if(r<-0.75){ stake.rect(sx-1.5*sc,sy-34*sc,3*sc,30*sc); stake.rect(side>0?sx-1.5*sc:sx-8.5*sc,sy-34*sc,7*sc,3*sc); } }
+  strokeB(lad,"#3e2c16",s=>Math.max(1,2.2*s)); cx.fillStyle="#3a3a36"; cx.fill(plate); cx.fillStyle="#0a0806"; cx.fill(hole); cx.fillStyle="#2a2016"; cx.fill(stake);
+  // wire belt in front (posts + coils, batched)
+  const wireN=side===-1?22:9, wp=B3(), wc=B3();
+  for(let i=0;i<wireN;i++){ const z=0.04+1.0*(i+0.3)/wireN; const [sx,sy,sc]=P(x+side*90+(side===-1?-40:30)+Math.sin(i*3+seed)*18,z,0); if(sx<-60*sc||sx>W+60*sc)continue; const b=band(z);
+    wp[b].moveTo(sx,sy); wp[b].lineTo(sx+2*sc,sy-24*sc); wp[b].moveTo(sx+18*sc,sy); wp[b].lineTo(sx+16*sc,sy-22*sc);
+    for(let j=0;j<=24;j++){ const a2=j*0.8, X=sx-6*sc+j*1.3*sc+Math.cos(a2)*5*sc, Y=sy-12*sc+Math.sin(a2)*8*sc; j?wc[b].lineTo(X,Y):wc[b].moveTo(X,Y); } }
+  strokeB(wp,"#241a10",s=>Math.max(1,1.8*s)); strokeB(wc,"rgba(40,30,20,0.75)",s=>Math.max(0.6,0.8*s));
 }
 // traverse blocks (earth + sandbags across the trench every other bay) — depth-sorted so they hide men behind them
-function traverseEnts(ents,x,side){ const seed=Math.round(x)%9973; for(let bay=Math.ceil(seed-1);bay<seed+14;bay++){ const z=(bay+0.91-seed)/12; if(z<0.02||z>1.08)continue; ents.push({z:z+0.001,d:()=>{
-    const q=x+(trenchOff(x,z-0.02)+trenchOff(x,z+0.02))/2; const a=P(q-TR_W,z,0), b=P(q+TR_W,z,0); const s=a[2];
+function traverseEnts(ents,x,side){ if(!trenchVisible(x))return; const seed=Math.round(x)%9973; for(let bay=Math.ceil(seed-1);bay<seed+14;bay++){ const z=(bay+0.91-seed)/12; if(z<0.02||z>1.08)continue; ents.push({z:z+0.001,d:()=>{
+    const q=x+(trenchOff(x,z-0.02)+trenchOff(x,z+0.02))/2; const a=P(q-TR_W,z,0), b=P(q+TR_W,z,0); const s=a[2]; if(b[0]<-20||a[0]>W+20)return;
     const TC=trenchCols(); cx.fillStyle=TC.berm; cx.beginPath(); cx.moveTo(a[0],a[1]+TR_D*s*0.2); cx.lineTo(a[0],a[1]-6*s); cx.lineTo(b[0],b[1]-6*s); cx.lineTo(b[0],b[1]+TR_D*s*0.2); cx.fill();
-    for(let j=0;j<5;j++){ const t=j/4; const x0=a[0]+(b[0]-a[0])*t; cx.fillStyle=TC.bag[j&3]; cx.fillRect(x0-7*s,a[1]-10*s,14*s,5.5*s); cx.fillStyle=TC.bagLit; cx.fillRect(x0-6*s,a[1]-10*s,12*s,1.3*s); cx.fillStyle=TC.bagSh; cx.fillRect(x0-6*s,a[1]-5.8*s,12*s,1.2*s); } }}); } }
+    cx.fillStyle=TC.bag[1]; cx.beginPath(); for(let j=0;j<5;j++){ const x0=a[0]+(b[0]-a[0])*j/4; cx.rect(x0-7*s,a[1]-10*s,14*s,5.5*s); } cx.fill();
+    cx.fillStyle=TC.bagLit; cx.beginPath(); for(let j=0;j<5;j++){ const x0=a[0]+(b[0]-a[0])*j/4; cx.rect(x0-6*s,a[1]-10*s,12*s,1.3*s); } cx.fill();
+    cx.fillStyle=TC.bagSh; cx.beginPath(); for(let j=0;j<5;j++){ const x0=a[0]+(b[0]-a[0])*j/4; cx.rect(x0-6*s,a[1]-5.8*s,12*s,1.2*s); } cx.fill(); }}); } }
 // a soldier standing on the trench floor: lowered by trench depth and clipped at the ground line, so only helmet & shoulders show
 const trenchShadeCache={}; function toHex(c){ if(c[0]==="#")return c; const m=c.match(/\d+/g); return "#"+m.slice(0,3).map(v=>(+v).toString(16).padStart(2,"0")).join(""); }
 function drawManInTrench(m,lift){ const [sx,sy,s]=P(m.x,m.z,0); if(sx<-80*s||sx>W+80*s)return; const depth=TR_D*(1-lift)*0.95;
