@@ -328,3 +328,10 @@ COMBAT / PERF
 - drawBackground: balloons() (1-2 tethered observation balloons, screen-anchored with slight parallax) + farFlashes() (distant gun flashes on the horizon and shell bursts in the far field with slow smoke; quiet boom_far after a delay).
 - drawGround end: nmlProps() - sparse world-anchored props over the field: shattered stumps, wire tangles, rifle+helmet grave markers, half-sunk wagon wheels, sandbag piles, broken crates (skipped near both trenches).
 - NOTE: the field runs ALONG the front (x = attack direction, z = along the trench), so anything drawn as a horizontal line at fixed z would be a trench crossing no man's land - avoid that.
+## WORK CLAIM - agent A, after v1.3j (2026-09-26)
+Status of the round-11 list: economy/stars DONE (v1.3a) · spread + 1.5x lines DONE (v1.3f) · MG density DONE (v1.3f) · random charge events DONE (v1.3g) · stripes DONE (v1.3h) · victory beat DONE (v1.3i) · far field / props DONE (v1.3j, near foreground was v1.3e by the other agent).
+Next, claimed by agent A (please pick other items to avoid duplicate work):
+1. Mid-game longer sectors with a SECOND enemy trench line (support line) + regroup between lines.
+2. Melee animation polish (paired duels, clash sparks, bodies dropping into the trench, no clumping).
+3. Perf: cache vignette/tint + static background bands.
+Tools: /home/user/dev/{quick,seq,jsshot,evtest,fogshot,cpuprof}.py (not in repo).
