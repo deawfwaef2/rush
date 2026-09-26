@@ -250,6 +250,7 @@ body.cgon #hud,body.cgon #menu,body.cgon #top,body.cgon #advisor,body.cgon #adba
 #offpad .hb{height:92px;padding:0 14px;display:flex;flex-direction:column;justify-content:center;gap:4px}#offpad .hb small{font:10px Georgia;color:#bba}#offpad .hb.on{background:#7a2a18cc}
 .timeRow{display:flex;gap:10px;justify-content:center;margin:8px 0 4px}.timeRow>div{background:#0005;border:1px solid #f0c87033;border-radius:6px;padding:4px 12px;min-width:110px;text-align:center}
 .timeRow span{display:block;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}.timeRow b{font:22px Impact,sans-serif;color:#f0c870;font-variant-numeric:tabular-nums}.timeRow i{display:block;font-size:10px;color:#9fd07a;font-style:normal}
+.covc{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:4px 10px;background:#1c160ecc;border:1px solid #f0c87055;border-radius:6px;color:#f0c870}.covc b{font:20px Impact,sans-serif}.covc small{font-size:9px;letter-spacing:.12em}
 </style>
 </head>
 <body>
@@ -1583,7 +1584,7 @@ function startCharge(){
   { const cnt={}; men.forEach(m=>{ if(!m.sent||m.vet)return; const w=waves[m.wave||0]; cnt[m.wave||0]=(cnt[m.wave||0]||0); if(w&&hasTool("eng")&&cnt[m.wave||0]<(w.e||0)){ m.eng=true; cnt[m.wave||0]++; } }); }
   men.forEach(m=>{ const w=waves[m.wave||0]; m.hold2=!!(w&&w.h&&hasTool("flare")); });
   men.forEach((m,i)=>{m.arriving=false;m.x=m.tx;m.state="crouch";const wf=waves[m.wave||0]; m.form=wf?wf.f:1; m.delay=0.9+wStart[m.wave||0]+Math.random()*(m.form===0?1.6:m.form===1?0.8:0.45);m.mor=55+S.morale*0.4+(m.vet?30:0)+Math.random()*25;m.speed=(135+Math.random()*35)*(lvl.ch===2?0.87:1)*(0.85+0.15*mf()/1.0);});
-  battle={t:0,sent:sendN,dead:0,reached:0,nodes:[0.3,0.6,0.86].map(f=>({x:bx+SEGL()*f,done:false})),mgT:0,rfT:0,shT:0,gasZones:[],smoke:used.smk?4+used.smk*4:0,snipers:used.snp,tank:null,melee:false,e:Math.max(0,Math.round(cur.gr)),e0:Math.max(0,Math.round(cur.gr)),mel:[],mT:0.3,supp:0,front:0,pinned:0,eKilled:0,meleeDead:0,sniperDone:false,over:false};
+  battle={cover:COVER_BASE()+(S.buy&&S.buy.cov||0),t:0,sent:sendN,dead:0,reached:0,nodes:[0.3,0.6,0.86].map(f=>({x:bx+SEGL()*f,done:false})),mgT:0,rfT:0,shT:0,gasZones:[],smoke:used.smk?4+used.smk*4:0,snipers:used.snp,tank:null,melee:false,e:Math.max(0,Math.round(cur.gr)),e0:Math.max(0,Math.round(cur.gr)),mel:[],mT:0.3,supp:0,front:0,pinned:0,eKilled:0,meleeDead:0,sniperDone:false,over:false};
   // gas zones
   for(let i=0;i<Math.round(cur.gs);i++)battle.gasZones.push({x:bx+SEGL()*(0.25+0.5*Math.random()),w:120+Math.random()*80});
   if(used.smk){for(let i=0;i<30+used.smk*20;i++)puff(bx+SEGL()*(0.3+Math.random()*0.5),0.1+Math.random()*0.9,0,1,"smokeW",20,9,90,2);}
@@ -1629,7 +1630,7 @@ function stepBattle(dt){
       if(m.stumble>0){m.stumble-=dt;sp*=0.05;} else if(Math.random()<dt*0.04){m.stumble=0.35+Math.random()*0.4; if(Math.random()<0.3)say(m,pick(S.lang==="zh"?["起来！","继续跑！","别停！"]:["Up!","Keep going!","Don't stop!"]),1);}
       if(m.hold2&&!battle.flared&&m.x>=deadX()-10-((m.z*531)%1)*50){ m.state="hold"; if(!battle.holdMsg){battle.holdMsg=1; toast(S.lang==="zh"?"待命波次已在死角卧倒——准备好后发射信号弹。":"Holding waves are down in the dead ground — fire the flare when ready.");} continue; }
       if(b.off&&b.off.alive&&m.fol){ const o=b.off; if(o.halt){ m.state="rally"; m.rx=o.x-20-((m.z*733)%1)*90; continue; } const ahead=m.x-(o.x+30+((m.z*311)%1)*40); if(ahead>0)sp*=Math.max(0.05,1-ahead/60); else sp*=Math.min(1.25,1+(-ahead)/300); const dz=o.z+((m.z*917)%1-0.5)*0.35-m.z; m.z+=Math.sign(dz)*Math.min(Math.abs(dz),dt*0.12); }
-      m.x+=sp*dt; m.phase+=dt*sp*0.075*(m.v?m.v.gaitF:1); if(m.zt!=null){ const dz=m.zt-m.z; m.z+=Math.sign(dz)*Math.min(Math.abs(dz),dt*0.07); }
+      m.x+=sp*dt; m.phase+=dt*sp*0.075*(m.v?m.v.gaitF:1); if(m.zt!=null){ const dz=m.zt-m.z; m.z+=Math.sign(dz)*Math.min(Math.abs(dz),dt*0.16); }
       if(m.x>=ex-150-((m.z*977)%1)*40){b.reached++; if(b.e>0&&b.assault){m.state="melee";m.mx=ex-40+Math.random()*50+b.front; joinMelee(m);} else if(b.e>0){m.state="gather";m.gx=m.x; if(!b.gatherMsg){b.gatherMsg=1;toast(S.lang==="zh"?"先头部队在铁丝网前隐蔽，等待后续部队…":"Leading men take cover at the wire, waiting for the rest…");}} else {m.state="wait";}}
       // morale: low morale men go to ground (pinned = lost)
       if(m.mor<22&&Math.random()<dt*1.6){ pinMan(m); continue; }
@@ -1646,6 +1647,7 @@ function stepBattle(dt){
   b.toolT=(b.toolT||0)-dt; if(b.toolT<=0){b.toolT=1; updTools();}
   { const hd=alive.filter(m=>m.state==="hold"); if(hd.length){ b.holdT=(b.holdT||0)+dt; const rr=cur.rf*0.0065*0.15*(1500/SEGL())/mf(); for(const m of hd){ if(Math.random()<rr*dt*(m.vet?0.62:1)) killMan(m,"rf"); } if(b.holdT>30&&!b.flared) fireFlare(true); } }
   stepOfficer(dt);
+  for(const m of men){ if(m.immune>0)m.immune-=dt; if(m.aim>0){ m.aim-=dt; if(!m.alive||m.state!=="run"&&m.state!=="cut"){m.aim=0;} else if(m.aim<=0){ m.aim=0; killMan(m,"rf"); } } }
   // hazards: continuous fire on running men
   const supp=1-(b.supp||0); const smokeF = (b.smoke>0 ? 0.45 : 1)*supp; if(b.smoke>0)b.smoke-=dt;
   const tankF = b.tanks ? Math.max(0.5,1-0.2*b.tanks.length) : 1;
@@ -1659,7 +1661,7 @@ function stepBattle(dt){
     // rifles
     const rfRate=cur.rf*0.0065*smokeF*(1500/SEGL())/mf();
     b.rfT-=dt; if(cur.rf>0.05&&b.rfT<=0){b.rfT=0.5/Math.max(0.3,cur.rf)*2; AU.shot(0.15); const e=pick(enemies.filter(e=>e.alive))||null; if(e){e.flash=0.08;const tgt=pick(running);tracer(e.x,e.z,48,tgt.x,tgt.z,40);}}
-    for(const m of running){ if(m.alive&&Math.random()<rfRate*dt*hitK(m,bx)) killMan(m,"rf"); }
+    for(const m of running){ if(m.alive&&!m.aim&&!(m.immune>0)&&Math.random()<rfRate*dt*hitK(m,bx)){ if((b.cover||0)>0&&men.filter(o=>o.aim>0).length<3&&Math.random()<0.7){ m.aim=1.25; if(!b.aimTip){ b.aimTip=1; slowmo=0.35; setTimeout(()=>slowmo=1,900); toast(S.lang==="zh"?"狙击手瞄准了一名士兵——点击方框让他卧倒！":"A sniper has a man in his sights — click the box to make him dive!"); } } else killMan(m,"rf"); } }
     // enemy shelling
     if(cur.sh>0.05){ b.shT-=dt; if(b.shT<=0){ b.shT=(3.2/cur.sh)*(0.6+Math.random()*0.8); const tg=pick(running); const sx=tg.x+(Math.random()-0.5)*120, sz=Math.max(0.05,Math.min(1,tg.z+(Math.random()-0.5)*0.2));
        shell(sx,sz,1.3,()=>{ for(const o of men){ if(o.alive&&o.state==="run"&&Math.abs(o.x-sx)<55&&Math.abs(o.z-sz)<0.14&&Math.random()<0.75*(FORM[o.form||1].fire>1?1.2:1))killMan(o,"shell"); } },true); } }
@@ -1741,11 +1743,21 @@ function updOffPad(){ let el=$("offpad"); const on=battle&&battle.off&&battle.of
     el.querySelectorAll("button[data-k]").forEach(bt=>{ const k=bt.dataset.k; bt.onpointerdown=e=>{e.preventDefault();OFFPAD[k]=1;}; bt.onpointerup=bt.onpointerleave=bt.onpointercancel=()=>{OFFPAD[k]=0;}; });
     el.querySelector(".hb").onclick=()=>officerHalt(); }
   el.classList.toggle("hide",!on); const hb=el.querySelector(".hb"); if(hb&&on) hb.classList.toggle("on",battle.off.halt); }
+/* TAKE COVER (early strategic resource): rifle hits are sometimes telegraphed as an aimed shot (box on the man).
+   Click the box before the timer runs out → he dives and is immune briefly. Charges per charge = COVER_BASE + bought. */
+const COVER_BASE=()=>S.lvl>=1?3:0;
+function tryCover(px,py){ const b=battle; if(!b||!(b.cover>0))return false; let best=null,bd=1e9; const r=cv.getBoundingClientRect(); const x=(px-r.left)*(W/r.width), y=(py-r.top)*(H/r.height);
+  for(const m of men){ if(!(m.aim>0))continue; const [sx,sy,s]=P(m.x,m.z,0); const d=Math.hypot(sx-x,(sy-40*s)-y); if(d<Math.max(46,60*s)&&d<bd){bd=d;best=m;} }
+  if(!best)return false; best.aim=0; best.immune=1.2; best.stumble=0.7; b.cover--; b.covUsed=(b.covUsed||0)+1; SFX.play("mud",0.5,{gap:0.05,dur:0.5}); AU.ric&&AU.ric(); say(best,S.lang==="zh"?"趴下！":"Down!",0.9); updTools(); return true; }
+function drawAimMarks(){ for(const m of men){ if(!(m.aim>0)||!m.alive)continue; const [sx,sy,s]=P(m.x,m.z,0); const hh=78*s, ww=40*s, cy=sy-hh/2, k=Math.max(0,m.aim/1.25);
+  const c=`rgba(${220},${Math.round(60+160*k)},${60},0.95)`; cx.strokeStyle=c; cx.lineWidth=2; const L=10*s+4;
+  for(const [dx,dy] of [[-1,-1],[1,-1],[-1,1],[1,1]]){ const x0=sx+dx*ww/2, y0=cy+dy*hh/2; cx.beginPath(); cx.moveTo(x0,y0-dy*L); cx.lineTo(x0,y0); cx.lineTo(x0-dx*L,y0); cx.stroke(); }
+  cx.fillStyle=c; cx.fillRect(sx-ww/2,cy-hh/2-8,ww*k,3); } }
 function fireFlare(auto){ const b=battle; if(!b||b.flared)return; b.flared=true; const x=deadX(); vfx=vfx||{t:0,x,flares:[]}; vfx.flares.push({x:x+60,z:0.5,h:0,vh:700,t:0,c:"255,90,70"}); vfx.t=0; SFX.play("rifle_rev",0.4,{lp:1500}); AU.whistle();
   big(S.lang==="zh"?"信号弹！":"FLARE!",S.lang==="zh"?(auto?"时间到——全体起身":"全体起身，一起冲！"):(auto?"Time's up — everyone up":"Everyone up — go together!"),1300); updTools(); }
 function updTools(){ updOffPad(); const el=$("tools"); if(!el)return; const b=battle; const zh=S.lang==="zh"; if(!b||!(mode==="charge"||mode==="melee")){el.classList.add("hide");return;}
-  const needF=hasTool("flare")&&men.some(m=>m.alive&&m.hold2)&&!b.flared; const canO=hasTool("off")&&!b.offUsed;
-  el.classList.toggle("hide",!needF&&!canO); el.innerHTML=(needF?`<button id="bFlare">${IC.flare}<b>${zh?"信号弹":"FLARE"}</b><small>F</small></button>`:"")+(canO?`<button id="bOff">${IC.off}<b>${zh?"军官":"OFFICER"}</b><small>O</small></button>`:"");
+  const needF=hasTool("flare")&&men.some(m=>m.alive&&m.hold2)&&!b.flared; const canO=hasTool("off")&&!b.offUsed; const covN=b.cover||0;
+  el.classList.toggle("hide",!needF&&!canO&&!(COVER_BASE()>0)); el.innerHTML=(COVER_BASE()>0?`<div class="covc"><b>${covN}</b><small>${zh?"掩护":"COVER"}</small></div>`:"")+(needF?`<button id="bFlare">${IC.flare}<b>${zh?"信号弹":"FLARE"}</b><small>F</small></button>`:"")+(canO?`<button id="bOff">${IC.off}<b>${zh?"军官":"OFFICER"}</b><small>O</small></button>`:"");
   const f=$("bFlare"); if(f)f.onclick=()=>fireFlare(false); const o=$("bOff"); if(o)o.onclick=()=>{ if(window.startOfficer)startOfficer(); }; }
 addEventListener("keydown",e=>{ const k=e.key.toLowerCase(); if(k==="f"&&battle&&(mode==="charge"||mode==="melee")&&men.some(m=>m.alive&&m.hold2))fireFlare(false); if(k==="o"&&window.startOfficer&&battle&&mode==="charge")startOfficer(); });
 function meleeTick(){
@@ -1839,7 +1851,7 @@ function result(win){ $("tools")&&$("tools").classList.add("hide");
   S.lost+=b.dead; S.lastMoraleD = win ? (lvl.fort?30:18) : -20; if(!win&&b.dead>b.sent*0.8)S.lastMoraleD-=5; S.morale=Math.max(0,Math.min(100,S.morale+S.lastMoraleD)); S.moraleT=Date.now();
   if(win){
     CG.happy();
-    const zhM=S.lang==="zh"; const merits=[]; if(b.shock)merits.push(zhM?"集中突击":"Massed assault"); if(b.flared&&b.holdMsg)merits.push(zhM?"信号弹协同":"Flare timing"); if(b.offUsed&&!b.offDied)merits.push(zhM?"军官指挥":"Officer's lead"); if(b.sent&&b.dead/b.sent<0.35)merits.push(zhM?"低伤亡":"Low losses"); if(!b.pinned)merits.push(zhM?"无人溃散":"Nobody broke");
+    const zhM=S.lang==="zh"; const merits=[]; if(b.shock)merits.push(zhM?"集中突击":"Massed assault"); if(b.flared&&b.holdMsg)merits.push(zhM?"信号弹协同":"Flare timing"); if(b.offUsed&&!b.offDied)merits.push(zhM?"军官指挥":"Officer's lead"); if(b.sent&&b.dead/b.sent<0.35)merits.push(zhM?"低伤亡":"Low losses"); if(!b.pinned)merits.push(zhM?"无人溃散":"Nobody broke"); if((b.covUsed||0)>=2)merits.push(zhM?"眼疾手快":"Quick reflexes");
     b.merits=merits; const vetGain=surv>0?Math.min(surv,Math.max(1,Math.floor(surv*(0.25+0.05*merits.length)))):0; const need=Math.max(1,Math.ceil(b.e0*0.6)); const hold=Math.min(surv-vetGain,need); const rear=surv-vetGain-hold;
     S.vets+=vetGain; S.reserve+=vetGain;
     S.hist.push({lvl:S.lvl,day:S.day,lost:b.dead,sent:b.sent});
@@ -2043,7 +2055,7 @@ function showTut(){ const steps=TUT[S.lang].filter(x=>x[0]!=="#supWrap"||supMax(
   box.querySelector("button").onclick=()=>{AU.init();AU.click();tutI++;showTut();}; }
 // drag to look back at captured strongholds (menu)
 let drag=null;
-cv.addEventListener("pointerdown",e=>{ if(chCG)return; if(mode==="menu"){drag={x:e.clientX,cx:cam.tx};} else {drag={x:e.clientX,lo:lookOff,look:1};} });
+cv.addEventListener("pointerdown",e=>{ if(chCG)return; if(battle&&(mode==="charge"||mode==="melee")&&tryCover(e.clientX,e.clientY))return; if(mode==="menu"){drag={x:e.clientX,cx:cam.tx};} else {drag={x:e.clientX,lo:lookOff,look:1};} });
 addEventListener("pointermove",e=>{ if(drag&&drag.look){ lookOff=Math.max(-SEGL()*0.7,Math.min(SEGL()*0.7,drag.lo-(e.clientX-drag.x)/scaleZ(0.6))); return; } if(drag){ const s=scaleZ(0.6); cam.tx=Math.min(trenchX(S.lvl)+400,Math.max(-300,drag.cx-(e.clientX-drag.x)/s)); } });
 addEventListener("pointerup",()=>{drag=null;});
 cv.addEventListener("wheel",e=>{ if(mode==="menu"){cam.tx=Math.min(trenchX(S.lvl)+400,Math.max(-300,cam.tx+e.deltaY+e.deltaX));} },{passive:true});
@@ -2128,7 +2140,7 @@ function frame(now){
   for(const e of enemies) if(e.alive) ents.push({z:e.z,d:()=>{const fight=battle&&battle.melee&&!battle.over; const [sx,sy,s]=P(e.x,e.z,0); cx.save(); if(!fight){cx.beginPath();cx.rect(sx-120*s,0,240*s,sy+1*s);cx.clip();} drawMan(sx,sy+(fight?0:TR_D*0.85)*s,s,-1,e.phase,fight?"melee":"aim",pal.en,{enemy:true,flash:e.flash>0}); cx.restore();}});
   if(battle&&battle.tanks&&(mode==="charge"||mode==="melee")) for(const tk of battle.tanks) ents.push({z:tk.z,d:()=>drawTank(tk)});
   pushSetEnts(ents); ents.sort((a,b)=>a.z-b.z); drawParts(false); for(const e of ents)e.d(); drawParts(true);
-  drawTracers(rdt); drawShells();
+  drawTracers(rdt); drawShells(); if(battle&&(mode==="charge"||mode==="melee"))drawAimMarks();
   // flag raise
   if(flagRaise){flagRaise.t+=rdt; const [sx,sy,s]=P(flagRaise.x,0.5); drawFlag(sx,sy,s*1.6,130,time,Math.min(1,flagRaise.t/2.2)); if(flagRaise.t>8)flagRaise=null;}
   // foreground layer: big dark near silhouettes (depth!)

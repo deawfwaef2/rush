@@ -224,3 +224,6 @@ NEW wishes:
 - STOPWATCH: S.clock (run time) + S.lvlT[lvl] accumulate only in plan/charge/melee/barrage (not menu/result/CG). #cClock chip in top bar. Win card .timeRow: level time (+ "new best" via S.best), chapter time on chapter end, run time. fmtT(), chapT(ch).
 - Normal win: modest but not bare — 1/3 of survivors raise rifles, soft cheer + bugle, "LINE TAKEN · name · time" caption. Fortress win stays grand.
 - Plan camera no longer zooms out with more men (trenches used to come closer); instead tilt rises (cam.tt 0.25→0.6) to show more depth. Running depth spread grows with men sent (0.5+sent/140, max 0.94).
+## v1.2b TAKE COVER
+- From lvl idx 1: battle.cover = 3 (+S.buy.cov). Some rifle hits become telegraphed aimed shots (m.aim 1.25s, max 3 at once, 70% when charges left): gold→red corner-bracket box + timer bar (drawAimMarks). Click/tap the box (tryCover, canvas pointerdown in charge/melee) → man dives (stumble .7) + immune 1.2s, charge used. Unclicked → killed. First time: slowmo + toast. Counter shown in #tools (.covc). Merit "Quick reflexes" if ≥2 used.
+- Men drift to their depth lane faster (dt*0.16) to reduce clumping.
