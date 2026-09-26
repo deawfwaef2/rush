@@ -307,3 +307,10 @@ COMBAT / PERF
 - Climb-out: runners keep their own lane (zt = centre + (z-centre)*max(0.5,FORM.zw)) instead of converging into a centre blob.
 - MG lethality x local crowd density (3x3 grid, df 0.55..2.4) and the gunner's tracer target prefers the densest knot -> dense crowds die faster (user request).
 - #bigtxt captions shrunk to a slim band at 15% height (they covered the whole battlefield).
+## v1.3g charge random events (2026-09-26, agent A)
+- NEW module "CHARGE EVENTS" (search `v1.3f CHARGE EVENTS`, before fireFlare): stepEvents() called from stepBattle after stepSnipers.
+- Small incidents (~1 per 0.5-1.5 s, scaled by runner count), odds shifted by the man's morale: trip, duck under a burst (brief rifle immunity), lucky helmet, crater (man drops into a shell hole and fires: suppresses enemy fire, may drop a defender), help (tends a wounded mate / hauls a PINNED man back up = revived), freeze (may go to ground), sergeant rally (+9 morale nearby, vets), hero sprint, grenade near their wire (defender down / MG pause), lost nerve (runs back; low-morale neighbours may follow), mud (chapters 2-3).
+- New man states: crater / help / freeze / flee (EVS map). They count as "still moving" (not flee). Fled men return to the RESERVE at result() (report row "Broke & ran back"), and break the "Nobody broke" merit.
+- BIG event: one "Fortune of war" d6 per charge (2 on sectors > 2100 long) when the lead passes 30-58% of the crossing; modifier +1 if runner morale >= 90 / S.morale >= 80, -1 if < 45 / < 35. 1 = rout (if morale < 62) or stall; 2 = our shells fall short or gunners find range (+45% MG 5 s); 3-4 steady; 5 = MG jam (6 s) or drifting smoke; 6 = surge (+30% speed, +12 morale); 7 = enemy panic (garrison bolts). Logged in the result report.
+- Presentation: speech bubbles + small italic effect tags above the man (de-overlapped, 2 s) + corner feed #evFeed (top-left, max 4, die SVG for the big roll). Nothing centre-screen.
+- Successive trench ranks now go over one after another (delay + rank*[1.35,1.0,0.7]) -> visible waves of lines instead of one thick mass.

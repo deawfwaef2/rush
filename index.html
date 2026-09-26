@@ -181,6 +181,15 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 .stats{display:flex;gap:18px;justify-content:center;margin:12px 0;font-size:20px}
 #bigtxt{position:absolute;left:50%;top:15%;transform:translateX(-50%);max-width:92vw;text-align:center;font-size:min(5.4vw,48px);color:#f2e6c8;text-shadow:0 3px 0 #000,0 0 22px #000;pointer-events:none;letter-spacing:.14em;opacity:0;transition:opacity .35s;padding:4px 34px 6px;background:linear-gradient(90deg,#0000,#000a 18%,#000a 82%,#0000)}
 #bigtxt.show{opacity:1}
+#evFeed{position:absolute;left:14px;top:96px;width:min(340px,62vw);pointer-events:none;display:flex;flex-direction:column;gap:4px;z-index:6}
+#evFeed .ef{display:flex;align-items:center;gap:8px;padding:3px 10px;background:#14110cc4;border-left:3px solid #8a7f68;color:#efe4cc;font:12.5px/1.3 Georgia,serif;border-radius:3px;animation:efIn .28s ease-out;transition:opacity .6s,transform .6s}
+#evFeed .ef.g{border-left-color:#8fb060}#evFeed .ef.b{border-left-color:#c8634a}
+#evFeed .ef.big{font-size:13.5px;padding:5px 10px;background:#1c160edc;border:1px solid #6a5a38;border-left:3px solid #d8b060}
+#evFeed .ef.big.g{border-left-color:#8fb060}#evFeed .ef.big.b{border-left-color:#c8634a}
+#evFeed .ef svg{flex:none;animation:dieRoll .5s cubic-bezier(.2,1.5,.4,1)}
+#evFeed .ef.out{opacity:0;transform:translateX(-14px)}
+@keyframes efIn{from{opacity:0;transform:translateX(-16px)}to{opacity:1;transform:none}}
+@keyframes dieRoll{from{transform:rotate(-200deg) scale(.4)}to{transform:none}}
 #bigtxt small{display:block;font-size:14px;letter-spacing:.28em;margin-top:2px;opacity:.9;font-family:Georgia}
 #hud{position:absolute;left:50%;transform:translateX(-50%);top:72px;display:flex;gap:18px;font-size:22px;background:#0008;padding:4px 16px;border-radius:20px}
 #toast{position:absolute;left:50%;top:24%;transform:translateX(-50%);background:#14110dee;border:1px solid var(--brass2);padding:8px 18px;border-radius:4px;font-size:16px;opacity:0;transition:opacity .3s;pointer-events:none!important}
@@ -327,7 +336,7 @@ body.cgon #hud,body.cgon #menu,body.cgon #top,body.cgon #advisor,body.cgon #adba
     <div class="ibtn" id="bBack" style="position:absolute;left:12px;bottom:14px"></div>
   </div>
   <div id="hud" class="hide stencil"></div><div id="tools" class="hide"></div>
-  <div id="bigtxt" class="stencil"></div>
+  <div id="bigtxt" class="stencil"></div><div id="evFeed"></div>
   <div id="toast"></div>
   <div id="ov" class="ov hide"></div>
   <div id="tut" class="hide"><div id="tutHole"></div><div id="tutBox"></div></div>
@@ -1567,7 +1576,7 @@ function pushOne(){
   const idx=men.filter(m=>m.sent&&m.wave===q.w).length;
   const zz=slotZ(idx,w.f); const lines=trenchLines(S.lvl-1); const tl=bx-Math.min(q.w,lines-1)*85;
   const x=tl+trenchOff(tl,zz)+ (slotRank(idx,w.f)%2?-12:8) + (Math.random()-0.5)*Math.min(14,FORM[w.f].xj);
-  const m=mkMan(x,zz,q.vet); m.sent=true; m.arriving=false; m.wave=q.w; m.tx=x; m.intrench=true; m.state="idle"; m.pop=0;
+  const m=mkMan(x,zz,q.vet); m.rank=slotRank(idx,w.f); m.sent=true; m.arriving=false; m.wave=q.w; m.tx=x; m.intrench=true; m.state="idle"; m.pop=0;
   men.push(m); sortMen(); if(Math.random()<0.3)AU.thud();
 }
 const HOLDS=new Set(); const holdStopAll=()=>{HOLDS.forEach(f=>f());HOLDS.clear();}; addEventListener("pointerup",holdStopAll); addEventListener("pointercancel",holdStopAll); addEventListener("blur",holdStopAll);
@@ -1693,9 +1702,9 @@ function startCharge(){
   let acc=0; const wStart=waves.map((w,i)=>{ if(i>0) acc+=w.d+1.2; return acc; });
   { const cnt={}; men.forEach(m=>{ if(!m.sent||m.vet)return; const w=waves[m.wave||0]; cnt[m.wave||0]=(cnt[m.wave||0]||0); if(w&&hasTool("eng")&&cnt[m.wave||0]<(w.e||0)){ m.eng=true; cnt[m.wave||0]++; } }); }
   men.forEach(m=>{ const w=waves[m.wave||0]; m.hold2=!!(w&&w.h&&hasTool("flare")); });
-  men.forEach((m,i)=>{m.arriving=false;m.x=m.tx;m.state="crouch";const wf=waves[m.wave||0]; m.form=wf?wf.f:1; m.delay=0.9+wStart[m.wave||0]+Math.random()*(m.form===0?1.6:m.form===1?0.8:0.45);m.mor=55+S.morale*0.4+(m.vet?30:0)+Math.random()*25;m.speed=(135+Math.random()*35)*(lvl.ch===2?0.87:1)*(0.85+0.15*mf()/1.0);});
+  men.forEach((m,i)=>{m.arriving=false;m.x=m.tx;m.state="crouch";const wf=waves[m.wave||0]; m.form=wf?wf.f:1; m.delay=0.9+wStart[m.wave||0]+(m.rank||0)*[1.35,1.0,0.7][m.form]+Math.random()*(m.form===0?1.6:m.form===1?0.8:0.45);m.mor=55+S.morale*0.4+(m.vet?30:0)+Math.random()*25;m.speed=(135+Math.random()*35)*(lvl.ch===2?0.87:1)*(0.85+0.15*mf()/1.0);});
   battle={cover:COVER_BASE()+(S.buy&&S.buy.cov||0),t:0,sent:sendN,dead:0,reached:0,nodes:[0.3,0.6,0.86].map(f=>({x:bx+SEGL()*f,done:false})),mgT:0,rfT:0,shT:0,gasZones:[],smoke:used.smk?4+used.smk*4:0,snipers:used.snp,tank:null,melee:false,e:Math.max(0,Math.round(cur.gr)),e0:Math.max(0,Math.round(cur.gr)),mel:[],mT:0.3,supp:0,front:0,pinned:0,eKilled:0,meleeDead:0,sniperDone:false,over:false};
-  applyLoadout();
+  applyLoadout(); evReset();
   // gas zones
   for(let i=0;i<Math.round(cur.gs);i++)battle.gasZones.push({x:bx+SEGL()*(0.25+0.5*Math.random()),w:120+Math.random()*80});
   if(used.smk){for(let i=0;i<30+used.smk*20;i++)puff(bx+SEGL()*(0.3+Math.random()*0.5),0.1+Math.random()*0.9,0,1,"smokeW",20,9,90,2);}
@@ -1737,7 +1746,7 @@ function stepBattle(dt){
     if(m.state==="run"){
       let sp=m.speed; for(const g of b.gasZones)if(Math.abs(m.x-g.x)<g.w)sp*=0.8;
       for(const bl of belts){ if(m.x>bl.x-18&&m.x<bl.x+26){ if(m.eng&&bl.cut<1&&!m.cutDone){ m.state="cut"; m.cutB=bl; if(!bl.msg){bl.msg=1; if(Math.random()<0.8)say(m,S.lang==="zh"?"剪开它！":"Cutters out!",1.2);} break; } sp*=bl.cut>=1?0.85:Math.max(0.18,0.34+0.5*bl.cut); if(bl.cut<1&&Math.random()<dt*0.5&&!m.snag){m.snag=1;} } }
-      if(m.hold>0){m.hold-=dt;sp*=0.08;}
+      if(m.hold>0){m.hold-=dt;sp*=0.08;} if(m.boostT>0){m.boostT-=dt;sp*=m.boostF||1.2;}
       if(m.stumble>0){m.stumble-=dt;sp*=0.05;} else if(Math.random()<dt*0.04){m.stumble=0.35+Math.random()*0.4; if(Math.random()<0.3)say(m,pick(S.lang==="zh"?["起来！","继续跑！","别停！"]:["Up!","Keep going!","Don't stop!"]),1);}
       if(m.hold2&&!battle.flared&&m.x>=deadX()-10-((m.z*531)%1)*50){ m.state="hold"; if(!battle.holdMsg){battle.holdMsg=1; toast(S.lang==="zh"?"待命波次已在死角卧倒——准备好后发射信号弹。":"Holding waves are down in the dead ground — fire the flare when ready.");} continue; }
       if(b.off&&b.off.alive&&m.fol){ const o=b.off; if(o.halt){ m.state="rally"; m.rx=o.x-20-((m.z*733)%1)*90; continue; } const ahead=m.x-(o.x+30+((m.z*311)%1)*40); if(ahead>0)sp*=Math.max(0.05,1-ahead/60); else sp*=Math.min(1.25,1+(-ahead)/300); const dz=o.z+((m.z*917)%1-0.5)*0.35-m.z; m.z+=Math.sign(dz)*Math.min(Math.abs(dz),dt*0.12); }
@@ -1761,13 +1770,14 @@ function stepBattle(dt){
   stepOfficer(dt);
   for(const m of men){ if(m.immune>0)m.immune-=dt; if(m.aim>0){ m.aim-=dt; if(!m.alive||m.state!=="run"&&m.state!=="cut"){m.aim=0;} else if(m.aim<=0){ m.aim=0; killMan(m,"rf"); } } }
   stepSnipers(dt);
+  stepEvents(dt,running,bx,ex);
   // hazards: continuous fire on running men
   const lewN=men.filter(m=>m.alive&&m.type==="lewis"&&(m.state==="run"||m.state==="gather")).length; const supp=(1-(b.supp||0))*Math.max(0.55,1-0.12*lewN); const smokeF = (b.smoke>0 ? 0.45 : 1)*supp; if(b.smoke>0)b.smoke-=dt;
   const tankF = b.tanks ? Math.max(0.5,1-0.2*b.tanks.length) : 1;
   if(running.length){
     // machine guns
-    const mgRate=cur.mg*0.028*smokeF*tankF*(1500/SEGL())/mf(); // per soldier per second
-    b.mgT-=dt; if(cur.mg>0.05&&b.mgT<=0){ b.mgT=0.09; AU.mg(1,0.12+Math.min(0.2,cur.mg*0.03));
+    const mgRate=cur.mg*0.028*smokeF*tankF*(1500/SEGL())/mf()*evFire(); // per soldier per second (x charge events)
+    b.mgT-=dt; if(cur.mg>0.05&&b.mgT<=0){ b.mgT=0.09/Math.max(0.15,evFire()); AU.mg(1,0.12+Math.min(0.2,cur.mg*0.03));
       let tgt=pick(running); for(let k=0;k<2;k++){ const o=pick(running); if((o.dens||0)>(tgt.dens||0))tgt=o; } const nest=enemies[Math.floor(Math.random()*enemies.length)]||{x:ex,z:0.5};
       tracer(ex+8,nest.z,40,tgt.x+(Math.random()-0.5)*30,tgt.z,20+Math.random()*40); if(nest)nest.flash=0.06; }
     // v1.3: the DENSER the crowd, the more a machine gun kills (3x3 grid of 45u x 0.05z cells)
@@ -1775,7 +1785,7 @@ function stepBattle(dt){
     const dens=m=>{ let n=0; for(let a=-1;a<=1;a++)for(let c=-1;c<=1;c++){ n+=DG.get(dk(m,a,c))||0; } return n; };
     for(const m of running){ if(!m.alive)continue; m.dens=dens(m); const df=Math.max(0.55,Math.min(2.4,0.55+0.13*(m.dens-1))); if(Math.random()<mgRate*dt*hitK(m,bx)*df) killMan(m,"mg"); }
     // rifles
-    const rfRate=cur.rf*0.0065*smokeF*(1500/SEGL())/mf();
+    const rfRate=cur.rf*0.0065*smokeF*(1500/SEGL())/mf()*(1-((battle.ev&&battle.ev.supp)||0));
     b.rfT-=dt; if(cur.rf>0.05&&b.rfT<=0){b.rfT=0.5/Math.max(0.3,cur.rf)*2; AU.shot(0.15); const e=pick(enemies.filter(e=>e.alive))||null; if(e){e.flash=0.08;const tgt=pick(running);tracer(e.x,e.z,48,tgt.x,tgt.z,40);}}
     for(const m of running){ if(m.alive&&!m.aim&&!(m.immune>0)&&Math.random()<rfRate*dt*hitK(m,bx)){ if((b.cover||0)>0&&men.filter(o=>o.aim>0).length<3&&Math.random()<0.7){ m.aim=1.25; if(!b.aimTip){ b.aimTip=1; slowmo=0.35; setTimeout(()=>slowmo=1,900); toast(S.lang==="zh"?"狙击手瞄准了一名士兵——点击方框让他卧倒！":"A sniper has a man in his sights — click the box to make him dive!"); } } else killMan(m,"rf"); } }
     // enemy shelling
@@ -1796,10 +1806,10 @@ function stepBattle(dt){
   // continuous melee at the enemy line
   if(b.mel.length&&b.e>0){ b.mT-=dt; if(b.mT<=0){ b.mT=0.7; meleeTick(); } }
   // end conditions
-  const stillMoving=men.filter(m=>m.alive&&(m.state==="run"||m.state==="crouch"||m.state==="climb"||m.state==="gather"||m.state==="cut"||m.state==="hold"||m.state==="rally")).length;
+  const stillMoving=men.filter(m=>m.alive&&(EVS[m.state]&&m.state!=="flee"||m.state==="run"||m.state==="crouch"||m.state==="climb"||m.state==="gather"||m.state==="cut"||m.state==="hold"||m.state==="rally")).length;
   const inMelee=b.mel.filter(m=>m.alive).length;
   if(b.e<=0&&!b.over&&(cur.ca||0)>0&&!b.caDone){ b.caDone=1; startCounter(); }
-  if(b.e<=0&&!b.over&&!b.caPending){ b.over=true; men.forEach(m=>{if(m.alive&&m.state==="run"){m.state="wait";}}); setTimeout(()=>result(true),900); }
+  if(b.e<=0&&!b.over&&!b.caPending){ b.over=true; men.forEach(m=>{if(m.alive&&(m.state==="run"||EVS[m.state])){m.state="wait";m.dir=1;}}); setTimeout(()=>result(true),900); }
   else if(men.filter(m=>m.alive).length===0&&!b.over){ b.over=true; setTimeout(()=>result(false),1600); }
   else if(stillMoving===0&&inMelee===0&&b.e>0&&!b.over){ b.over=true; setTimeout(()=>result(false),1600); }
   // camera follows the mass
@@ -1929,6 +1939,118 @@ function startCounter(){ const b=battle, n=Math.max(2,Math.round(b.e0*0.18*(cur.
   const ex=trenchX(S.lvl+1); setTimeout(()=>{ if(battle!==b)return; b.e+=n; b.e0c=n; cur.gr=b.e; b.caPending=0; b.melee=true;
     for(let i=0;i<Math.min(n,18);i++){ enemies.push({x:ex+b.front+260+Math.random()*120,tx:ex+b.front+Math.random()*40,z:laneZ(Math.random()),phase:0,alive:true,flash:0}); }
     men.forEach(m=>{ if(m.alive&&(m.state==="wait"||m.state==="gather"||m.state==="cheer")){ m.state="melee"; m.mx=ex-40+Math.random()*50+b.front; if(!b.mel.includes(m))b.mel.push(m); } }); },1400); }
+/* ===== v1.3f CHARGE EVENTS (agent A) =====
+   Small incidents all the time (trip, duck under a burst, crater fire, help a mate, freeze, sergeant, hero, grenade, mud, lost nerve, lucky helmet);
+   one "fortune of war" d6 roll per charge (two on long sectors) -> rare BIG event (rout / stall / short shells / gunners find range / MG jam / smoke / surge / enemy panic).
+   Morale shifts the odds. Shown as speech + tiny effect tags at the man and a compact corner feed; never centre-screen. */
+const EVS={crater:1,help:1,freeze:1,flee:1};
+const EVT={tags:[]};
+function evReset(){ const b=battle; if(!b)return; b.ev={t:2.2+Math.random()*1.2,rolls:0,next:0.3+Math.random()*0.28,log:[],mgT:0,mgK:1,supp:0}; b.fled=0; EVT.tags.length=0; const el=$("evFeed"); if(el)el.innerHTML=""; }
+function evTag(m,txt,good){ if(EVT.tags.length>=6)EVT.tags.shift(); EVT.tags.push({m,x:m.x,z:m.z,txt,good,t:0}); }
+function dieSVG(n){ n=Math.max(1,Math.min(6,n)); const P={1:[[11,11]],2:[[6.5,6.5],[15.5,15.5]],3:[[6,6],[11,11],[16,16]],4:[[6.5,6.5],[15.5,6.5],[6.5,15.5],[15.5,15.5]],5:[[6,6],[16,6],[11,11],[6,16],[16,16]],6:[[6.5,5.5],[15.5,5.5],[6.5,11],[15.5,11],[6.5,16.5],[15.5,16.5]]}[n];
+  return `<svg width="22" height="22" viewBox="0 0 22 22"><rect x="1" y="1" width="20" height="20" rx="4" fill="#efe4cc" stroke="#2a2418" stroke-width="1.4"/>${P.map(q=>`<circle cx="${q[0]}" cy="${q[1]}" r="2" fill="#2a2418"/>`).join("")}</svg>`; }
+function evFeed(txt,good,die){ const el=$("evFeed"); if(!el)return; const d=document.createElement("div"); d.className="ef"+(die?" big":"")+(good>0?" g":good<0?" b":""); d.innerHTML=(die?dieSVG(die):"")+`<span>${txt}</span>`; el.appendChild(d); while(el.children.length>4)el.removeChild(el.firstChild); setTimeout(()=>{ d.classList.add("out"); setTimeout(()=>d.remove(),700); },die?7500:4500); }
+function evNear(m,r,rz,max){ const out=[]; for(const o of men){ if(o!==m&&o.alive&&o.state==="run"&&Math.abs(o.x-m.x)<r&&Math.abs(o.z-m.z)<rz){ out.push(o); if(out.length>=max)break; } } return out; }
+function evMorNear(m,d){ for(const o of evNear(m,95,0.12,14)) o.mor=Math.max(0,Math.min(118,(o.mor||60)+d*(0.6+Math.random()*0.5))); m.mor=Math.max(0,Math.min(118,(m.mor||60)+d)); }
+function evEnemyDown(){ const b=battle; if(!b||b.e<=1)return false; b.e=Math.max(0,b.e-1); b.eKilled++; const ve=enemies.filter(e=>e.alive); if(ve.length){ const en=ve[Math.floor(Math.random()*ve.length)]; en.alive=false; makeRagdoll(en.x,en.z,-1,pal.en,false,[5+Math.random()*5,5+Math.random()*5],true); } return true; }
+function evFire(){ const E=battle&&battle.ev; if(!E)return 1; return (E.mgT>0?E.mgK:1)*(1-E.supp); }
+function evOn(m){ const q=P(m.x,m.z,0); return q[0]>60&&q[0]<W-60; }
+function stepEvents(dt,running,bx,ex){
+  const b=battle; if(!b||!b.ev||b.over)return; const E=b.ev, zh=S.lang==="zh", L=SEGL();
+  if(E.mgT>0){ E.mgT-=dt; if(E.mgT<=0)E.mgK=1; }
+  E.supp=Math.max(0,E.supp-dt*0.04);
+  for(const m of men){ if(!m.alive||!EVS[m.state])continue;
+    if(m.state==="crater"){ m.evT-=dt; if(m.flash>0)m.flash-=dt; m.shT=(m.shT==null?0.4:m.shT)-dt;
+      if(m.shT<=0){ m.shT=0.55+Math.random()*0.7; m.flash=0.07; AU.shot(0.05); const e=pick(enemies.filter(q=>q.alive)); if(e)tracer(m.x+14,m.z,20,e.x,e.z,40); E.supp=Math.min(0.3,E.supp+0.018);
+        if(Math.random()<0.075&&evEnemyDown()){ evTag(m,zh?"击中一名守军":"hit one!",1); if(Math.random()<0.5)evFeed(zh?"弹坑里的步枪手打倒了一名守军":"A rifleman in a shell hole drops a defender",1); } }
+      if(Math.random()<dt*0.05)killMan(m,"rf"); if(m.alive&&m.evT<=0){ m.state="run"; m.stumble=0.25; } }
+    else if(m.state==="help"){ m.evT-=dt; if(Math.random()<dt*0.1)killMan(m,"rf");
+      if(m.alive&&m.evT<=0){ m.state="run"; const p=m.revive; if(p&&!p.alive&&p.pinned&&!p.fled){ p.alive=true; p.pinned=false; p.state="run"; p.stumble=0.3; p.mor=Math.max(p.mor||0,55); b.pinned=Math.max(0,b.pinned-1); evTag(p,zh?"重新站起":"back on his feet",1); evFeed(zh?"一名士兵把趴下的战友拉了起来":"A man hauls a pinned comrade back to his feet",1); } m.revive=null; } }
+    else if(m.state==="freeze"){ m.evT-=dt; if(Math.random()<dt*0.16)killMan(m,"mg");
+      if(m.alive&&m.evT<=0){ if(Math.random()<0.22+Math.max(0,55-(m.mor||60))/80){ pinMan(m); if(Math.random()<0.5)evFeed(zh?"一名吓呆的士兵趴下再也不肯起来":"A frozen man goes to ground and stays there",-1); } else { m.state="run"; m.mor=Math.min(118,(m.mor||60)+6); } } }
+    else if(m.state==="flee"){ m.x-=m.speed*0.95*dt; m.phase+=dt*m.speed*0.075; if(m.zt!=null){ const dz=m.zt-m.z; m.z+=Math.sign(dz)*Math.min(Math.abs(dz),dt*0.1); } if(Math.random()<dt*0.12)killMan(m,"rf");
+      if(m.alive&&m.x<=bx+trenchOff(bx,m.z)+4){ m.alive=false; m.fled=true; m.intrench=true; b.fled=(b.fled||0)+1; } }
+  }
+  if(running.length>=3){ E.t-=dt; if(E.t<=0){ E.t=(1.1+Math.random()*0.9)/Math.max(0.6,Math.min(2.0,Math.sqrt(running.length/18))); evSmall(running,bx,ex); } }
+  if(running.length>=4&&E.rolls<(L>2100?2:1)){ let lead=-1e9; for(const m of running)if(m.x>lead)lead=m.x; if((lead-bx)/L>=E.next){ E.rolls++; E.next=Math.max(E.next+0.24,0.6+Math.random()*0.12); evBig(running,bx,ex); } }
+}
+function evSmall(running,bx,ex){
+  const b=battle, E=b.ev, zh=S.lang==="zh", L=SEGL(); let m=null;
+  for(let k=0;k<8&&!m;k++){ const c=running[Math.floor(Math.random()*running.length)]; if(c.alive&&c.state==="run"&&!(c.stumble>0)&&!(c.hold>0)&&!(c.boostT>0)&&!c.fol&&evOn(c))m=c; }
+  if(!m)return; const mor=m.mor||60, p=(m.x-bx)/L, ch=(levelDef(S.lvl)||{}).ch; const opts=[]; const add=(k,w)=>{ if(w>0)opts.push([k,w]); };
+  add("trip",1.0); add("duck",0.85); add("helmet",0.22);
+  if(p>0.16&&p<0.8) add("crater",0.45+mor/120);
+  if(p>0.1) add("help",0.5);
+  if(!m.vet) add("freeze",Math.max(0.12,1.45-mor/55));
+  add("rally",(m.vet?1.1:0.22)*(0.5+mor/120));
+  add("hero",mor>80?0.75:mor>60?0.3:0.08);
+  if(p>0.74&&b.e>1) add("grenade",1.1);
+  if(!m.vet&&mor<56) add("nerve",Math.max(0,1.2-mor/48));
+  add("mud",(ch===1||ch===2)?1.0:0.15);
+  let tot=0; for(const o of opts)tot+=o[1]; let r=Math.random()*tot, k=opts[0][0]; for(const o of opts){ r-=o[1]; if(r<=0){k=o[0];break;} }
+  const Z=(a,e)=>zh?a:e, sayP=(pr,arr)=>{ if(Math.random()<pr)say(m,pick(arr),1.2); };
+  if(k==="trip"){ m.stumble=0.9+Math.random()*0.6; puff(m.x+10,m.z,2,4,"dirt",70,0.5,3,-500); if(Math.random()<0.4)AU.thud(); sayP(0.35,zh?["哎哟！","该死！"]:["Oof!","Blast!"]); if(Math.random()<0.5)evTag(m,Z("绊倒 · 减速","tripped · slowed"),-1); if(Math.random()<0.3)m.mor-=6; }
+  else if(k==="duck"){ const ns=[m,...evNear(m,60,0.08,5)]; for(const o of ns){ o.stumble=Math.max(o.stumble||0,0.5+Math.random()*0.35); o.immune=Math.max(o.immune||0,0.6); } for(let i=0;i<8;i++)puff(m.x-40+i*11+Math.random()*6,m.z+(Math.random()-0.5)*0.04,0,2,"dirt",90,0.45,3,-500); AU.ric&&AU.ric(); sayP(0.45,zh?["卧倒！","低头！"]:["Get down!","Heads down!"]); if(Math.random()<0.5)evTag(m,Z("弹雨扫来 · 卧倒","a burst · they duck"),0); }
+  else if(k==="helmet"){ m.stumble=0.35; AU.clang&&AU.clang(); puff(m.x,m.z,70,3,"dirt",60,0.5,2,-400); m.mor=Math.min(118,mor+6); m.immune=Math.max(m.immune||0,1.2); sayP(0.7,zh?["好险！","打中钢盔了！"]:["Close one!","Blimey — the helmet!"]); evTag(m,Z("钢盔挡了一枪 · 走运","helmet saved him · lucky"),1); }
+  else if(k==="crater"){ m.state="crater"; m.evT=2+Math.random()*1.8; m.shT=0.35; m.flash=0; sayP(0.4,zh?["掩护！","我来压制！"]:["Covering fire!","Keep their heads down!"]); evTag(m,Z("跳进弹坑还击 · 压制","into a crater, firing · suppress"),1); }
+  else if(k==="help"){ let pin=null; for(const o of men){ if(!o.alive&&o.pinned&&!o.fled&&Math.abs(o.x-m.x)<90&&Math.abs(o.z-m.z)<0.12){ pin=o; break; } }
+    if(pin&&Math.random()<0.6){ m.revive=pin; m.state="help"; m.evT=1.3+Math.random()*0.8; say(m,pick(zh?["起来，伙计！","跟我走！"]:["Up you get, mate!","Come on, with me!"]),1.3); evTag(m,Z("拉起趴下的战友","pulls a pinned mate up"),1); }
+    else if(b.dead>0){ m.state="help"; m.evT=1.1+Math.random()*0.8; sayP(0.6,zh?["坚持住！","医护兵！"]:["Hold on, mate!","Stretcher bearer!"]); evMorNear(m,3); evTag(m,Z("照看伤员 · 士气+","tends a wounded mate · morale +"),1); }
+    else { m.stumble=0.6; evTag(m,Z("绊倒 · 减速","tripped · slowed"),-1); } }
+  else if(k==="freeze"){ m.state="freeze"; m.evT=1.1+Math.random()*1.4; sayP(0.3,zh?["我……动不了……","……"]:["I can't… move…","…"]); evTag(m,Z("吓呆了","frozen with fear"),-1); }
+  else if(k==="rally"){ const ns=evNear(m,95,0.12,12); say(m,pick(zh?["跟上，小伙子们！","别停！往前冲！","跟我来！"]:["Come on, lads!","Keep moving!","With me, boys!"]),1.4); evMorNear(m,9); for(const o of ns){ o.boostT=2.2; o.boostF=1.15; } evTag(m,Z("鼓舞 · 周围士气+9","rallies · morale +9 nearby"),1); if(m.vet)evFeed(Z("一名老兵军士鼓舞了周围的人 · 士气+9","A veteran sergeant rallies the men · morale +9"),1); }
+  else if(k==="hero"){ m.boostT=3.2; m.boostF=1.45; say(m,pick(zh?["跟我冲！","冲啊！"]:["Follow me!","Charge!"]),1.2); evMorNear(m,5); evTag(m,Z("冲在最前 · 士气+","sprints ahead · morale +"),1); }
+  else if(k==="grenade"){ m.stumble=0.5; say(m,pick(zh?["手榴弹！","接着！"]:["Bomb!","Have this!"]),1.0); const gx=ex+trenchOff(ex,m.z)-6, gz=m.z;
+    setTimeout(()=>{ if(battle!==b||b.over)return; explosion(gx,gz,0.5); if(Math.random()<0.6&&evEnemyDown()){ evTag(m,Z("手榴弹炸倒一名守军","grenade · a defender down"),1); evFeed(Z("一枚手榴弹落进敌壕 · 守军-1","A grenade lands in their trench · defender down"),1); } else if(Math.random()<0.5){ E.mgK=Math.min(E.mgK,0.5); E.mgT=Math.max(E.mgT,1.5); } },700); }
+  else if(k==="nerve"){ m.state="flee"; m.dir=-1; say(m,pick(zh?["我受不了了！","不——！"]:["I can't!","No more!"]),1.2); evMorNear(m,-5); evTag(m,Z("崩溃往回跑 · 士气-","breaks and runs · morale −"),-1); evFeed(Z("一名士兵崩溃，往回跑","A man's nerve breaks — he runs back"),-1);
+    for(const o of evNear(m,70,0.1,4)){ if(!o.vet&&(o.mor||60)<40&&Math.random()<0.35){ o.state="flee"; o.dir=-1; } } }
+  else if(k==="mud"){ m.hold=Math.max(m.hold||0,1.1+Math.random()*1.1); sayP(0.3,zh?["陷住了！","该死的泥！"]:["I'm stuck!","Bloody mud!"]); evTag(m,Z("陷进泥里 · 减速","stuck in the mud · slowed"),-1); }
+}
+function evBig(running,bx,ex){
+  const b=battle, E=b.ev, zh=S.lang==="zh", Z=(a,e)=>zh?a:e; let am=0; for(const m of running)am+=m.mor||60; am/=running.length;
+  const mod=(am>=90?1:am<45?-1:0)+(S.morale>=80?1:S.morale<35?-1:0); const d=1+Math.floor(Math.random()*6); const r=Math.max(0,Math.min(7,d+mod));
+  let txt="", good=0;
+  const surge=()=>{ for(const m of running){ if(m.state==="run"){ m.boostT=4; m.boostF=1.3; } m.mor=Math.min(120,(m.mor||60)+12); } AU.cheer(); const r2=running.filter(m=>m.state==="run"); for(let i=0;i<3&&r2.length;i++)say(pick(r2),pick(zh?["冲啊！","乌拉！"]:["Hurrah!","Come on!"]),1.2); return Z("士气高涨！全线加速冲锋 · 士气+12","SURGE! The whole line picks up pace · morale +12"); };
+  if(r<=1){
+    if(am<62&&running.length>=6){ const pool=running.filter(m=>m.state==="run"&&!m.vet).sort((p,q)=>(p.mor||60)-(q.mor||60)); const k=Math.min(pool.length,Math.max(2,Math.round(pool.length*(0.12+Math.random()*0.14))));
+      for(let i=0;i<k;i++){ const m=pool[i]; m.state="flee"; m.dir=-1; if(i<2)say(m,Z("快跑！","Run for it!"),1.2); } for(const m of running)m.mor=Math.max(0,(m.mor||60)-8); cam.shake=Math.max(cam.shake||0,3);
+      txt=Z(`溃逃！${k} 人掉头往回跑`,`ROUT! ${k} men turn and run back`); good=-1; }
+    else { for(const m of running){ if(m.state==="run")m.stumble=Math.max(m.stumble||0,1.5+Math.random()*1.1); }
+      setTimeout(()=>{ if(battle!==b||b.over)return; AU.whistle(); const r2=men.filter(m=>m.alive&&m.state==="run"); for(let i=0;i<3&&r2.length;i++)say(pick(r2),pick(zh?["起来！","继续前进！"]:["Up! Up!","On your feet!"]),1.1); },1600);
+      txt=Z("迟疑！整条线趴在泥里不敢起身","STALL! The whole line hesitates, face down in the mud"); good=-1; } }
+  else if(r===2){
+    if(Math.random()<0.5){ const srt=running.slice().sort((p,q)=>p.x-q.x); const t=srt[Math.floor(srt.length*0.25)];
+      for(let i=0;i<2;i++){ const sx=t.x+(Math.random()-0.5)*90, sz=Math.max(0.06,Math.min(0.95,t.z+(Math.random()-0.5)*0.2)); setTimeout(()=>{ if(battle!==b||b.over)return; shell(sx,sz,1.1,()=>{ for(const o of men){ if(o.alive&&o.state==="run"&&Math.abs(o.x-sx)<50&&Math.abs(o.z-sz)<0.12&&Math.random()<0.55)killMan(o,"shell"); } },false); },i*550); }
+      txt=Z("我方炮弹打近了——落在自己人中间","Our own shells fall short — among our men"); good=-1; }
+    else { E.mgK=1.45; E.mgT=5; txt=Z("敌军机枪手找准了射界 · 火力+45%（5秒）","Their gunners find the range · MG fire +45% (5 s)"); good=-1; } }
+  else if(r<=4){ txt=Z("战线稳住了——没有意外","The line holds steady — nothing unusual"); }
+  else if(r===5){
+    if(Math.random()<0.55){ E.mgK=0.12; E.mgT=6; AU.clang&&AU.clang(); txt=Z("敌军机枪卡壳了！几乎哑火 6 秒","Their machine gun JAMS! Near silence for 6 s"); good=1; }
+    else { b.smoke=Math.max(b.smoke||0,5); for(let i=0;i<16;i++)puff(bx+SEGL()*(0.35+Math.random()*0.5),Math.random(),6,1,"smokeW",18,5.5,85,1); txt=Z("一阵烟雾飘过无人区，遮住了敌人的视线","Drifting smoke blinds the enemy for a moment"); good=1; } }
+  else if(r===6){ txt=surge(); good=1; }
+  else { if(b.e>4){ const k=Math.max(1,Math.min(b.e-3,Math.round(b.e*(0.14+Math.random()*0.1)))); let n=0; for(let i=0;i<k;i++){ if(b.e>3){ b.e--; n++; const ve=enemies.filter(e=>e.alive); if(ve.length){ const en=ve[Math.floor(Math.random()*ve.length)]; en.alive=false; puff(en.x+20,en.z,30,2,"dirt",40,0.6,3,-200); } } }
+      txt=Z(`敌壕里一片恐慌！${n} 名守军弃壕而逃`,`PANIC in their trench! ${n} defenders bolt`); }
+    else txt=surge(); good=1; }
+  E.log.push({d,mod,txt,good});
+  const modTxt=mod?` (${mod>0?"+":""}${mod} ${Z("士气","morale")})`:"";
+  evFeed(`<b>${Z("战场运气","Fortune of war")} ${d}${modTxt}</b> — ${txt}`,good,d);
+}
+function drawEvMan(m,sx,sy,s){
+  const cols=manCols(m), o={vet:m.vet,v:m.v};
+  if(m.state==="crater"){ cx.fillStyle="rgba(40,32,22,0.55)"; cx.beginPath(); cx.ellipse(sx+4*s,sy+3*s,46*s,11*s,0,0,7); cx.fill(); cx.strokeStyle="rgba(150,130,95,0.45)"; cx.lineWidth=Math.max(1,3*s); cx.beginPath(); cx.ellipse(sx+4*s,sy+1*s,48*s,12*s,0,Math.PI*1.05,Math.PI*1.95); cx.stroke();
+    o.crop=sy+2*s; o.flash=m.flash>0; drawMan(sx,sy+30*s,s,1,m.phase,"aim",cols,o); return; }
+  if(m.state==="help"){ drawMan(sx,sy,s,m.dir,m.phase,"crouch",cols,o); return; }
+  if(m.state==="freeze"){ drawMan(sx,sy,s,m.dir,0,"idle",cols,o); return; }
+  drawMan(sx,sy,s,-1,m.phase,"run",cols,o);
+}
+function drawEvTags(dt){ if(!EVT.tags.length)return; cx.save(); cx.textAlign="center"; const fs=Math.max(10,Math.min(13,W/100)); cx.font=`italic ${fs}px Georgia,serif`;
+  const placed=[];
+  for(let i=EVT.tags.length-1;i>=0;i--){ const g=EVT.tags[i]; g.t+=dt; if(g.t>2){ EVT.tags.splice(i,1); continue; } if(g.m&&g.m.alive){ g.x=g.m.x; g.z=g.m.z; }
+    const [px,py,s]=P(g.x,g.z,0); const a=Math.min(1,g.t*5)*Math.min(1,(2-g.t)*2.2); let y=py-(118+g.t*10)*s; const w=g.w||(g.w=cx.measureText(g.txt).width);
+    for(let k=0;k<5;k++){ let hit=false; for(const q of placed){ if(Math.abs(q[0]-px)<(q[1]+w)/2+6&&Math.abs(q[2]-y)<fs+3){ hit=true; y=q[2]-fs-4; } } if(!hit)break; }
+    placed.push([px,w,y]);
+    cx.globalAlpha=a*0.9; cx.fillStyle="rgba(0,0,0,0.75)"; cx.fillText(g.txt,px+1,y+1); cx.fillStyle=g.good>0?"#d6eaa6":g.good<0?"#f2b08e":"#efe4cc"; cx.fillText(g.txt,px,y); }
+  cx.restore(); }
 function fireFlare(auto){ const b=battle; if(!b||b.flared)return; b.flared=true; const x=deadX(); vfx=vfx||{t:0,x,flares:[]}; vfx.flares.push({x:x+60,z:0.5,h:0,vh:700,t:0,c:"255,90,70"}); vfx.t=0; SFX.play("rifle_rev",0.4,{lp:1500}); AU.whistle();
   big(S.lang==="zh"?"信号弹！":"FLARE!",S.lang==="zh"?(auto?"时间到——全体起身":"全体起身，一起冲！"):(auto?"Time's up — everyone up":"Everyone up — go together!"),1300); updTools(); }
 function updTools(){ updOffPad(); const el=$("tools"); if(!el)return; const b=battle; const zh=S.lang==="zh"; if(!b||!(mode==="charge"||mode==="melee")){el.classList.add("hide");return;}
@@ -2030,19 +2152,19 @@ function reportHTML(b,surv,vetGain,hold,rear,fail){
   else if(eff<3&&b.dead<b.sent*0.5) rem = zh?"高效：兵力恰到好处。参谋部很满意。":"Efficient: just enough men. Staff is pleased.";
   else rem = zh?"合格：阵地拿下，损失可以接受。":"Sound: the line is taken at an acceptable cost.";
   const cell=(k,v,c="",wide)=>`<div class="${wide?"wide":""}"><span>${k}</span><b class="${c}">${v}</b></div>`;   // v1.3: compact 2-column report (card no longer overflows)
-  return `<div class="rep"><div class="rg">${cell(zh?"派出":"Sent",b.sent)}${cell(zh?"阵亡":"Killed",b.dead,"red")}${cell(zh?"趴下不起 (计为损失)":"Went to ground (lost)",b.pinned,"red")}${cell(zh?"击毙守军":"Enemy killed",b.eKilled)}
+  return `<div class="rep"><div class="rg">${cell(zh?"派出":"Sent",b.sent)}${cell(zh?"阵亡":"Killed",b.dead,"red")}${cell(zh?"趴下不起 (计为损失)":"Went to ground (lost)",b.pinned,"red")}${b.fled?cell(zh?"崩溃退回 (回到预备队)":"Broke & ran back (to reserve)",b.fled):""}${cell(zh?"击毙守军":"Enemy killed",b.eKilled)}
    ${fail?"":cell(zh?"幸存":"Survived",surv)+cell(zh?"留守新阵地":"Hold the new trench",hold)+cell(zh?"调往后方 (多余)":"Rotated to the rear (surplus)",rear,rear>b.e0?"red":"")+cell(zh?"晋升老兵 返回":"Return as veterans",vetGain,"gold")+(b.recovered?cell(zh?"担架队救回":"Carried back by stretcher bearers",b.recovered,"gold"):"")+(b.rpGain?cell(zh?"获得增援点":"Reinforcement points earned","+"+b.rpGain+" RP","gold"):"")+(b.merits&&b.merits.length?cell(zh?"战术评价 (+5%老兵/项)":"Tactical merit (+5% vets each)",b.merits.join(" · "),"gold",1):"")}
-   </div><div class="wv">${lw.map((w,i)=>`W${i+1}: ${w.r}${w.v?" +"+VETI+w.v:""} ${fl[w.f]}`).join(" · ")}</div><div class="rem">${rem}</div></div>`;
+   </div>${(b.ev&&b.ev.log.length)?`<div class="wv">${b.ev.log.map(e=>(zh?"战场运气 ":"Fortune of war ")+e.d+(e.mod?(e.mod>0?"+":"")+e.mod:"")+": "+e.txt.replace(/<[^>]+>/g,"")).join(" · ")}</div>`:""}<div class="wv">${lw.map((w,i)=>`W${i+1}: ${w.r}${w.v?" +"+VETI+w.v:""} ${fl[w.f]}`).join(" · ")}</div><div class="rem">${rem}</div></div>`;
 }
 function result(win){ $("tools")&&$("tools").classList.add("hide");
   mode="result"; CG.gameplayStop(); slowmo=1;
-  const b=battle; const t=L_(); const surv=men.filter(m=>m.alive).length;
+  const b=battle; const t=L_(); const surv=men.filter(m=>m.alive).length; if(b.fled){ S.reserve+=b.fled; } { const el=$("evFeed"); if(el)el.innerHTML=""; }
   if(b.strb&&b.pinned){ const rec=Math.floor(b.pinned*0.5*Math.min(1,b.strb)); S.reserve+=rec; b.recovered=rec; }
   S.rp=(S.rp||0)+(win?2+(lvl.fort?3:0):1);
   S.lost+=b.dead; S.lastMoraleD = win ? (lvl.fort?30:18) : -20; if(!win&&b.dead>b.sent*0.8)S.lastMoraleD-=5; S.morale=Math.max(0,Math.min(100,S.morale+S.lastMoraleD)); S.moraleT=Date.now();
   if(win){
     CG.happy();
-    const zhM=S.lang==="zh"; const merits=[]; if(b.shock)merits.push(zhM?"集中突击":"Massed assault"); if(b.flared&&b.holdMsg)merits.push(zhM?"信号弹协同":"Flare timing"); if(b.offUsed&&!b.offDied)merits.push(zhM?"军官指挥":"Officer's lead"); if(b.sent&&b.dead/b.sent<0.35)merits.push(zhM?"低伤亡":"Low losses"); if(!b.pinned)merits.push(zhM?"无人溃散":"Nobody broke"); if((b.covUsed||0)>=2)merits.push(zhM?"眼疾手快":"Quick reflexes");
+    const zhM=S.lang==="zh"; const merits=[]; if(b.shock)merits.push(zhM?"集中突击":"Massed assault"); if(b.flared&&b.holdMsg)merits.push(zhM?"信号弹协同":"Flare timing"); if(b.offUsed&&!b.offDied)merits.push(zhM?"军官指挥":"Officer's lead"); if(b.sent&&b.dead/b.sent<0.35)merits.push(zhM?"低伤亡":"Low losses"); if(!b.pinned&&!b.fled)merits.push(zhM?"无人溃散":"Nobody broke"); if((b.covUsed||0)>=2)merits.push(zhM?"眼疾手快":"Quick reflexes");
     b.merits=merits; S.rp+=merits.length; b.rpGain=2+(lvl.fort?3:0)+merits.length; const vetGain=surv>0?Math.min(surv,Math.max(1,Math.floor(surv*(0.25+0.05*merits.length)))):0; const need=Math.max(1,Math.ceil(b.e0*0.6)); const hold=Math.min(surv-vetGain,need); const rear=surv-vetGain-hold;
     const pst=perfStars(rear,b.sent), gain=perfGain(lvl.reward,pst); b.pst=pst; b.gain=gain; const base=lvl.reward;   // v1.3 PERFECTION
     S.vets+=vetGain; S.reserve+=vetGain;
@@ -2334,7 +2456,7 @@ function frame(now){
   if(mode!=="menu"||true){ traverseEnts(ents,trenchX(S.lvl),1); traverseEnts(ents,trenchX(S.lvl+1),-1); }
   for(const m of men) if(m.alive&&m.intrench) ents.push({z:m.z,d:()=>drawManInTrench(m,m.state==="climb"?m.lift:0)});
   { const oe=drawOfficer(); if(oe)ents.push(oe); }
-  for(const m of men) if(m.alive&&!m.intrench) ents.push({z:m.z,d:()=>{const [sx,sy,s]=P(m.x,m.z,m.state==="cheer"?0:0);drawMan(sx,sy,s,m.dir,m.phase,m.stumble>0?"crouch":(m.state==="wait"||m.state==="gather"||m.state==="rally"||m.state==="cut"||m.state==="hold")?"crouch":m.state==="cheer"?"cheer":(m.arriving?"run":m.state),manCols(m),{vet:m.vet,v:m.v});
+  for(const m of men) if(m.alive&&!m.intrench) ents.push({z:m.z,d:()=>{const [sx,sy,s]=P(m.x,m.z,m.state==="cheer"?0:0); if(EVS[m.state]){drawEvMan(m,sx,sy,s);return;} drawMan(sx,sy,s,m.dir,m.phase,m.stumble>0?"crouch":(m.state==="wait"||m.state==="gather"||m.state==="rally"||m.state==="cut"||m.state==="hold")?"crouch":m.state==="cheer"?"cheer":(m.arriving?"run":m.state),manCols(m),{vet:m.vet,v:m.v});
      if(m.state==="cheer"){ /* rifle raised */ }}});
   for(const e of enemies) if(e.alive) ents.push({z:e.z,d:()=>{const fight=battle&&battle.melee&&!battle.over; const [sx,sy,s]=P(e.x,e.z,0); drawMan(sx,sy+(fight?0:TR_D*0.85)*s,s,-1,e.phase,fight?"melee":"aim",pal.en,{enemy:true,flash:e.flash>0,crop:fight?null:sy+1*s});}});
   if(battle&&battle.tanks&&(mode==="charge"||mode==="melee")) for(const tk of battle.tanks) ents.push({z:tk.z,d:()=>drawTank(tk)});
@@ -2347,7 +2469,7 @@ function frame(now){
   drawVictoryFX(rdt);
   drawForeground(); if(QUAL>0||wxKind===1||wxKind===2)drawWeather();
   // bubbles
-  drawBubbles(rdt);
+  drawBubbles(rdt); if(battle&&!battle.over)drawEvTags(rdt);
   // color grade & vignette & grain
   setNightGrade(); cx.fillStyle=pal.tint;cx.fillRect(0,0,W,H);
   const vg=cx.createRadialGradient(W/2,H/2,H*0.35,W/2,H/2,H*0.95);vg.addColorStop(0,"rgba(0,0,0,0)");vg.addColorStop(1,"rgba(0,0,0,0.55)");cx.fillStyle=vg;cx.fillRect(0,0,W,H);
