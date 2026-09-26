@@ -393,3 +393,9 @@ User LIKES this version (v1.4b). Requests:
 - Build: `python3 tools/build_zips.py` -> ../zips/rush-{crazygames,playgama,web}.zip (4.4 MB each). NEVER commit ZIPs. Details and test results in ADS.md.
 - Portal caps are outside our control: CrazyGames enforces about 3 min between midgames on its side (adCooldown -> the game continues).
 - ZIPs are also attached to GitHub Release v1.4e (https://github.com/deawfwaef2/rush/releases/tag/v1.4e); rebuild + upload new assets for later versions.
+## ROUND 15 user feedback (2026-09-27) - agent A working on it (claimed)
+1. When the mouse is over the UI (panels, buttons), the camera must NOT move (edge-scroll must not trigger over the interface).
+2. REMOVE developer mode completely ("I have tested enough"): settings row, DEV buttons, ?debug features.
+3. Package again (ZIPs).
+4. Write everything needed for the CrazyGames submission form: game name, description, controls, tags, etc.
+5. The last sentence was cut off ("而且你再对...") - ask the user what they meant.
