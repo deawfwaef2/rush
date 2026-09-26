@@ -1453,15 +1453,15 @@ function stepBattle(dt){
   const running=alive.filter(m=>m.state==="run");
   // advance soldiers
   for(const m of alive){
-    if(m.state==="climb"){ m.lift=Math.min(1,(m.lift||0)+dt*1.7); m.phase+=dt*8; m.x+=dt*TR_W*1.6; if(m.lift>=1){m.state="run";m.intrench=false;} continue; }
+    if(m.state==="climb"){ m.lift=Math.min(1,(m.lift||0)+dt*1.7); m.phase+=dt*8; m.x+=dt*TR_W*1.6; if(m.lift>=1){m.state="run";m.intrench=false; const u=((men.indexOf(m)*0.618+m.phase*0.1)%1); m.zt=Math.max(0.07,Math.min(0.96,0.52+(u-0.5)*0.9*FORM[m.form||1].zw));} continue; }
     if(m.state==="crouch"){ m.delay-=dt; if(m.delay<=0&&!montage){m.state="climb";m.lift=0; if(Math.random()<0.1)SFX.play("mud",0.3,{gap:0.1,dur:0.5}); if(Math.random()<0.05)say(m,S.lang==="zh"?"冲啊！":"Go! Go!",1.2);} continue; }
     if(m.state==="run"){
       let sp=m.speed; for(const g of b.gasZones)if(Math.abs(m.x-g.x)<g.w)sp*=0.8;
       if(cur.wr>0&&m.x>bx+SEGL()*0.55&&m.x<bx+SEGL()*0.62)sp*=Math.max(0.3,1-cur.wr*0.22);
       if(m.hold>0){m.hold-=dt;sp*=0.08;}
       if(m.stumble>0){m.stumble-=dt;sp*=0.05;} else if(Math.random()<dt*0.04){m.stumble=0.35+Math.random()*0.4; if(Math.random()<0.3)say(m,pick(S.lang==="zh"?["起来！","继续跑！","别停！"]:["Up!","Keep going!","Don't stop!"]),1);}
-      m.x+=sp*dt; m.phase+=dt*sp*0.075*(m.v?m.v.gaitF:1);
-      if(m.x>=ex-150-((m.z*977)%1)*40){b.reached++; if(b.e>0&&b.assault){m.state="melee";m.x=ex-40+Math.random()*50+b.front; joinMelee(m);} else if(b.e>0){m.state="gather";m.gx=m.x; if(!b.gatherMsg){b.gatherMsg=1;toast(S.lang==="zh"?"先头部队在铁丝网前隐蔽，等待后续部队…":"Leading men take cover at the wire, waiting for the rest…");}} else {m.state="wait";}}
+      m.x+=sp*dt; m.phase+=dt*sp*0.075*(m.v?m.v.gaitF:1); if(m.zt!=null){ const dz=m.zt-m.z; m.z+=Math.sign(dz)*Math.min(Math.abs(dz),dt*0.07); }
+      if(m.x>=ex-150-((m.z*977)%1)*40){b.reached++; if(b.e>0&&b.assault){m.state="melee";m.mx=ex-40+Math.random()*50+b.front; joinMelee(m);} else if(b.e>0){m.state="gather";m.gx=m.x; if(!b.gatherMsg){b.gatherMsg=1;toast(S.lang==="zh"?"先头部队在铁丝网前隐蔽，等待后续部队…":"Leading men take cover at the wire, waiting for the rest…");}} else {m.state="wait";}}
       // morale: low morale men go to ground (pinned = lost)
       if(m.mor<22&&Math.random()<dt*1.6){ pinMan(m); continue; }
       // mines
@@ -1471,6 +1471,9 @@ function stepBattle(dt){
       for(const g of b.gasZones){ if(Math.abs(m.x-g.x)<g.w&&Math.random()<0.012*dt*60*0.12)killMan(m,"gas"); }
     }
   }
+  for(const m of alive){ if(m.state==="melee"&&m.mx!=null){ const d=m.mx-m.x; if(Math.abs(d)>1){ m.x+=Math.sign(d)*Math.min(Math.abs(d),dt*150); m.phase+=dt*9; } } }
+  for(const en of enemies){ if(en.alive&&en.tx!=null){ const d=en.tx-en.x; if(Math.abs(d)>1){ en.x+=Math.sign(d)*Math.min(Math.abs(d),dt*90); en.phase=(en.phase||0)+dt*8; } } }
+  { const gat=alive.filter(m=>m.state==="gather"); const rr=cur.rf*0.0065*0.4*(1500/SEGL())/mf(); for(const m of gat){ if(Math.random()<rr*dt*1.8*(m.vet?0.62:1)) killMan(m,"rf"); } }
   // hazards: continuous fire on running men
   const supp=1-(b.supp||0); const smokeF = (b.smoke>0 ? 0.45 : 1)*supp; if(b.smoke>0)b.smoke-=dt;
   const tankF = b.tanks ? Math.max(0.5,1-0.2*b.tanks.length) : 1;
@@ -1498,8 +1501,8 @@ function stepBattle(dt){
   for(let ni=0;ni<b.nodes.length;ni++){ const nd=b.nodes[ni]; if(!nd.done&&lead>=nd.x){ nd.done=true; nodeEvent(ni); } }
   // gather in dead ground at the wire, then assault together
   if(!b.assault&&b.e>0){ const gat=alive.filter(m=>m.state==="gather"); const run=alive.filter(m=>m.state==="run"||m.state==="climb"||m.state==="crouch").length;
-    if(gat.length&&(run===0||gat.length>=Math.max(4,0.75*(gat.length+run))||gat.length>=b.e*2.5)){ b.assault=true; big(S.lang==="zh"?"冲进战壕！":"INTO THEIR TRENCH!","",1200); AU.whistle(); AU.cheer();
-      gat.forEach((m,i)=>{ m.state="melee"; m.x=ex-40+Math.random()*50+b.front; setTimeout(()=>{},0); joinMelee(m); }); } }
+    if(gat.length){b.gatherT=(b.gatherT||0)+dt;} if(gat.length&&(run===0||b.gatherT>3.5||gat.length>=Math.max(4,0.75*(gat.length+run))||gat.length>=b.e*2.5)){ b.assault=true; big(S.lang==="zh"?"冲进战壕！":"INTO THEIR TRENCH!","",1200); AU.whistle(); AU.cheer();
+      gat.forEach((m,i)=>{ m.state="melee"; m.mx=ex-40+Math.random()*50+b.front; joinMelee(m); }); } }
   // continuous melee at the enemy line
   if(b.mel.length&&b.e>0){ b.mT-=dt; if(b.mT<=0){ b.mT=0.7; meleeTick(); } }
   // end conditions
@@ -1530,10 +1533,10 @@ function meleeTick(){
   b.e-=k; b.eKilled+=k; cur.gr=b.e; b.supp=Math.min(0.9,A/(A+E)*1.15);
   const FD=(trenchLines(S.lvl)-1)*85+40; b.front=Math.min(FD,(1-b.e/Math.max(1,b.e0))*FD); // fight moves deeper into the trench system
   let ve=enemies.filter(x=>x.alive); for(let i=0;i<Math.min(k,ve.length);i++){ const en=ve[Math.floor(Math.random()*ve.length)]; if(en.alive){en.alive=false;makeRagdoll(en.x,en.z,-1,pal.en,false,[8+Math.random()*6,6+Math.random()*6],true);puff(en.x,en.z,40,4,"blood",60,0.5,2,-400);} }
-  ve=enemies.filter(x=>x.alive); while(ve.length<Math.min(b.e,24)){const n={x:ex+b.front+Math.random()*50,z:laneZ(Math.random()),phase:0,alive:true,flash:0};enemies.push(n);ve.push(n);}
-  enemies.forEach(en=>{if(en.alive&&en.x<ex+b.front-10)en.x+=6;});
+  ve=enemies.filter(x=>x.alive); while(ve.length<Math.min(b.e,24)){const n={x:ex+b.front+90+Math.random()*60,tx:ex+b.front+Math.random()*50,z:laneZ(Math.random()),phase:0,alive:true,flash:0};enemies.push(n);ve.push(n);}
+  enemies.forEach(en=>{if(en.alive&&en.x<ex+b.front-10)en.tx=ex+b.front-10+Math.random()*20;});
   al.sort(()=>Math.random()-0.5); for(let i=0;i<kk;i++){ const m=al[i]; m.alive=false; b.dead++; b.meleeDead++; makeRagdoll(m.x,m.z,1,manCols(m),m.vet,[-6-Math.random()*6,6+Math.random()*6],false); }
-  al.forEach(m=>{ if(m.alive&&m.x<ex-30+b.front)m.x+=8+Math.random()*10; });
+  al.forEach(m=>{ if(m.alive){ m.mx=Math.max(m.mx||m.x, ex-40+b.front+Math.random()*30); } });
   for(let i=0;i<Math.min(6,2+k);i++)setTimeout(()=>AU.clang(),i*70); if(Math.random()<0.6)AU.shot(0.25);
   for(let i=0;i<Math.min(8,k+kk);i++){const x=ex+b.front-20+Math.random()*60;puff(x,laneZ(Math.random()),45,3,"spark",80,0.25,2,-200);}
   cam.shake=Math.max(cam.shake,2+Math.min(8,k)); if(k>=5&&Math.random()<0.5){slowmo=0.5;setTimeout(()=>slowmo=1,350);}

@@ -153,3 +153,8 @@ NEW wishes:
 - MID-GAME unlock: GENERAL/OFFICER (strategic resource, 1 per charge). Player controls him with WASD; troops follow him. Terrain has safe zones (dead ground / shell craters) where you can halt, regroup, and re-order the charge. Officer can die → short cinematic, then troops continue on original order.
 - MID-GAME unlock: SIGNAL FLARE: order waves to move to a buffer/safe zone and WAIT, then fire flare → all continue together.
 - MID-GAME: barbed wire belts on the route; ENGINEERS unit type cuts wire (otherwise men stall at wire and die).
+
+## v1.1a
+- Melee teleports fixed: men get m.mx target, enemies en.tx; both walk smoothly (no x jumps). New enemies spawn behind and walk in.
+- Gather at wire: max 3.5s (b.gatherT) then assault; gathered men take reduced rifle fire (not invulnerable).
+- Depth spread: on leaving trench each man gets zt across field depth (x FORM.zw) and drifts there while running.
