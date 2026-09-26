@@ -176,3 +176,7 @@ NEW wishes:
 - SIGNAL FLARE (lvl 12): wave.h hold order (#holdRow Go/Hold). Dead ground fold at deadX()=0.42 SEGL (drawn, labelled in plan; fire x0.25 there). Holding men stop there (state "hold", light rifle exposure). #tools HUD button FLARE (key F) → fireFlare(): red flare, all rise together; auto after 30s.
 - SHOCK ASSAULT skill reward: if assault mass >=70% of those still coming and >= enemy garrison → b.shock, melee +30%.
 - #tools also hosts OFFICER button (key O) → window.startOfficer (next stage).
+
+## v1.1f OFFICER
+- startOfficer() (O key / #tools button, lvl>=17, once per charge): officer spawns at rearmost runner; runners within 0.35 SEGL get m.fol and keep just behind him (speed modulated, z drifts toward him). WASD/arrows or on-screen #offpad move him. SPACE/H or HALT/GO toggles halt: followers go state "rally" (crouch around him, morale regen); GO → morale +25 if halted >2s, b.shock if regrouped ≥max(6,0.8·garrison). Takes fire (reduced when halted / dead ground). officerDown(): ragdoll, slowmo 0.25 + camera zoom + "THE OFFICER IS DOWN", others continue. Reaching the wire hands over. Camera follows him.
+- #topStrip hidden outside plan/menu (was overlapping battle HUD).

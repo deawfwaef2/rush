@@ -243,6 +243,11 @@ body.cgon #hud,body.cgon #menu,body.cgon #top,body.cgon #advisor,body.cgon #adba
 #tools{position:absolute;right:14px;bottom:18px;display:flex;gap:10px;z-index:5}#tools button{display:flex;flex-direction:column;align-items:center;gap:2px;min-width:86px;padding:8px 10px;background:linear-gradient(#3a2a18,#1a120a);border:2px solid #c9a86a;border-radius:8px;color:#efe4cc;font:15px Impact,sans-serif;letter-spacing:.1em;cursor:pointer}#tools button svg{width:30px;height:30px}#tools small{font:10px Georgia;opacity:.6}#bFlare{border-color:#e05a3a!important;animation:pulseF 1s infinite}@keyframes pulseF{50%{box-shadow:0 0 18px #e05a3a}}
 .toolRow .seg{flex:1;padding:6px 4px;background:#0004;border:1px solid #ffffff22;color:#cbb;border-radius:4px;font-size:12px;cursor:pointer}.toolRow .seg.on{background:#7e1d12;border-color:#f3d890;color:#fff}
 #supports.many .sup .tx i{display:none}#supports.many .sup{max-width:150px}#supports{flex-wrap:wrap;justify-content:center;max-width:calc(100vw - 660px)}
+#offpad{position:absolute;right:14px;bottom:14px;display:flex;gap:10px;align-items:flex-end;z-index:6}
+#offpad .dp{display:grid;grid-template-columns:repeat(3,44px);grid-template-rows:repeat(2,44px);gap:4px}
+#offpad .dp button:nth-child(1){grid-column:2;grid-row:1}#offpad .dp button:nth-child(2){grid-column:1;grid-row:2}#offpad .dp button:nth-child(3){grid-column:2;grid-row:2}#offpad .dp button:nth-child(4){grid-column:3;grid-row:2}
+#offpad button{background:#1c160ecc;border:1px solid #f0c87066;color:#f0c870;font:15px Impact,sans-serif;border-radius:6px}
+#offpad .hb{height:92px;padding:0 14px;display:flex;flex-direction:column;justify-content:center;gap:4px}#offpad .hb small{font:10px Georgia;color:#bba}#offpad .hb.on{background:#7a2a18cc}
 </style>
 </head>
 <body>
@@ -1231,6 +1236,7 @@ const SVI={cg:'<svg class="ti" viewBox="0 0 12 12"><rect x="1" y="3" width="10" 
  warn:'<svg class="ti" viewBox="0 0 12 12"><path d="M6 1l5.5 10H.5z" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M6 4.5v3.2M6 8.8v1" stroke="currentColor" stroke-width="1.3"/></svg>',
  play:'<svg viewBox="0 0 12 12" width="1em" height="1em"><path d="M3 1.5v9l7.5-4.5z" fill="currentColor"/></svg>'};
 const TAGI={cg:SVI.cg,fort:SVI.fort,new:SVI.new};
+function chCGon(){ try{ return !!(typeof chCG!=="undefined"&&chCG); }catch(e){ return false; } }
 function updStrip(){ const el=$("topStrip"); if(el) el.innerHTML=S.done?"":stripHTML(); }
 function stripHTML(){ const ch=Math.floor(S.lvl/8), zh=S.lang==="zh"; let h=`<div class="strip"><div class="sh">${CHAPTERS[Math.min(4,ch)][S.lang]}<b>${lvlCode(S.lvl)}</b></div><div class="nodes">`;
   for(let k=0;k<8;k++){ const i=ch*8+k; if(i>=NLV)break; const tg=lvlTags(i); const st=i<S.lvl?"done":i===S.lvl?"cur":"";
@@ -1506,6 +1512,7 @@ function stepBattle(dt){
   for(const m of alive){
     if(m.state==="climb"){ m.lift=Math.min(1,(m.lift||0)+dt*1.7); m.phase+=dt*8; m.x+=dt*TR_W*1.6; if(m.lift>=1){m.state="run";m.intrench=false; const u=((men.indexOf(m)*0.618+m.phase*0.1)%1); m.zt=Math.max(0.07,Math.min(0.96,0.52+(u-0.5)*0.9*FORM[m.form||1].zw));} continue; }
     if(m.state==="crouch"){ m.delay-=dt; if(m.delay<=0&&!montage){m.state="climb";m.lift=0; if(Math.random()<0.1)SFX.play("mud",0.3,{gap:0.1,dur:0.5}); if(Math.random()<0.05)say(m,S.lang==="zh"?"冲啊！":"Go! Go!",1.2);} continue; }
+    if(m.state==="rally"){ const o=b.off; if(!o||!o.alive||!o.halt){ m.state="run"; m.stumble=Math.random()*0.3; if(o&&o.alive&&o.boost)m.mor=Math.min(120,m.mor+25); continue; } const d=m.rx-m.x; if(Math.abs(d)>2){m.x+=Math.sign(d)*Math.min(Math.abs(d),dt*120); m.phase+=dt*8;} m.mor=Math.min(110,m.mor+dt*6); continue; }
     if(m.state==="hold"){ if(battle.flared){ m.state="run"; m.hold2=false; m.stumble=Math.random()*0.5; } continue; }
     if(m.state==="cut"){ const bl=m.cutB; m.phase+=dt*3; if(!bl||bl.cut>=1){ m.state="run"; m.cutDone=1; continue; } bl.cut=Math.min(1,bl.cut+dt/3.6); if(Math.random()<dt*2)SFX.play("clang",0.12,{gap:0.25,dur:0.3}); if(bl.cut>=1){ m.state="run"; m.cutDone=1; toast(S.lang==="zh"?"工兵在铁丝网上剪开了缺口！":"Engineers cut a gap in the wire!"); } continue; }
     if(m.state==="run"){
@@ -1514,6 +1521,7 @@ function stepBattle(dt){
       if(m.hold>0){m.hold-=dt;sp*=0.08;}
       if(m.stumble>0){m.stumble-=dt;sp*=0.05;} else if(Math.random()<dt*0.04){m.stumble=0.35+Math.random()*0.4; if(Math.random()<0.3)say(m,pick(S.lang==="zh"?["起来！","继续跑！","别停！"]:["Up!","Keep going!","Don't stop!"]),1);}
       if(m.hold2&&!battle.flared&&m.x>=deadX()-10-((m.z*531)%1)*50){ m.state="hold"; if(!battle.holdMsg){battle.holdMsg=1; toast(S.lang==="zh"?"待命波次已在死角卧倒——准备好后发射信号弹。":"Holding waves are down in the dead ground — fire the flare when ready.");} continue; }
+      if(b.off&&b.off.alive&&m.fol){ const o=b.off; if(o.halt){ m.state="rally"; m.rx=o.x-20-((m.z*733)%1)*90; continue; } const ahead=m.x-(o.x+30+((m.z*311)%1)*40); if(ahead>0)sp*=Math.max(0.05,1-ahead/60); else sp*=Math.min(1.25,1+(-ahead)/300); const dz=o.z+((m.z*917)%1-0.5)*0.35-m.z; m.z+=Math.sign(dz)*Math.min(Math.abs(dz),dt*0.12); }
       m.x+=sp*dt; m.phase+=dt*sp*0.075*(m.v?m.v.gaitF:1); if(m.zt!=null){ const dz=m.zt-m.z; m.z+=Math.sign(dz)*Math.min(Math.abs(dz),dt*0.07); }
       if(m.x>=ex-150-((m.z*977)%1)*40){b.reached++; if(b.e>0&&b.assault){m.state="melee";m.mx=ex-40+Math.random()*50+b.front; joinMelee(m);} else if(b.e>0){m.state="gather";m.gx=m.x; if(!b.gatherMsg){b.gatherMsg=1;toast(S.lang==="zh"?"先头部队在铁丝网前隐蔽，等待后续部队…":"Leading men take cover at the wire, waiting for the rest…");}} else {m.state="wait";}}
       // morale: low morale men go to ground (pinned = lost)
@@ -1530,6 +1538,7 @@ function stepBattle(dt){
   { const gat=alive.filter(m=>m.state==="gather"); const rr=cur.rf*0.0065*0.4*(1500/SEGL())/mf(); for(const m of gat){ if(Math.random()<rr*dt*1.8*(m.vet?0.62:1)) killMan(m,"rf"); } }
   b.toolT=(b.toolT||0)-dt; if(b.toolT<=0){b.toolT=1; updTools();}
   { const hd=alive.filter(m=>m.state==="hold"); if(hd.length){ b.holdT=(b.holdT||0)+dt; const rr=cur.rf*0.0065*0.15*(1500/SEGL())/mf(); for(const m of hd){ if(Math.random()<rr*dt*(m.vet?0.62:1)) killMan(m,"rf"); } if(b.holdT>30&&!b.flared) fireFlare(true); } }
+  stepOfficer(dt);
   // hazards: continuous fire on running men
   const supp=1-(b.supp||0); const smokeF = (b.smoke>0 ? 0.45 : 1)*supp; if(b.smoke>0)b.smoke-=dt;
   const tankF = b.tanks ? Math.max(0.5,1-0.2*b.tanks.length) : 1;
@@ -1562,13 +1571,14 @@ function stepBattle(dt){
   // continuous melee at the enemy line
   if(b.mel.length&&b.e>0){ b.mT-=dt; if(b.mT<=0){ b.mT=0.7; meleeTick(); } }
   // end conditions
-  const stillMoving=men.filter(m=>m.alive&&(m.state==="run"||m.state==="crouch"||m.state==="climb"||m.state==="gather"||m.state==="cut"||m.state==="hold")).length;
+  const stillMoving=men.filter(m=>m.alive&&(m.state==="run"||m.state==="crouch"||m.state==="climb"||m.state==="gather"||m.state==="cut"||m.state==="hold"||m.state==="rally")).length;
   const inMelee=b.mel.filter(m=>m.alive).length;
   if(b.e<=0&&!b.over){ b.over=true; men.forEach(m=>{if(m.alive&&m.state==="run"){m.state="wait";}}); setTimeout(()=>result(true),900); }
   else if(men.filter(m=>m.alive).length===0&&!b.over){ b.over=true; setTimeout(()=>result(false),1600); }
   else if(stillMoving===0&&inMelee===0&&b.e>0&&!b.over){ b.over=true; setTimeout(()=>result(false),1600); }
   // camera follows the mass
   if(b.mel.length&&(!running.length||b.mel.length>running.length*0.6)){cam.tx=ex-80+b.front; cam.tz=1.15;} else if(running.length){ const avg=running.reduce((s,m)=>s+m.x,0)/running.length; cam.tx=Math.min(ex-200,Math.max(bx+100,avg+160)); }
+  if(b.off&&b.off.alive&&!b.off.gone){ cam.tx=b.off.x+60; cam.tz=1.15; lookOff*=0.9; }
   // HUD
   $("hud").innerHTML=`<span>${IC.man.replace('<svg','<svg width=22 height=22 style="vertical-align:-3px"')} ${alive.length}</span><span style="color:#c8432f">${IC.skull.replace('<svg','<svg width=22 height=22 style="vertical-align:-3px"')} ${b.dead}</span><span>${IC.gr.replace('<svg','<svg width=22 height=22 style="vertical-align:-3px"')} ${Math.max(0,Math.round(b.e))}</span>${b.pinned?`<span style="color:#d8b060">⬇ ${b.pinned}</span>`:""}`;
 }
@@ -1578,9 +1588,55 @@ function hitK(m,bx){ const p=Math.max(0,Math.min(1,(m.x-bx)/SEGL())); if(hasDead
 function pinMan(m){ if(!m.alive)return; m.alive=false; m.pinned=true; m.state="prone"; battle.pinned++; if(Math.random()<0.3)say(m,pick(S.lang==="zh"?["我不行了…","趴下！","妈妈…"]:["I can't…","Get down!","Mother…"]),1.4); }
 function shockNear(x,z){ for(const o of men){ if(o.alive&&o.state==="run"&&Math.abs(o.x-x)<70&&Math.abs(o.z-z)<0.16){ o.mor-= (o.vet?2:5.5)*(0.6+Math.random()*0.8)*(FORM[o.form||1].melee>1?0.8:1); } } }
 function joinMelee(m){ const b=battle; b.mel.push(m); m.phase=Math.random()*6; if(!b.melee){ b.melee=true; big(L_().melee,"",1100); AU.cheer(); cam.shake=6; slowmo=0.55; setTimeout(()=>slowmo=1,900); } if(Math.random()<0.12)say(m,pick(S.lang==="zh"?["刺刀！","杀！","冲进去！"]:["Bayonets!","At them!","Into the trench!"]),1.1); }
+/* ============ OFFICER (strategic resource, 1 per charge, unlock lvl 17) ============
+   Press O (or button) during the advance: an officer appears with the rearmost running group.
+   WASD/arrows move him; nearby runners follow and keep behind him. SPACE = halt & rally (men go prone around him,
+   morale recovers; in dead ground fire is light). SPACE again = "Up and at them!" -> morale boost + regroup shock bonus.
+   He can be shot. On death: slow-motion cinematic, men continue their original orders. */
+const OKEYS={};
+addEventListener("keydown",e=>{ const k=e.key.toLowerCase(); OKEYS[k]=1; if(battle&&battle.off&&battle.off.alive&&(k===" "||k==="h")){ e.preventDefault(); officerHalt(); } });
+addEventListener("keyup",e=>{ OKEYS[e.key.toLowerCase()]=0; });
+function startOfficer(){ const b=battle; if(!b||b.offUsed||!hasTool("off")||mode!=="charge")return; const run=men.filter(m=>m.alive&&m.state==="run"); if(!run.length){toast(S.lang==="zh"?"没有正在前进的部队。":"No one is advancing.");return;}
+  b.offUsed=1; run.sort((a,c)=>a.x-c.x); const x0=run[0].x; b.off={x:x0-20,z:0.55,alive:true,halt:false,t:0,phase:0,hp:1};
+  for(const m of run) if(m.x<x0+SEGL()*0.35) m.fol=1;
+  AU.whistle(); big(S.lang==="zh"?"军官上前":"OFFICER UP",S.lang==="zh"?"WASD移动 · 空格 停止集结 / 再次冲锋":"WASD move · SPACE halt & rally / charge again",1800); updTools(); updOffPad(); }
+window.startOfficer=startOfficer;
+function officerHalt(){ const b=battle, o=b&&b.off; if(!o||!o.alive)return; if(!o.halt){ o.halt=true; o.haltT=0; toast(S.lang==="zh"?"卧倒！在军官身边集结。":"Down! Rally on the officer."); }
+  else { o.halt=false; o.boost=o.haltT>2; const n=men.filter(m=>m.alive&&m.fol&&m.state==="rally").length; AU.whistle(); SFX.play("charge",0.5,{gap:1});
+    big(S.lang==="zh"?"跟我上！":"UP AND AT THEM!",n?(S.lang==="zh"?`${n}人重新编组冲锋`:`${n} men regrouped`):"",1200); if(n>=Math.max(6,b.e*0.8)) b.shock=true; }
+  updOffPad(); }
+function stepOfficer(dt){ const b=battle, o=b&&b.off; if(!o||!o.alive)return; o.t+=dt; const ex=trenchX(S.lvl+1), bx=trenchX(S.lvl);
+  let vx=0,vz=0; if(OKEYS.d||OKEYS.arrowright||OFFPAD.r)vx+=1; if(OKEYS.a||OKEYS.arrowleft||OFFPAD.l)vx-=0.6; if(OKEYS.w||OKEYS.arrowup||OFFPAD.u)vz+=1; if(OKEYS.s||OKEYS.arrowdown||OFFPAD.d)vz-=1;
+  if(o.halt){ o.haltT+=dt; vx=0; vz=0; }
+  o.x=Math.max(bx+20,Math.min(ex-160,o.x+vx*150*mf()*dt)); o.z=Math.max(0.1,Math.min(0.94,o.z+vz*0.28*dt)); if(vx||vz)o.phase+=dt*11;
+  // morale aura
+  for(const m of men) if(m.alive&&m.fol&&Math.abs(m.x-o.x)<160) m.mor=Math.min(115,m.mor+dt*3);
+  // reached the wire: officer hands over
+  if(o.x>=ex-162&&!o.halt&&vx>0){ o.gone=1; }
+  // incoming fire (officers were prime targets)
+  const dead=hasDead()&&Math.abs(o.x-deadX())<45; const p=Math.max(0,Math.min(1,(o.x-bx)/SEGL()));
+  const rr=(cur.rf*0.0065+cur.mg*0.004)*(o.halt?0.35:1)*(dead?0.25:1)*(0.4+1.2*p*p)*(1500/SEGL())*0.55;
+  if(Math.random()<rr*dt){ officerDown(); }
+  if(o.gone){ for(const m of men) m.fol=0; b.off=null; toast(S.lang==="zh"?"军官已抵达铁丝网——部队自行突击。":"The officer reached the wire — the men take it from here."); updOffPad(); }
+}
+function officerDown(){ const b=battle,o=b.off; o.alive=false; makeRagdoll(o.x,o.z,1,pal.vet,true,[-4,8],false); puff(o.x,o.z,40,5,"blood",60,0.5,2,-400);
+  slowmo=0.25; cam.tx=o.x; cam.tz=1.6; cam.shake=4; SFX.play("heart",0.6,{fixed:1,dur:3});
+  big(S.lang==="zh"?"军官阵亡":"THE OFFICER IS DOWN",S.lang==="zh"?"士兵们按原命令继续冲锋":"The men carry on with their orders",2200);
+  setTimeout(()=>{slowmo=1;},1800); for(const m of men){ if(m.alive&&m.state==="rally"){m.state="run";} m.fol=0; } b.off=null; updOffPad(); }
+function drawOfficer(){ const b=battle, o=b&&b.off; if(!o||!o.alive)return null; return {z:o.z,d:()=>{ const [sx,sy,s]=P(o.x,o.z,0);
+  cx.strokeStyle=o.halt?"rgba(240,200,110,0.8)":"rgba(240,200,110,0.45)"; cx.lineWidth=1.5; cx.beginPath(); cx.ellipse(sx,sy,26*s,7*s,0,0,7); cx.stroke();
+  drawMan(sx,sy,s,1,o.phase,o.halt?"crouch":"run",pal.vet,{vet:true,v:{h:1.03,w:1,stride:1,lean:0,pack:false,cap:true,hold:0}});
+  cx.fillStyle="#f0c870"; cx.font=`${Math.max(10,11*s)}px Georgia`; cx.textAlign="center"; cx.fillText(S.lang==="zh"?"军官":"OFFICER",sx,sy-80*s); cx.textAlign="left"; }}; }
+const OFFPAD={};
+function updOffPad(){ let el=$("offpad"); const on=battle&&battle.off&&battle.off.alive;
+  if(!el){ el=document.createElement("div"); el.id="offpad"; $("ui").appendChild(el);
+    el.innerHTML=`<div class="dp"><button data-k="u">W</button><button data-k="l">A</button><button data-k="d">S</button><button data-k="r">D</button></div><button class="hb" data-h="1">${S.lang==="zh"?"停止/冲锋":"HALT / GO"}<small>SPACE</small></button>`;
+    el.querySelectorAll("button[data-k]").forEach(bt=>{ const k=bt.dataset.k; bt.onpointerdown=e=>{e.preventDefault();OFFPAD[k]=1;}; bt.onpointerup=bt.onpointerleave=bt.onpointercancel=()=>{OFFPAD[k]=0;}; });
+    el.querySelector(".hb").onclick=()=>officerHalt(); }
+  el.classList.toggle("hide",!on); const hb=el.querySelector(".hb"); if(hb&&on) hb.classList.toggle("on",battle.off.halt); }
 function fireFlare(auto){ const b=battle; if(!b||b.flared)return; b.flared=true; const x=deadX(); vfx=vfx||{t:0,x,flares:[]}; vfx.flares.push({x:x+60,z:0.5,h:0,vh:700,t:0,c:"255,90,70"}); vfx.t=0; SFX.play("rifle_rev",0.4,{lp:1500}); AU.whistle();
   big(S.lang==="zh"?"信号弹！":"FLARE!",S.lang==="zh"?(auto?"时间到——全体起身":"全体起身，一起冲！"):(auto?"Time's up — everyone up":"Everyone up — go together!"),1300); updTools(); }
-function updTools(){ const el=$("tools"); if(!el)return; const b=battle; const zh=S.lang==="zh"; if(!b||!(mode==="charge"||mode==="melee")){el.classList.add("hide");return;}
+function updTools(){ updOffPad(); const el=$("tools"); if(!el)return; const b=battle; const zh=S.lang==="zh"; if(!b||!(mode==="charge"||mode==="melee")){el.classList.add("hide");return;}
   const needF=hasTool("flare")&&men.some(m=>m.alive&&m.hold2)&&!b.flared; const canO=hasTool("off")&&!b.offUsed;
   el.classList.toggle("hide",!needF&&!canO); el.innerHTML=(needF?`<button id="bFlare">${IC.flare}<b>${zh?"信号弹":"FLARE"}</b><small>F</small></button>`:"")+(canO?`<button id="bOff">${IC.off}<b>${zh?"军官":"OFFICER"}</b><small>O</small></button>`:"");
   const f=$("bFlare"); if(f)f.onclick=()=>fireFlare(false); const o=$("bOff"); if(o)o.onclick=()=>{ if(window.startOfficer)startOfficer(); }; }
@@ -1917,6 +1973,7 @@ function frame(now){
   }
   if(montage){ montage.t+=rdt; if(montage.t>montage.dur){const oe=montage.onEnd;montage=null;if(oe)oe();$("hud").style.opacity=1;BGM.play("charge");} }
   if(mode==="charge"||mode==="melee")stepBattle(dt);
+  { const vis=(mode==="plan"||mode==="menu")&&!chCGon(); if(vis!==frame.stripVis){ frame.stripVis=vis; const ts=$("topStrip"); if(ts) ts.style.visibility=vis?"":"hidden"; } }
   stepRagdolls(dt); stepParts(dt); stepShells(dt); stepWeather(rdt); BGM.step(rdt);
   for(const e of enemies){e.phase+=dt;if(e.flash>0)e.flash-=dt;}
   // enemy idle fire during plan (ambience)
@@ -1952,7 +2009,8 @@ function frame(now){
   for(const m of men) if(m.pinned) ents.push({z:m.z,d:()=>{const [sx,sy,s]=P(m.x,m.z);cx.save();cx.translate(sx,sy+3*s);cx.rotate(1.42);drawMan(0,0,s*0.95,1,0,"crouch",manCols(m),{vet:m.vet,v:m.v});cx.restore();}});
   if(mode!=="menu"||true){ traverseEnts(ents,trenchX(S.lvl),1); traverseEnts(ents,trenchX(S.lvl+1),-1); }
   for(const m of men) if(m.alive&&m.intrench) ents.push({z:m.z,d:()=>drawManInTrench(m,m.state==="climb"?m.lift:0)});
-  for(const m of men) if(m.alive&&!m.intrench) ents.push({z:m.z,d:()=>{const [sx,sy,s]=P(m.x,m.z,m.state==="cheer"?0:0);drawMan(sx,sy,s,m.dir,m.phase,m.stumble>0?"crouch":(m.state==="wait"||m.state==="gather"||m.state==="cut"||m.state==="hold")?"crouch":m.state==="cheer"?"cheer":(m.arriving?"run":m.state),manCols(m),{vet:m.vet,v:m.v});
+  { const oe=drawOfficer(); if(oe)ents.push(oe); }
+  for(const m of men) if(m.alive&&!m.intrench) ents.push({z:m.z,d:()=>{const [sx,sy,s]=P(m.x,m.z,m.state==="cheer"?0:0);drawMan(sx,sy,s,m.dir,m.phase,m.stumble>0?"crouch":(m.state==="wait"||m.state==="gather"||m.state==="rally"||m.state==="cut"||m.state==="hold")?"crouch":m.state==="cheer"?"cheer":(m.arriving?"run":m.state),manCols(m),{vet:m.vet,v:m.v});
      if(m.state==="cheer"){ /* rifle raised */ }}});
   for(const e of enemies) if(e.alive) ents.push({z:e.z,d:()=>{const fight=battle&&battle.melee&&!battle.over; const [sx,sy,s]=P(e.x,e.z,0); cx.save(); if(!fight){cx.beginPath();cx.rect(sx-120*s,0,240*s,sy+1*s);cx.clip();} drawMan(sx,sy+(fight?0:TR_D*0.85)*s,s,-1,e.phase,fight?"melee":"aim",pal.en,{enemy:true,flash:e.flash>0}); cx.restore();}});
   if(battle&&battle.tanks&&(mode==="charge"||mode==="melee")) for(const tk of battle.tanks) ents.push({z:tk.z,d:()=>drawTank(tk)});
