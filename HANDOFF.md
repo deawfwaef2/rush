@@ -359,3 +359,11 @@ meleeAssign (every 0.2 s), meleeAfter(dt) (after b.over), drawEnemy(e), clash()/
 - meleeTick no longer kills anyone: it keeps flameTick, b.supp and ambience. Enemy rifle flashes only come from defenders still in the trench.
 - Camera zoom during melee 0.97 (was 1.15) so the whole trench depth stays visible. Report shows "Prisoners taken" (b.captured).
 - NEVER spawn figures in view or snap positions: use rise / run-in / walking (user requirement, round 13).
+
+## ROUND 14 user feedback (2026-09-27) - agent A working on all of it (claimed)
+User LIKES this version (v1.4b). Requests:
+1. Strategic resources panel: some entries do not update, text is cut off ("吞字"), the OFFICER entry shows nothing, FLAMETHROWERS are not shown.
+2. Stutter / lag ("卡顿") -> performance optimisation.
+3. Build several ZIP packages (per platform) with ads correctly integrated.
+4. Every FAILED attack plays one forced ad (interstitial / midgame).
+5. Integrate CrazyGames SDK AND Playgama SDK (Playgama Bridge).
