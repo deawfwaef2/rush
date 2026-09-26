@@ -227,3 +227,27 @@ NEW wishes:
 ## v1.2b TAKE COVER
 - From lvl idx 1: battle.cover = 3 (+S.buy.cov). Some rifle hits become telegraphed aimed shots (m.aim 1.25s, max 3 at once, 70% when charges left): gold→red corner-bracket box + timer bar (drawAimMarks). Click/tap the box (tryCover, canvas pointerdown in charge/melee) → man dives (stumble .7) + immune 1.2s, charge used. Unclicked → killed. First time: slowmo + toast. Counter shown in #tools (.covc). Merit "Quick reflexes" if ≥2 used.
 - Men drift to their depth lane faster (dt*0.16) to reduce clumping.
+
+---
+## Feedback round 11 (2026-09-26) → v1.3  (user's words, summarised; keep for future agents)
+ECONOMY
+- Daily reinforcement must be MUCH bigger: daily = (old daily number) x3; at game start the daily reward is 100 men.
+- Rewarded ad = 1/3 of the daily reward (not a whole day).
+- PERFECTION RATING per captured stronghold (1-5 stars): the SMALLER the share of men rotated to the rear (surplus survivors) out of the total sent, the HIGHER the rating. Reward only scales the level's BASE reward: 5*=300%, 4*=150%, 3*=100%, 2*=75%, 1*=50%.
+- After tutorial level 1 is cleared, TEACH this (popup/tutorial card) to encourage skilful, efficient sending.
+FIELD / VISUALS
+- Units still clump at start (a blob in the middle) -> spread them.
+- Both sides' lines feel too SHORT -> make the base length 1.5x longer.
+- Near-ground and far-ground zones are EMPTY -> fill them (visual richness).
+- Environment/scene too crude ("too simple, not pretty"). Check visuals yourself: mysterious HORIZONTAL STRIPES/bands on screen -> find & fix.
+- Battle animation crude; VICTORY FEEDBACK insufficient (make it more rewarding).
+- Mid-game: longer levels, more complex environment, enemy may have MULTIPLE trench lines, varied scenes.
+CHARGE RANDOM EVENTS (strongly requested)
+- Many random events during each charge so every charge feels different (not the same "movie" each time).
+- Each event gives a small buff/debuff shift to the charge.
+- Small & lively: a man trips and falls, a man drops into a shell hole and fires a few shots, etc. Rare LARGE events: mass rout, stall/hesitation, etc.
+- Probability modified by morale; give a "dice roll" feel.
+- Must be INTEGRATED/natural, not obviously scripted; must not lag or be awkward.
+COMBAT / PERF
+- Machine guns: the DENSER the formation, the MORE deaths.
+- Still very laggy with many men -> keep optimizing performance (top priority, again).
