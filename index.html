@@ -1719,7 +1719,7 @@ function stepOfficer(dt){ const b=battle, o=b&&b.off; if(!o||!o.alive)return; o.
   if(Math.random()<rr*dt){ officerDown(); }
   if(o.gone){ for(const m of men) m.fol=0; b.off=null; toast(S.lang==="zh"?"军官已抵达铁丝网——部队自行突击。":"The officer reached the wire — the men take it from here."); updOffPad(); }
 }
-function officerDown(){ const b=battle,o=b.off; o.alive=false; makeRagdoll(o.x,o.z,1,pal.vet,true,[-4,8],false); puff(o.x,o.z,40,5,"blood",60,0.5,2,-400);
+function officerDown(){ const b=battle,o=b.off; o.alive=false; b.offDied=1; makeRagdoll(o.x,o.z,1,pal.vet,true,[-4,8],false); puff(o.x,o.z,40,5,"blood",60,0.5,2,-400);
   slowmo=0.25; cam.tx=o.x; cam.tz=1.6; cam.shake=4; SFX.play("heart",0.6,{fixed:1,dur:3});
   big(S.lang==="zh"?"军官阵亡":"THE OFFICER IS DOWN",S.lang==="zh"?"士兵们按原命令继续冲锋":"The men carry on with their orders",2200);
   setTimeout(()=>{slowmo=1;},1800); for(const m of men){ if(m.alive&&m.state==="rally"){m.state="run";} m.fol=0; } b.off=null; updOffPad(); }
@@ -1823,7 +1823,7 @@ function reportHTML(b,surv,vetGain,hold,rear,fail){
   return `<div class="rep"><table>${row(zh?"派出":"Sent",`${b.sent} <small>(${lw.map((w,i)=>`W${i+1}:${w.r}${w.v?"+"+VETI+w.v:""} ${fl[w.f]}`).join(" · ")})</small>`)}
    ${row(zh?"阵亡":"Killed",b.dead,"red")}${row(zh?"趴下不起 (计为损失)":"Went to ground (lost)",b.pinned,"red")}
    ${row(zh?"击毙守军":"Enemy killed",b.eKilled)}
-   ${fail?"":row(zh?"幸存":"Survived",surv)+row(zh?"留守新阵地":"Hold the new trench",hold)+row(zh?"调往后方":"Transferred to the rear",rear, rear>b.e0?"red":"")+row(zh?"晋升老兵 返回":"Return as veterans",vetGain,"gold")}
+   ${fail?"":row(zh?"幸存":"Survived",surv)+row(zh?"留守新阵地":"Hold the new trench",hold)+row(zh?"调往后方":"Transferred to the rear",rear, rear>b.e0?"red":"")+row(zh?"晋升老兵 返回":"Return as veterans",vetGain,"gold")+(b.merits&&b.merits.length?row(zh?"战术评价 (+5%老兵/项)":"Tactical merit (+5% vets each)",b.merits.join(" · "),"gold"):"")}
    </table><div class="rem">${rem}</div></div>`;
 }
 function result(win){ $("tools")&&$("tools").classList.add("hide");
@@ -1832,7 +1832,8 @@ function result(win){ $("tools")&&$("tools").classList.add("hide");
   S.lost+=b.dead; S.lastMoraleD = win ? (lvl.fort?30:18) : -20; if(!win&&b.dead>b.sent*0.8)S.lastMoraleD-=5; S.morale=Math.max(0,Math.min(100,S.morale+S.lastMoraleD)); S.moraleT=Date.now();
   if(win){
     CG.happy();
-    const vetGain=surv>0?Math.max(1,Math.floor(surv*0.25)):0; const need=Math.max(1,Math.ceil(b.e0*0.6)); const hold=Math.min(surv-vetGain,need); const rear=surv-vetGain-hold;
+    const zhM=S.lang==="zh"; const merits=[]; if(b.shock)merits.push(zhM?"集中突击":"Massed assault"); if(b.flared&&b.holdMsg)merits.push(zhM?"信号弹协同":"Flare timing"); if(b.offUsed&&!b.offDied)merits.push(zhM?"军官指挥":"Officer's lead"); if(b.sent&&b.dead/b.sent<0.35)merits.push(zhM?"低伤亡":"Low losses"); if(!b.pinned)merits.push(zhM?"无人溃散":"Nobody broke");
+    b.merits=merits; const vetGain=surv>0?Math.min(surv,Math.max(1,Math.floor(surv*(0.25+0.05*merits.length)))):0; const need=Math.max(1,Math.ceil(b.e0*0.6)); const hold=Math.min(surv-vetGain,need); const rear=surv-vetGain-hold;
     S.vets+=vetGain; S.reserve+=vetGain;
     S.hist.push({lvl:S.lvl,day:S.day,lost:b.dead,sent:b.sent});
     S.income+=lvl.reward;
