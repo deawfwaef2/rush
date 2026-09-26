@@ -185,3 +185,8 @@ NEW wishes:
 - drawChapterCG rewritten: per-scene baked layers (cgBake → sky/far/mid/fg offscreen canvases, cached by ch:kind:size) + live figures; parallax push-in camera per layer; painterly clouds, haze bands, ruined church/houses, poplars, dead trees, sandbag parapet, wire coils, revetment, crosses, tanks; weather (rain/snow/pollen), god rays, baked vignette. Scenes CGK per chapter (march/dig/line, rain/flood/stretcher, sentry/flare/ruins, gasfield/masks/crosses, tanks/advance/dawn).
 - PERF: when chCG is active, frame() skips the whole world render (was drawing world + CG → lag).
 - Only SKIP button skips (from v1.0a).
+
+## v1.1h trench art pass
+- trenchCols(): palette-aware trench colours (berm, burlap bags x4, lit/shadow strips, walls, floor, cut); winter = snow caps on top course.
+- Parapet/parados now: earth berm polygon + lit crest + brick-bond sandbag courses (rounded bags w/ highlight + shadow), traverses same style; comm trenches/support line earthy with spoil lip instead of black strips/blobs.
+- Men waiting in trench drawn in shadow (trenchShadeCache darkened cols). Global rim light 0.55→0.22 (men looked like pale blobs).

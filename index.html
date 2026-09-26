@@ -880,20 +880,24 @@ function drawGround(){
 const TR_D=34, TR_W=30;
 function trenchOff(x,z){ const seed=Math.round(x)%9973; const u=z*12+seed, bay=Math.floor(u), f=u-bay; const a=(bay%2?14:-14), b=((bay+1)%2?14:-14); const k=f<0.82?0:(f-0.82)/0.18; return a+(b-a)*k*k*(3-2*k)+Math.sin(z*7+seed)*2; }
 // narrow cut (communication trench / sap) along a polyline of [x,z]
-function drawCut(pts,w){ cx.fillStyle="#140e08"; cx.beginPath(); pts.forEach((q,i)=>{const p=P(q[0],q[1]-w/900,0);i?cx.lineTo(p[0],p[1]):cx.moveTo(p[0],p[1]);}); for(let i=pts.length-1;i>=0;i--){const p=P(pts[i][0],pts[i][1]+w/900,0);cx.lineTo(p[0],p[1]);} cx.fill();
-  cx.strokeStyle="#3a2a1a"; cx.lineWidth=Math.max(1,3*P(0,pts[0][1])[2]); cx.beginPath(); pts.forEach((q,i)=>{const p=P(q[0],q[1]+w/900,-4);i?cx.lineTo(p[0],p[1]):cx.moveTo(p[0],p[1]);}); cx.stroke();
-  cx.fillStyle="#8f7e5c"; for(let i=0;i<pts.length;i++){ const p=P(pts[i][0],pts[i][1]-w/900-0.004,0); cx.beginPath(); cx.ellipse(p[0],p[1]-2*p[2],7*p[2],3*p[2],0,0,7); cx.fill(); } }
+function drawCut(pts,w){ const TC=trenchCols(); cx.fillStyle=TC.cut; cx.beginPath(); pts.forEach((q,i)=>{const p=P(q[0],q[1]-w/900,0);i?cx.lineTo(p[0],p[1]):cx.moveTo(p[0],p[1]);}); for(let i=pts.length-1;i>=0;i--){const p=P(pts[i][0],pts[i][1]+w/900,0);cx.lineTo(p[0],p[1]);} cx.fill();
+  cx.strokeStyle=TC.cutLit; cx.lineWidth=Math.max(1,2.4*P(pts[0][0],pts[0][1])[2]); cx.beginPath(); pts.forEach((q,i)=>{const p=P(q[0],q[1]+w/900,-4);i?cx.lineTo(p[0],p[1]):cx.moveTo(p[0],p[1]);}); cx.stroke();
+  cx.strokeStyle=TC.berm; cx.lineWidth=Math.max(1.5,5*P(pts[0][0],pts[0][1])[2]); cx.beginPath(); pts.forEach((q,i)=>{const p=P(q[0],q[1]-w/900-0.006,2);i?cx.lineTo(p[0],p[1]):cx.moveTo(p[0],p[1]);}); cx.stroke(); }
 function drawTrenchNet(x,side){ // communication trenches back to the support line + saps to listening posts
   const seed=Math.round(x)%9973; const back=-side*190;
   cx.save(); for(const zc of [0.22,0.55,0.86]){ const z=zc+((seed%7)-3)*0.01; const pts=[]; for(let k=0;k<=8;k++){ const t=k/8; pts.push([x+trenchOff(x,z)-side*TR_W+back*t, z+Math.sin(t*6+seed)*0.012]); } drawCut(pts,10); }
   // support trench (simpler) behind
   const sp=[]; for(let k=0;k<=24;k++){ const z=k/24*1.08; sp.push([x+back+Math.sin(z*18+seed)*9, z]); }
-  cx.fillStyle="#150f09"; cx.beginPath(); sp.forEach((q,i)=>{const p=P(q[0]-12,q[1],0);i?cx.lineTo(p[0],p[1]):cx.moveTo(p[0],p[1]);}); for(let i=sp.length-1;i>=0;i--){const p=P(sp[i][0]+12,sp[i][1],0);cx.lineTo(p[0],p[1]);} cx.fill();
-  cx.fillStyle="#7a6a4c"; sp.forEach(q=>{const p=P(q[0]+side*16,q[1],0);cx.beginPath();cx.ellipse(p[0],p[1]-2*p[2],9*p[2],3.4*p[2],0,0,7);cx.fill();});
+  cx.fillStyle=trenchCols().cut; cx.beginPath(); sp.forEach((q,i)=>{const p=P(q[0]-12,q[1],0);i?cx.lineTo(p[0],p[1]):cx.moveTo(p[0],p[1]);}); for(let i=sp.length-1;i>=0;i--){const p=P(sp[i][0]+12,sp[i][1],0);cx.lineTo(p[0],p[1]);} cx.fill();
+  cx.strokeStyle=trenchCols().berm; cx.lineWidth=Math.max(2,6*P(x+back,0.5)[2]); cx.beginPath(); sp.forEach((q,i)=>{const p=P(q[0]+side*18,q[1],2);i?cx.lineTo(p[0],p[1]):cx.moveTo(p[0],p[1]);}); cx.stroke();
   // saps forward to listening posts
   for(const zc of [0.38,0.72]){ const z=zc+((seed%5)-2)*0.012; const x0=x+trenchOff(x,z)+side*TR_W; const pts=[[x0,z],[x0+side*40,z+0.01],[x0+side*80,z-0.005]]; drawCut(pts,8);
-    const p=P(x0+side*86,z,0); cx.fillStyle="#9a8862"; for(let a=0;a<7;a++){ cx.beginPath(); cx.ellipse(p[0]+Math.cos(a*0.9)*12*p[2],p[1]+Math.sin(a*0.9)*3*p[2]-3*p[2],7*p[2],3*p[2],0,0,7); cx.fill(); } }
+    const p=P(x0+side*86,z,0); cx.fillStyle=trenchCols().bag[1]; for(let a=0;a<7;a++){ cx.beginPath(); cx.ellipse(p[0]+Math.cos(a*0.9)*12*p[2],p[1]+Math.sin(a*0.9)*3*p[2]-3*p[2],7*p[2],3*p[2],0,0,7); cx.fill(); } }
   cx.restore(); }
+function trenchCols(){ const k=pal; if(trenchCols.k===k)return trenchCols.c; const g=k.ground, burl="#8a7652";
+  const c={berm:shade(g[1],"#000000",0.18), bermLit:shade(g[0],"#000000",0.05), bag:[shade(burl,g[1],0.45),shade(burl,g[1],0.3),shade(burl,g[2],0.4),shade("#7a6a48",g[1],0.35)], bagLit:"rgba(255,240,210,0.22)", bagSh:"rgba(0,0,0,0.28)",
+    wallF:shade(g[2],"#000000",0.25), wallB:shade(g[2],"#000000",0.4), floor:shade(g[2],"#000000",0.55), cut:shade(g[2],"#000000",0.6), cutLit:shade(g[0],"#000000",0.1), snow:k===PAL.winter};
+  trenchCols.k=k; trenchCols.c=c; return c; }
 function drawTrench(x,side,level){
   drawTrenchNet(x,side); const seed=Math.round(x)%9973, D=TR_D, Wd=TR_W, n=52, z0=0.0, z1=1.1;
   const S_=[];for(let i=0;i<=n;i++){const z=z0+(z1-z0)*i/n;S_.push({z,x:x+trenchOff(x,z)});}
@@ -905,13 +909,13 @@ function drawTrench(x,side,level){
   for(let i=0;i<n;i++){const A=S_[i],B=S_[i+1];
     // floor + duckboards (A-frames)
     const a1=Q(lx(A)+4,A.z,-D),a2=Q(rx(A)-4,A.z,-D),b1=Q(lx(B)+4,B.z,-D),b2=Q(rx(B)-4,B.z,-D);
-    cx.fillStyle="#2b2016";cx.beginPath();cx.moveTo(a1[0],a1[1]);cx.lineTo(b1[0],b1[1]);cx.lineTo(b2[0],b2[1]);cx.lineTo(a2[0],a2[1]);cx.fill();
+    cx.fillStyle=trenchCols().floor;cx.beginPath();cx.moveTo(a1[0],a1[1]);cx.lineTo(b1[0],b1[1]);cx.lineTo(b2[0],b2[1]);cx.lineTo(a2[0],a2[1]);cx.fill();
     cx.fillStyle="#6a5236"; const m1=Q(A.x-8,A.z,-D+1),m2=Q(A.x+8,A.z,-D+1),m3=Q(B.x+8,B.z,-D+1),m4=Q(B.x-8,B.z,-D+1);
     cx.beginPath();cx.moveTo(m1[0],m1[1]);cx.lineTo(m2[0],m2[1]);cx.lineTo(m3[0],m3[1]);cx.lineTo(m4[0],m4[1]);cx.fill();
     cx.strokeStyle="#3a2a18";cx.lineWidth=Math.max(0.6,1.2*m1[2]);for(let k=0;k<4;k++){const t=k/4;cx.beginPath();cx.moveTo(m1[0]+(m4[0]-m1[0])*t,m1[1]+(m4[1]-m1[1])*t);cx.lineTo(m2[0]+(m3[0]-m2[0])*t,m2[1]+(m3[1]-m2[1])*t);cx.stroke();}
     // two walls: parapet side revetted with planks + posts, parados side with wattle/earth
     for(const sd of [-side,side]){ const wx=q=>q.x+sd*Wd; const t1=Q(wx(A),A.z,0),t2=Q(wx(B),B.z,0),c1=Q(wx(A),A.z,-D),c2=Q(wx(B),B.z,-D);
-      cx.fillStyle= sd===side ? "#5e4630" : "#4a3824"; cx.beginPath();cx.moveTo(t1[0],t1[1]);cx.lineTo(t2[0],t2[1]);cx.lineTo(c2[0],c2[1]);cx.lineTo(c1[0],c1[1]);cx.fill();
+      cx.fillStyle= sd===side ? trenchCols().wallF : trenchCols().wallB; cx.beginPath();cx.moveTo(t1[0],t1[1]);cx.lineTo(t2[0],t2[1]);cx.lineTo(c2[0],c2[1]);cx.lineTo(c1[0],c1[1]);cx.fill();
       cx.strokeStyle= sd===side ? "rgba(25,16,8,0.6)" : "rgba(25,16,8,0.35)"; cx.lineWidth=Math.max(0.6,1*t1[2]);
       for(let k=1;k<(sd===side?6:4);k++){const f=k/(sd===side?6:4);cx.beginPath();cx.moveTo(t1[0]+(c1[0]-t1[0])*f,t1[1]+(c1[1]-t1[1])*f);cx.lineTo(t2[0]+(c2[0]-t2[0])*f,t2[1]+(c2[1]-t2[1])*f);cx.stroke();}
       cx.fillStyle="#2a1c0e"; if(i%2===0)cx.fillRect(t1[0]-1.6*t1[2],t1[1]-5*t1[2],3.2*t1[2],c1[1]-t1[1]+5*t1[2]);
@@ -925,12 +929,26 @@ function drawTrench(x,side,level){
       if(r>0.88){cx.fillStyle="rgba(255,190,90,0.45)";cx.beginPath();cx.arc(m[0],m[1]+h*0.55,3.2*m[2],0,7);cx.fill();}
     }
   }
-  // sandbag parapet (front, high) and parados (rear, low): flat 2-tone bags
-  for(const [sd,rows,c0,c1] of [[-side,2,"#6e5f44","#8a7a58"],[side,4,"#8f7e5c","#b3a078"]]){
-    for(let i=0;i<=n*2;i++){ const z=z0+(z1-z0)*i/(n*2); const [sx,sy,sc]=P(x+trenchOff(x,z)+sd*(Wd+8),z,0);
-      for(let r2=0;r2<rows;r2++){ const bw=17*sc,bh=6.5*sc, ox=(r2%2)*bw*0.45, oy=-bh*r2*0.85-bh*0.4;
-        cx.fillStyle=c0; cx.beginPath();cx.ellipse(sx+ox,sy+oy,bw*0.62,bh*0.6,0,0,7);cx.fill();
-        cx.fillStyle=c1; cx.beginPath();cx.ellipse(sx+ox-bw*0.05,sy+oy-bh*0.15,bw*0.5,bh*0.34,0,0,7);cx.fill(); } } }
+  // earth berm (parapet high on the enemy-facing side, parados low behind) with sandbag courses laid in brick bond
+  const TC=trenchCols();
+  for(const [sd,rows,bermH] of [[-side,2,7],[side,3,11]]){
+    // berm
+    cx.fillStyle=TC.berm; cx.beginPath();
+    for(let i=0;i<=n;i++){ const z=z0+(z1-z0)*i/n; const q=x+trenchOff(x,z); const p=P(q+sd*(Wd+2),z,0); i?cx.lineTo(p[0],p[1]):cx.moveTo(p[0],p[1]); }
+    for(let i=n;i>=0;i--){ const z=z0+(z1-z0)*i/n; const q=x+trenchOff(x,z); const p=P(q+sd*(Wd+26),z,bermH*0.5); cx.lineTo(p[0],p[1]); }
+    cx.fill();
+    cx.fillStyle=TC.bermLit; cx.beginPath();
+    for(let i=0;i<=n;i++){ const z=z0+(z1-z0)*i/n; const q=x+trenchOff(x,z); const p=P(q+sd*(Wd+10),z,bermH); i?cx.lineTo(p[0],p[1]):cx.moveTo(p[0],p[1]); }
+    for(let i=n;i>=0;i--){ const z=z0+(z1-z0)*i/n; const q=x+trenchOff(x,z); const p=P(q+sd*(Wd+22),z,bermH*0.55); cx.lineTo(p[0],p[1]); }
+    cx.fill();
+    // bags
+    for(let i=0;i<=n*2;i++){ const z=z0+(z1-z0)*i/(n*2); const [sx,sy,sc]=P(x+trenchOff(x,z)+sd*(Wd+7),z,0); if(sx<-60||sx>W+60)continue;
+      for(let r2=0;r2<rows;r2++){ const bw=15*sc,bh=5.6*sc, ox=((r2+i)%2)*bw*0.5-bw*0.5, oy=-bh*r2*0.92-bh*0.5-bermH*0.35*sc;
+        const hv=hash(seed*7+i*13+r2*29); cx.fillStyle=TC.bag[(hv*4)|0&3]||TC.bag[0];
+        cx.beginPath(); cx.moveTo(sx+ox+bh*0.4,sy+oy-bh*0.5); cx.lineTo(sx+ox+bw-bh*0.4,sy+oy-bh*0.5); cx.quadraticCurveTo(sx+ox+bw+bh*0.1,sy+oy,sx+ox+bw-bh*0.4,sy+oy+bh*0.5); cx.lineTo(sx+ox+bh*0.4,sy+oy+bh*0.5); cx.quadraticCurveTo(sx+ox-bh*0.1,sy+oy,sx+ox+bh*0.4,sy+oy-bh*0.5); cx.fill();
+        cx.fillStyle=TC.bagLit; cx.fillRect(sx+ox+bh*0.4,sy+oy-bh*0.5,bw-bh*0.8,Math.max(0.8,bh*0.22));
+        cx.fillStyle=TC.bagSh; cx.fillRect(sx+ox+bh*0.3,sy+oy+bh*0.3,bw-bh*0.6,Math.max(0.8,bh*0.2));
+        if(TC.snow&&r2===rows-1){ cx.fillStyle="rgba(240,244,248,0.9)"; cx.fillRect(sx+ox+bh*0.2,sy+oy-bh*0.7,bw-bh*0.4,bh*0.35); } } } }
   // ladders every bay on our side, periscopes, stakes; enemy: loopholes & steel plates
   for(let i=0;i<n;i++){ const r=hash(seed*13+i*5); const z=z0+(z1-z0)*(i+0.5)/n; const q=x+trenchOff(x,z);
     const [sx,sy,sc]=P(q+side*(Wd-4),z,0);
@@ -950,12 +968,14 @@ function drawTrench(x,side,level){
 // traverse blocks (earth + sandbags across the trench every other bay) — depth-sorted so they hide men behind them
 function traverseEnts(ents,x,side){ const seed=Math.round(x)%9973; for(let bay=Math.ceil(seed-1);bay<seed+14;bay++){ const z=(bay+0.91-seed)/12; if(z<0.02||z>1.08)continue; ents.push({z:z+0.001,d:()=>{
     const q=x+(trenchOff(x,z-0.02)+trenchOff(x,z+0.02))/2; const a=P(q-TR_W,z,0), b=P(q+TR_W,z,0); const s=a[2];
-    cx.fillStyle="#5a4630"; cx.beginPath(); cx.moveTo(a[0],a[1]+TR_D*s*0.2); cx.lineTo(a[0],a[1]-6*s); cx.lineTo(b[0],b[1]-6*s); cx.lineTo(b[0],b[1]+TR_D*s*0.2); cx.fill();
-    for(let j=0;j<5;j++){ const t=j/4; const x0=a[0]+(b[0]-a[0])*t; cx.fillStyle="#9a8862"; cx.beginPath(); cx.ellipse(x0,a[1]-7*s,9*s,4*s,0,0,7); cx.fill(); cx.fillStyle="#b3a078"; cx.beginPath(); cx.ellipse(x0-1*s,a[1]-8.2*s,7*s,2.2*s,0,0,7); cx.fill(); } }}); } }
+    const TC=trenchCols(); cx.fillStyle=TC.berm; cx.beginPath(); cx.moveTo(a[0],a[1]+TR_D*s*0.2); cx.lineTo(a[0],a[1]-6*s); cx.lineTo(b[0],b[1]-6*s); cx.lineTo(b[0],b[1]+TR_D*s*0.2); cx.fill();
+    for(let j=0;j<5;j++){ const t=j/4; const x0=a[0]+(b[0]-a[0])*t; cx.fillStyle=TC.bag[j&3]; cx.fillRect(x0-7*s,a[1]-10*s,14*s,5.5*s); cx.fillStyle=TC.bagLit; cx.fillRect(x0-6*s,a[1]-10*s,12*s,1.3*s); cx.fillStyle=TC.bagSh; cx.fillRect(x0-6*s,a[1]-5.8*s,12*s,1.2*s); } }}); } }
 // a soldier standing on the trench floor: lowered by trench depth and clipped at the ground line, so only helmet & shoulders show
+const trenchShadeCache={}; function toHex(c){ if(c[0]==="#")return c; const m=c.match(/\d+/g); return "#"+m.slice(0,3).map(v=>(+v).toString(16).padStart(2,"0")).join(""); }
 function drawManInTrench(m,lift){ const [sx,sy,s]=P(m.x,m.z,0); const depth=TR_D*(1-lift)*0.95;
   cx.save(); cx.beginPath(); cx.rect(sx-120*s,0,240*s,sy+1*s); cx.clip();
-  drawMan(sx,sy+depth*s,s,m.dir,m.phase,m.state==="climb"?"run":"idle",manCols(m),{vet:m.vet,v:m.v}); if(m.eng){ cx.fillStyle="#e8e0cc"; cx.fillRect(sx-3*s,sy-52*s,6*s,2.6*s); } cx.restore(); }
+  const mc=manCols(m), sh=1-lift; const key2=mc[0]+mc[1]+(sh>0.5?1:0); let tc=trenchShadeCache[key2]; if(!tc){ tc=trenchShadeCache[key2]=sh>0.5?[shade(toHex(mc[0]),"#0e0a06",0.38),shade(toHex(mc[1]),"#0e0a06",0.3)]:mc; }
+  drawMan(sx,sy+depth*s,s,m.dir,m.phase,m.state==="climb"?"run":"idle",tc,{vet:m.vet,v:m.v}); if(m.eng){ cx.fillStyle="#e8e0cc"; cx.fillRect(sx-3*s,sy-52*s,6*s,2.6*s); } cx.restore(); }
 
 /* ============================================================
    SOLDIERS — silhouette + ragdoll
@@ -1054,7 +1074,7 @@ function drawMan0(sx,sy,s,dir,phase,state,cols,opts){
   };
   const g=gradFor(sx,sy,s,cols);
   // rim light pass (offset toward the light)
-  cx.fillStyle=opts.rim||"rgba(255,236,190,0.55)"; cx.save();cx.translate(-1.1*s,-1*s);paint();cx.restore();
+  cx.fillStyle=opts.rim||"rgba(255,236,190,0.22)"; cx.save();cx.translate(-1.1*s,-1*s);paint();cx.restore();
   cx.fillStyle=g; paint();
   // details
   cx.fillStyle="rgba(0,0,0,0.28)";
