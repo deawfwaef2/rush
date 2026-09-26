@@ -112,3 +112,7 @@ TODO next: plan camera should frame own trench better; unit types; enemy outpost
 - Trench unrealistic ("just a line") → real trench system: zigzag bays/traverses, communication trenches, support line, saps.
 - Map drawing has problems; game had BUGS; charge ended right after starting (bug: climbing men not counted → instant fail, fixed v0.9a).
 - User prefers the ORIGINAL charge CG (v0.5 4-shot montage) over v0.8 wide shots.
+
+## v0.9e (chapter CG)
+- playChapterCG(ch,done)/drawChapterCG: 13.5s, 3 scenes per chapter (per-chapter kinds: march/trench/dig/flood/sentry/gas/masks/advance/tanks), typewriter captions CGTXT en/zh, letterbox, tap to skip. Triggered in toPlan when S.lvl%8===2 && !S.seenCG<ch>. body.cgon hides UI.
+- Remaining TODO: battle immersion (smoke, craters, wounded, MG tracers), map glitch checks, balance.

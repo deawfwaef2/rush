@@ -225,6 +225,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
  #sendInfo,.pdesc{font-size:11px}
  #cDay{display:none}#hud{top:60px}
 }
+body.cgon #hud,body.cgon #menu,body.cgon #top,body.cgon #advisor,body.cgon #adbanner,body.cgon #plan{display:none!important}
 </style>
 </head>
 <body>
@@ -1357,7 +1358,7 @@ function toPlan(){
   cam.tx=trenchX(S.lvl)+SEGL()*0.2; cam.tz=0.9; cam.tt=0.45;
   setTimeout(()=>{ if(mode!=="pan")return; mode="plan"; $("plan").classList.remove("hide"); hazRows(); buildSupports(); buildPresets(); setSend(Math.min(S.reserve, Math.max(0, Math.ceil(lvl.gr*2)))); CG.gameplayStart(); updTop();
     if(lvl.fort) big(`⚠ ${L_().fortress}`,L_().fortTip,2200); if(S.reserve<Math.max(5,lvl.gr)) setTimeout(adOffer,900);
-    const ch=Math.floor(S.lvl/8); if(S.lvl%8===0 && !S["seenCh"+ch]){S["seenCh"+ch]=1;save();chapterCard(ch);} else if(!S.tut) setTimeout(startTut,400); },1300);
+    const ch=Math.floor(S.lvl/8); if(S.lvl%8===2 && !S["seenCG"+ch]){S["seenCG"+ch]=1;save();playChapterCG(ch,()=>{});} else if(S.lvl%8===0 && !S["seenCh"+ch]){S["seenCh"+ch]=1;save();chapterCard(ch);} else if(!S.tut) setTimeout(startTut,400); },1300);
 }
 function chapterCard(ch){
   const c=CHAPTERS[ch]; const ov=$("ov"); ov.classList.remove("hide");
@@ -1770,7 +1771,7 @@ function showTut(){ const steps=TUT[S.lang]; if(tutI>=steps.length){ $("tut").cl
   box.querySelector("button").onclick=()=>{AU.init();AU.click();tutI++;showTut();}; }
 // drag to look back at captured strongholds (menu)
 let drag=null;
-cv.addEventListener("pointerdown",e=>{ if(mode==="menu"){drag={x:e.clientX,cx:cam.tx};} else {drag={x:e.clientX,lo:lookOff,look:1};} });
+cv.addEventListener("pointerdown",e=>{ if(chCG){endChapterCG();return;} if(mode==="menu"){drag={x:e.clientX,cx:cam.tx};} else {drag={x:e.clientX,lo:lookOff,look:1};} });
 addEventListener("pointermove",e=>{ if(drag&&drag.look){ lookOff=Math.max(-SEGL()*0.7,Math.min(SEGL()*0.7,drag.lo-(e.clientX-drag.x)/scaleZ(0.6))); return; } if(drag){ const s=scaleZ(0.6); cam.tx=Math.min(trenchX(S.lvl)+400,Math.max(-300,drag.cx-(e.clientX-drag.x)/s)); } });
 addEventListener("pointerup",()=>{drag=null;});
 cv.addEventListener("wheel",e=>{ if(mode==="menu"){cam.tx=Math.min(trenchX(S.lvl)+400,Math.max(-300,cam.tx+e.deltaY+e.deltaX));} },{passive:true});
@@ -1862,6 +1863,7 @@ function frame(now){
   cx.restore();
   drawInsets(rdt);
   if(montage)drawMontage();
+  if(chCG)drawChapterCG(rdt);
   grain();
   requestAnimationFrame(frame);
 }
@@ -2072,6 +2074,60 @@ function drawMontWide(dawn,lt,t,bar,ih){
   }
   const vg=cx.createRadialGradient(W/2,H/2,H*0.2,W/2,H/2,H*0.9);vg.addColorStop(0,"rgba(0,0,0,0)");vg.addColorStop(1,"rgba(0,0,0,0.65)");cx.fillStyle=vg;cx.fillRect(0,0,W,H);
   cx.restore(); cx.fillStyle="#000";cx.fillRect(0,0,W,bar);cx.fillRect(0,H-bar,W,bar);
+}
+/* ============ CHAPTER CG (plays on level 3 of every chapter) ============ */
+let chCG=null;
+const CGTXT={en:[["August 1914.","They said it would be over by Christmas.","By autumn the armies had dug in, from the Channel to Switzerland."],
+ ["1915.","The rain came, and the front sank into the mud.","Men stood in water to the knee for days at a time."],
+ ["Winter, 1916.","The guns never stopped. Only the snow was quiet.","A sentry's breath was the only warm thing on the line."],
+ ["1917.","The air itself became a weapon.","A mask, a gasp, and you learned to count by breaths."],
+ ["August 1918.","At last, the line moved.","A hundred days. Tanks, aeroplanes, and tired men walking east."]],
+ zh:[["1914年8月。","他们说，圣诞节前就能结束。","到了秋天，军队从英吉利海峡一直挖到了瑞士。"],
+ ["1915年。","雨来了，战线沉进了泥里。","士兵们一连几天站在齐膝深的水里。"],
+ ["1916年冬。","炮声从未停歇。只有雪是安静的。","哨兵呼出的白气，是战壕里唯一温暖的东西。"],
+ ["1917年。","连空气都成了武器。","一只面具，一口喘息，你学会了用呼吸来数时间。"],
+ ["1918年8月。","战线终于动了。","一百天。坦克、飞机，还有向东走去的疲惫士兵。"]]};
+function playChapterCG(ch,done){ chCG={ch,t:0,dur:13.5,done}; document.body.classList.add("cgon"); BGM.play("calm"); $("plan").classList.add("hide"); SFX.play("booms_far",0.5,{fixed:1,dur:12}); if(ch===1)SFX.play("rain",0.5,{fixed:1,dur:13}); if(ch===2)SFX.play("wind",0.6,{fixed:1,dur:13}); if(ch===3)SFX.play("heart",0.6,{fixed:1,dur:8}); }
+function endChapterCG(){ if(!chCG)return; const d=chCG.done; chCG=null; document.body.classList.remove("cgon"); $("plan").classList.remove("hide"); if(d)d(); }
+function drawChapterCG(dt){ const c=chCG; c.t+=dt; if(c.t>c.dur){endChapterCG();return;} const t=c.t, ch=c.ch, bar=H*0.12, ih=H-2*bar, S_=ih/200;
+  const sc=t<4.5?0:t<9?1:2, lt=(t-[0,4.5,9][sc])/4.5; const P0=PAL[CHAPTERS[ch].pal];
+  cx.save(); cx.fillStyle="#000"; cx.fillRect(0,0,W,H); cx.beginPath(); cx.rect(0,bar,W,ih); cx.clip();
+  const sky=cx.createLinearGradient(0,bar,0,H-bar); sky.addColorStop(0,P0.sky[0]); sky.addColorStop(0.6,P0.sky[2]); sky.addColorStop(1,P0.ground[2]); cx.fillStyle=sky; cx.fillRect(0,0,W,H);
+  const hz=bar+ih*0.62, dark=["#1e1a14","#0c0a07"], mid=[shade(P0.us[0],"#000000",0.45),shade(P0.us[1],"#000000",0.5)];
+  const pan=lt*W*0.06; const V={h:1,w:1,stride:1,lean:0,pack:true,cap:false,hold:0};
+  // far land
+  cx.fillStyle=shade(P0.ground[0],P0.sky[2],0.45); cx.beginPath(); cx.moveTo(0,hz); for(let x=0;x<=W;x+=24)cx.lineTo(x,hz-Math.abs(vnoise((x+pan*0.3)/90+ch))*ih*0.05); cx.lineTo(W,H); cx.lineTo(0,H); cx.fill();
+  const kind=[["march","trench","dig"],["trench","flood","trench"],["sentry","trench","snowline"],["trench","gas","masks"],["advance","tanks","advance"]][ch][sc];
+  if(kind==="march"||kind==="advance"){ // column on a road with poplars / skirmish line walking east
+    for(let i=0;i<10;i++){ const x=((i*170-pan*1.5)%(W+200))-100; cx.fillStyle=shade(P0.ground[1],"#000000",0.3); if(ch===0){cx.beginPath();cx.ellipse(x,hz-ih*0.16,10*S_,ih*0.14,0,0,7);cx.fill();cx.fillRect(x-1.5*S_,hz-ih*0.05,3*S_,ih*0.06);} else {cx.fillRect(x,hz-ih*0.12,3*S_,ih*0.12);cx.fillRect(x-8*S_,hz-ih*0.1,10*S_,2*S_);} }
+    cx.fillStyle=shade(P0.ground[1],"#000000",0.15); cx.fillRect(0,hz+ih*0.1,W,ih*0.06);
+    const n=kind==="march"?22:16; for(let i=0;i<n;i++){ const depth=kind==="march"?0.55+(i%2)*0.12:0.4+((i*0.37)%1)*0.5; const x=((i*(W/n)*1.1+t*38*depth)%(W+120))-60; drawMan(x,hz+ih*(0.12+depth*0.12),S_*depth*0.55,1,t*7+i,"run",depth>0.7?dark:mid,{v:Object.assign({},V,{stride:0.45})}); }
+    if(kind==="advance"&&ch===4){ cx.fillStyle="rgba(255,150,60,0.25)"; cx.fillRect(0,0,W,H); }
+  } else if(kind==="tanks"){ for(let i=0;i<3;i++){ const x=W*(0.15+i*0.33)+t*12, y=hz+ih*(0.1+i*0.06), s2=S_*(0.45+i*0.12); cx.fillStyle="#15120c"; cx.beginPath(); cx.moveTo(x-60*s2,y); cx.lineTo(x-75*s2,y-28*s2); cx.lineTo(x-40*s2,y-48*s2); cx.lineTo(x+55*s2,y-48*s2); cx.lineTo(x+85*s2,y-18*s2); cx.lineTo(x+62*s2,y); cx.fill(); cx.fillRect(x-10*s2,y-62*s2,26*s2,16*s2); for(let k=0;k<8;k++){cx.fillStyle="#2a241a";cx.beginPath();cx.arc(x-55*s2+k*16*s2,y-6*s2,5*s2,0,7);cx.fill();} }
+    for(let i=0;i<10;i++) drawMan(W*(0.05+i*0.1)+t*20,hz+ih*0.3,S_*0.5,1,t*6+i,"run",dark,{v:V});
+  } else if(kind==="gas"){ for(let i=0;i<24;i++){ const x=((i*90+t*60)%(W+300))-150, y=hz+ih*(0.05+(i%5)*0.05); const g=cx.createRadialGradient(x,y,0,x,y,ih*0.25); g.addColorStop(0,"rgba(190,200,90,0.45)"); g.addColorStop(1,"rgba(170,190,70,0)"); cx.fillStyle=g; cx.fillRect(x-ih*0.25,y-ih*0.25,ih*0.5,ih*0.5); }
+  } else { // trench interior looking out: parapet, men, weather
+    cx.fillStyle="#2a1f14"; cx.fillRect(0,hz+ih*0.08,W,H);
+    const n=kind==="sentry"?1:kind==="masks"?7:9; for(let i=0;i<n;i++){ const x=n===1?W*0.45:W*(0.06+i*(0.9/n))+(i%2)*14; drawMan(x,hz+ih*0.24,S_*(n===1?1.1:0.6),1,i+t,kind==="dig"&&i%2?"melee":"idle",dark,{v:V}); if(kind==="masks"){ cx.fillStyle="#3a3a32"; cx.beginPath(); cx.arc(x+4*S_*0.72*1.2,hz+ih*0.34-62*S_*0.72,6*S_*0.72,0,7); cx.fill(); } }
+    cx.fillStyle="#3a2c1c"; cx.beginPath(); cx.moveTo(0,hz+ih*0.2); for(let x=0;x<=W;x+=30*S_)cx.quadraticCurveTo(x+15*S_,hz+ih*0.15,x+30*S_,hz+ih*0.2); cx.lineTo(W,H); cx.lineTo(0,H); cx.fill();
+    if(kind==="flood"){ cx.fillStyle="rgba(90,100,100,0.55)"; cx.fillRect(0,hz+ih*0.26,W,H); for(let i=0;i<30;i++){cx.fillStyle="rgba(200,210,210,0.3)";cx.fillRect((i*97+t*20)%W,hz+ih*0.27+(i%5)*6,20,1.5);} }
+    if(kind==="sentry"){ for(let i=0;i<6;i++){ const bt=(t*0.7+i*0.17)%1; cx.fillStyle=`rgba(255,255,255,${0.2*(1-bt)})`; cx.beginPath(); cx.arc(W*0.45+26*S_+bt*60,hz+ih*0.34-80*S_+-bt*30,(4+bt*18)*S_,0,7); cx.fill(); } }
+  }
+  // weather
+  if(ch===1||kind==="flood"){ cx.strokeStyle="rgba(210,215,220,0.35)"; cx.lineWidth=1; cx.beginPath(); for(let i=0;i<160;i++){ const x=(i*53+t*-120)%W+(i*7%W), y=(i*97+t*700)%ih+bar; cx.moveTo(x,y); cx.lineTo(x-4,y+18);} cx.stroke(); }
+  if(ch===2){ cx.fillStyle="rgba(255,255,255,0.85)"; for(let i=0;i<150;i++){ const x=(i*83+Math.sin(t+i)*20+t*-10)%W, y=(i*61+t*40)%ih+bar; cx.fillRect((x+W)%W,y,2.4,2.4);} }
+  // star shell flicker
+  if(ch>=1&&(t*0.4)%1<0.25){ const fx=W*0.7, fy=bar+ih*0.2; const g=cx.createRadialGradient(fx,fy,0,fx,fy,ih*0.5); g.addColorStop(0,"rgba(255,250,220,0.35)"); g.addColorStop(1,"rgba(255,250,220,0)"); cx.fillStyle=g; cx.fillRect(0,0,W,H); }
+  cx.fillStyle=P0.tint; cx.fillRect(0,0,W,H);
+  const vg=cx.createRadialGradient(W/2,H/2,H*0.2,W/2,H/2,H*0.9); vg.addColorStop(0,"rgba(0,0,0,0)"); vg.addColorStop(1,"rgba(0,0,0,0.7)"); cx.fillStyle=vg; cx.fillRect(0,0,W,H);
+  // scene fades
+  const lf=Math.min(1,lt*4,(1-lt)*4); cx.fillStyle=`rgba(0,0,0,${1-Math.max(0,lf)})`; cx.fillRect(0,0,W,H);
+  cx.restore();
+  // captions (typewriter), chapter title
+  const L=CGTXT[S.lang][ch]; const line=L[sc]; const nch=Math.floor(Math.min(1,lt*1.6)*line.length);
+  cx.fillStyle="rgba(239,228,204,0.95)"; cx.textAlign="center"; cx.font=`${Math.max(16,H*0.032)}px Georgia`; cx.fillText(line.slice(0,nch),W/2,H-bar/2+6);
+  if(sc===0){ cx.font=`${Math.max(22,H*0.06)}px Impact, sans-serif`; cx.fillStyle=`rgba(239,228,204,${Math.min(1,lt*3)*0.9})`; cx.fillText(CHAPTERS[ch][S.lang],W/2,bar*0.7); }
+  cx.font="12px Georgia"; cx.fillStyle="rgba(239,228,204,0.5)"; cx.fillText(S.lang==="zh"?"点击跳过":"tap to skip",W-60,H-12); cx.textAlign="left";
 }
 function drawMontage(){
   $("hud").style.opacity=0;
