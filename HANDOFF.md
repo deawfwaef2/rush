@@ -367,3 +367,11 @@ User LIKES this version (v1.4b). Requests:
 3. Build several ZIP packages (per platform) with ads correctly integrated.
 4. Every FAILED attack plays one forced ad (interstitial / midgame).
 5. Integrate CrazyGames SDK AND Playgama SDK (Playgama Bridge).
+## v1.4c performance (2026-09-27, agent A)
+- Sprites: TIME budget 3 ms/frame for makeSprite (was only a count of 28 and it built anyway); fallback = same pose of another archetype (SPR_LAST) until built.
+  Alpha-trim scan uses stride 2 for big sprites. queueMeleeWarm() pre-builds melee/aim/crouch (ours) + melee/run/surr (enemy) sprites during the charge (0.8 ms/frame).
+- Colour grade + night + vignette = one cached half-res layer (drawGrade), was 2-3 full-screen fills + new gradient per frame.
+- Adaptive resolution steps QDPR=[1,1.25,1.5] per QUAL, resize on every change; downgrade at >21 ms avg; QMAX stops menu<->battle oscillation.
+  Measured (1.5x DPI, software canvas, lvl10/300 men): plan 9-10 fps (Q2) -> 16 (Q1) -> 22-25 (Q0); charge 7-8.5 -> 11-12 -> 18.
+- Settings: Graphics Auto/High/Med/Low (S.gfx a/h/m/l) pins QUAL.
+- Trench LOD: Q0 all trenches, Q1 support lines -> sandbag band instead of ~500 single bags; far bags (<0.6 px scale) always a band.

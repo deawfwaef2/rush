@@ -728,8 +728,12 @@ const cv=$("c"); let cx=cv.getContext("2d");
 let W=0,H=0,DPR=1;
 let UIZ=1; function uiScale(){ UIZ=Math.max(0.74,Math.min(1.45,Math.min(innerWidth/1000,innerHeight/560))); document.getElementById("ui").style.zoom=UIZ; }
 let QUAL=2, qAcc=0, qT=0;
-function perfTick(rdt){ qAcc+=rdt; qT++; if(qAcc>=2){ const avg=qAcc/qT; qAcc=0; qT=0; const busy=(mode==="charge"||mode==="melee"||mode==="plan"); if(avg>0.026&&QUAL>0){ QUAL--; if(QUAL===0){ resize(); } } else if(avg<0.0175&&QUAL<2&&!busy){ QUAL++; resize(); } } }
-function resize(){ uiScale();DPR=Math.min(QUAL===0?1:1.5,window.devicePixelRatio||1);W=innerWidth;H=innerHeight;cv.width=W*DPR;cv.height=H*DPR;cx.setTransform(DPR,0,0,DPR,0,0);}
+const QDPR=[1,1.25,1.5]; let QMAX=2;
+function perfTick(rdt){ if(S.gfx&&S.gfx!=="a"){ const q={h:2,m:1,l:0}[S.gfx]; if(q!=null&&QUAL!==q){ QUAL=q; resize(); } return; }
+  qAcc+=rdt; qT++; if(qAcc>=2){ const avg=qAcc/qT; qAcc=0; qT=0; const busy=(mode==="charge"||mode==="melee"||mode==="plan");
+  if(avg>0.021&&QUAL>0){ QUAL--; if(busy)QMAX=Math.min(QMAX,QUAL); resize(); } // once a battle needed lower quality, the menu does not raise it again (no resize/sprite rebuild at every battle start)
+  else if(avg<0.0165&&QUAL<QMAX&&!busy){ QUAL++; resize(); } } }
+function resize(){ uiScale();DPR=Math.min(QDPR[QUAL]||1,window.devicePixelRatio||1);W=innerWidth;H=innerHeight;cv.width=W*DPR;cv.height=H*DPR;cx.setTransform(DPR,0,0,DPR,0,0);}
 addEventListener("resize",resize);resize();
 
 // world width per level grows: later fields are longer (fortresses extra long)
@@ -942,6 +946,13 @@ function pushSetEnts(ents){ const i=S.lvl, bx=trenchX(i), ex=trenchX(i+1), L=ex-
   if(set.includes("lanterns")) add(0.5,()=>{ for(let k=0;k<5;k++){ const [sx,sy,s]=P(ex-20,0.1+k*0.2,26); const g=cx.createRadialGradient(sx,sy,0,sx,sy,30*s); g.addColorStop(0,"rgba(255,200,110,0.5)"); g.addColorStop(1,"rgba(255,200,110,0)"); cx.fillStyle=g; cx.fillRect(sx-30*s,sy-30*s,60*s,60*s); } });
   if(set.includes("hill")) add(0.0,()=>{}); // hills handled by background ridge variation
 }
+let gradeC=null, gradeK="";
+function drawGrade(){ const night=setHas("night"); const k=W+"x"+H+"|"+pal.tint+"|"+(night?1:0);
+  if(k!==gradeK||!gradeC){ gradeK=k; gradeC=gradeC||document.createElement("canvas"); const w=Math.max(2,Math.round(W/2)), h=Math.max(2,Math.round(H/2)); gradeC.width=w; gradeC.height=h;
+    const g=gradeC.getContext("2d"); g.setTransform(w/W,0,0,h/H,0,0); g.clearRect(0,0,W,H);
+    if(night){ g.fillStyle="rgba(12,20,40,0.38)"; g.fillRect(0,0,W,H); } g.fillStyle=pal.tint; g.fillRect(0,0,W,H);
+    const vg=g.createRadialGradient(W/2,H/2,H*0.35,W/2,H/2,H*0.95); vg.addColorStop(0,"rgba(0,0,0,0)"); vg.addColorStop(1,"rgba(0,0,0,0.55)"); g.fillStyle=vg; g.fillRect(0,0,W,H); }
+  cx.drawImage(gradeC,0,0,W,H); }
 function setNightGrade(){ if(setHas("night")){ cx.fillStyle="rgba(12,20,40,0.38)"; cx.fillRect(0,0,W,H); } }
 
 /* v1.3j FAR FIELD (agent A): the empty band under the horizon + sky get life: enemy support/reserve trench lines and wire pickets
@@ -1083,9 +1094,9 @@ function trenchCols(){ const k=pal; if(trenchCols.k===k)return trenchCols.c; con
   trenchCols.k=k; trenchCols.c=c; return c; }
 /* v1.3 PERF: drawTrench batches every repeated element into a handful of Path2D fills/strokes
    (was ~3000 separate fill/stroke calls per trench, x up to 20 trenches per frame). Line widths use 3 depth bands. */
-function drawTrench(x,side,level){
+function drawTrench(x,side,level,sup){
   if(!trenchVisible(x))return;
-  drawTrenchNet(x,side); const seed=Math.round(x)%9973, D=TR_D, Wd=TR_W, n=52, z1=1.1, TC=trenchCols();
+  drawTrenchNet(x,side); const seed=Math.round(x)%9973, D=TR_D, Wd=TR_W, n=52, z1=1.1, TC=trenchCols(); const lo=QUAL===0||(QUAL===1&&!!sup); // v1.4c LOD: sandbag band instead of ~500 single bags
   const zs=new Array(n+1), qs=new Array(n+1), cxs=new Array(n+1);
   for(let i=0;i<=n;i++){ const z=z1*i/n; zs[i]=z; qs[i]=x+trenchOff(x,z); cxs[i]=P(qs[i],z,0); }
   // visible index range (screen x of the centreline, padded by the trench width)
@@ -1122,12 +1133,14 @@ function drawTrench(x,side,level){
     p1=new Path2D(); strip(p1,sd*(Wd+2),0,sd*(Wd+26),bermH*0.5); cx.fillStyle=TC.berm; cx.fill(p1);
     p1=new Path2D(); strip(p1,sd*(Wd+10),bermH,sd*(Wd+22),bermH*0.55); cx.fillStyle=TC.bermLit; cx.fill(p1);
     const bagP=[new Path2D(),new Path2D(),new Path2D(),new Path2D()], lit=new Path2D(), shd=new Path2D(), snow=TC.snow?new Path2D():null;
-    for(let i=iA*2;i<=iB*2;i++){ const z=z1*i/(n*2); const [sx,sy,sc]=P(x+trenchOff(x,z)+sd*(Wd+7),z,0); if(sx<-60||sx>W+60)continue;
+    if(lo){ const pb=new Path2D(); strip(pb,sd*(Wd+1),bermH*0.35+rows*4.2,sd*(Wd+14),bermH*0.35); cx.fillStyle=TC.bag[1]; cx.fill(pb); const pl=new Path2D(); strip(pl,sd*(Wd+2),bermH*0.35+rows*4.2,sd*(Wd+6),bermH*0.35+rows*4.2-1.2); cx.fillStyle=TC.bagLit; cx.fill(pl); }
+    else { let iF=iA*2; while(iF<iB*2&&P(x,z1*iF/(n*2),0)[2]*DPR<0.6)iF++; if(iF>iA*2){ const i1=Math.ceil(iF/2); const pb=new Path2D(); for(let i=iA;i<=i1;i++){ const q=P(qs[i]+sd*(Wd+1),zs[i],bermH*0.35+rows*4.2); i===iA?pb.moveTo(q[0],q[1]):pb.lineTo(q[0],q[1]); } for(let i=i1;i>=iA;i--){ const q=P(qs[i]+sd*(Wd+14),zs[i],bermH*0.35); pb.lineTo(q[0],q[1]); } pb.closePath(); cx.fillStyle=TC.bag[1]; cx.fill(pb); }
+    for(let i=iF;i<=iB*2;i++){ const z=z1*i/(n*2); const [sx,sy,sc]=P(x+trenchOff(x,z)+sd*(Wd+7),z,0); if(sx<-60||sx>W+60)continue;
       for(let r2=0;r2<rows;r2++){ const bw=15*sc,bh=5.6*sc, X=sx+((r2+i)%2)*bw*0.5-bw*0.5, Y=sy-bh*r2*0.92-bh*0.5-bermH*0.35*sc;
         const idx=(hash(seed*7+i*13+r2*29)*4)|0, bp=bagP[idx>0?idx:0];
         bp.moveTo(X+bh*0.4,Y-bh*0.5); bp.lineTo(X+bw-bh*0.4,Y-bh*0.5); bp.quadraticCurveTo(X+bw+bh*0.1,Y,X+bw-bh*0.4,Y+bh*0.5); bp.lineTo(X+bh*0.4,Y+bh*0.5); bp.quadraticCurveTo(X-bh*0.1,Y,X+bh*0.4,Y-bh*0.5); bp.closePath();
         lit.rect(X+bh*0.4,Y-bh*0.5,bw-bh*0.8,Math.max(0.8,bh*0.22)); shd.rect(X+bh*0.3,Y+bh*0.3,bw-bh*0.6,Math.max(0.8,bh*0.2));
-        if(snow&&r2===rows-1) snow.rect(X+bh*0.2,Y-bh*0.7,bw-bh*0.4,bh*0.35); } }
+        if(snow&&r2===rows-1) snow.rect(X+bh*0.2,Y-bh*0.7,bw-bh*0.4,bh*0.35); } } }
     for(let k=0;k<4;k++){ cx.fillStyle=TC.bag[k]; cx.fill(bagP[k]); } cx.fillStyle=TC.bagLit; cx.fill(lit); cx.fillStyle=TC.bagSh; cx.fill(shd); if(snow){ cx.fillStyle="rgba(240,244,248,0.9)"; cx.fill(snow); } }
   // ladders every 4th bay on our side, steel loophole plates on theirs, stakes
   const lad=B3(), plate=new Path2D(), hole=new Path2D(), stake=new Path2D();
@@ -1186,7 +1199,7 @@ function drawFlag(sx,sy,s,h,t,rise=1){ // pole base at sx,sy; flag height fracti
     cx.globalAlpha=1; cx.drawImage(FLAGC,u*240,0,240/N+1,160,sx+u*fw,top+off,fw/N+0.6,fh);
     cx.fillStyle=`rgba(0,0,0,${(1-sh)*0.9})`; cx.fillRect(sx+u*fw,top+off,fw/N+0.6,fh); } }
 /* PERF: sprite cache — each pose rendered once to an offscreen canvas, then blitted */
-const SPR=new Map(); let sprCount=0, sprMade=0, sprFrame=0; const SPR_B=[0.6,1,1.6,2.6];
+const SPR=new Map(), SPR_LAST=new Map(); let sprCount=0, sprMade=0, sprFrame=0, sprMs=0; const SPR_B=[0.6,1,1.6,2.6];
 const TAU=Math.PI*2;
 /* v1.3 PERF: body ARCHETYPES (was ~720 random look combos -> the run cache thrashed at 300 men). [stride,lean,hold,pack,cap,bandage] */
 const ARCH=[[1,0,0,1,0,0],[1.2,0.04,0,1,0,0],[0.8,-0.04,0.25,1,0,0],[1,0.04,-0.2,1,0,0],[1.2,0,0.25,0,0,0],[1,-0.04,0,1,1,0],[0.8,0,-0.2,1,0,1],[1.2,0.04,0,0,0,0]];
@@ -1199,10 +1212,18 @@ let sprWarmQ=[];
 function queueSpriteWarm(){ sprWarmQ=[]; const Rs=new Set(); for(const z of [0.1,0.5,0.95]){ const s=P(cam.x,z,0)[2]*DPR; let R=SPR_B[SPR_B.length-1]; for(const b of SPR_B){ if(b>=s*0.92){R=b;break;} } Rs.add(R); }
   const seen=new Set(); for(const m of men){ if(!m.alive)continue; const V=m.v||DEFV, cols=manCols(m), k=cols[0]+cols[1]+(m.vet?1:0)+(V.a!=null?V.a:"x"); if(seen.has(k))continue; seen.add(k);
     for(const R of Rs) for(let pb=0;pb<PHN.run;pb++) sprWarmQ.push([cols,{vet:m.vet},V,R,pb]); } }
+let sprWarmQ2=[];
+function queueMeleeWarm(){ sprWarmQ2=[]; const ex=trenchX(S.lvl+1); const Rs=new Set(); for(const z of [0.2,0.8]){ const s0=scaleZ(z)*DPR; for(const f of [1.05]){ const s=s0*f; let R=SPR_B[SPR_B.length-1]; for(const b of SPR_B){ if(b>=s*0.92){R=b;break;} } Rs.add(R); } }
+  const seen=new Set(); for(const m of men){ if(!m.alive||!m.sent)continue; const V=m.v||DEFV, cols=manCols(m), k=cols[0]+cols[1]+(m.vet?1:0)+(V.a!=null?V.a:"x"); if(seen.has(k))continue; seen.add(k);
+    for(const R of Rs){ for(let pb=0;pb<PHN.melee;pb++) sprWarmQ2.push(["melee",pb,PHN.melee,cols,{vet:m.vet},V,R,1]); sprWarmQ2.push(["aim",0,1,cols,{vet:m.vet},V,R,1]); sprWarmQ2.push(["crouch",0,1,cols,{vet:m.vet},V,R,1]); } }
+  for(const R of Rs){ const eo={enemy:true}; for(let pb=0;pb<PHN.melee;pb++) sprWarmQ2.push(["melee",pb,PHN.melee,pal.en,eo,DEFV,R,-1]); for(let pb=0;pb<PHN.run;pb++) sprWarmQ2.push(["run",pb,PHN.run,pal.en,eo,DEFV,R,-1]); sprWarmQ2.push(["surr",0,1,pal.en,eo,DEFV,R,-1]); }
+  sprWarmQ2.reverse(); }
+function stepSpriteWarm2(ms){ const t0=performance.now(); while(sprWarmQ2.length&&performance.now()-t0<ms){ const [state,pb,pn,cols,opts,V,R,d]=sprWarmQ2.pop(); const key=sprKey(state,pb,cols,opts,V,R,d); if(!SPR.has(key)){ const c=makeSprite(key,R,d,(pb+0.5)/pn*TAU,state,cols,opts,V); SPR_LAST.set(state+"|"+pb+"|"+d+"|"+R+"|"+(opts.enemy?1:0),c); } } }
 function stepSpriteWarm(n){ while(n-->0&&sprWarmQ.length){ const [cols,opts,V,R,pb]=sprWarmQ.pop(); const key=sprKey("run",pb,cols,opts,V,R,1); if(!SPR.has(key)) makeSprite(key,R,1,(pb+0.5)/PHN.run*TAU,"run",cols,opts,V); } }
 const DEFV={stride:1,lean:0,pack:true,cap:false,hold:0,w:1,h:1,bandage:false};
 let SPR_SCR=null;
-function makeSprite(key,R,d,ph,state,cols,opts,V){
+function makeSprite(key,R,d,ph,state,cols,opts,V){ const T0=performance.now(); try{ return makeSprite0(key,R,d,ph,state,cols,opts,V); } finally { sprMs+=performance.now()-T0; } }
+function makeSprite0(key,R,d,ph,state,cols,opts,V){
   if(sprCount>1600){ let k=0; for(const kk of SPR.keys()){ SPR.delete(kk); if(++k>=400)break; } sprCount=SPR.size; }
   const W0=Math.ceil(170*R), H0=Math.ceil(150*R);
   if(!SPR_SCR){ SPR_SCR=document.createElement("canvas"); SPR_SCR.width=480; SPR_SCR.height=430; SPR_SCR.g=SPR_SCR.getContext("2d",{willReadFrequently:true}); }
@@ -1214,11 +1235,11 @@ function makeSprite(key,R,d,ph,state,cols,opts,V){
        else drawMan0(ax,125,1,d,ph,state,cols,o2); } finally { cx=keep; }
   g.setTransform(1,0,0,1,0,0);
   // tight bounding box -> blit only the figure (was a 170x150 rect that was ~85% transparent = wasted fill-rate)
-  const u32=new Uint32Array(g.getImageData(0,0,W0,H0).data.buffer); let x0=W0,y0=-1,x1=-1,y1=-1;
-  for(let y=0;y<H0;y++){ const row=y*W0; let l=-1; for(let x=0;x<W0;x++){ if((u32[row+x]>>>24)>4){l=x;break;} } if(l<0)continue;
-    let r=l; for(let x=W0-1;x>l;x--){ if((u32[row+x]>>>24)>4){r=x;break;} } if(l<x0)x0=l; if(r>x1)x1=r; if(y0<0)y0=y; y1=y; }
+  const u32=new Uint32Array(g.getImageData(0,0,W0,H0).data.buffer); let x0=W0,y0=-1,x1=-1,y1=-1; const st=R>=1.6?2:1;
+  for(let y=0;y<H0;y+=st){ const row=y*W0; let l=-1; for(let x=0;x<W0;x+=st){ if((u32[row+x]>>>24)>4){l=x;break;} } if(l<0)continue;
+    let r=l; for(let x=W0-1;x>l;x-=st){ if((u32[row+x]>>>24)>4){r=x;break;} } if(l<x0)x0=l; if(r>x1)x1=r; if(y0<0)y0=y; y1=y; }
   if(y0<0){ x0=0;y0=0;x1=1;y1=1; }
-  x0=Math.max(0,x0-1); y0=Math.max(0,y0-1); x1=Math.min(W0-1,x1+1); y1=Math.min(H0-1,y1+1);
+  x0=Math.max(0,x0-st); y0=Math.max(0,y0-st); x1=Math.min(W0-1,x1+st); y1=Math.min(H0-1,y1+st);
   const bw=x1-x0+1, bh=y1-y0+1, c=document.createElement("canvas"); c.width=bw; c.height=bh; c.getContext("2d").drawImage(scr,x0,y0,bw,bh,0,0,bw,bh);
   c.ax=ax; c.ox=x0/R; c.oy=y0/R; c.sw=bw/R; c.sh=bh/R; c.R=R;
   SPR.set(key,c); sprCount++; sprMade++; return c;
@@ -1235,10 +1256,12 @@ function drawMan(sx,sy,s,dir,phase,state,cols,opts={}){
   const V=v||DEFV, d=dir<0?-1:1;
   const key=sprKey(state,pb,cols,opts,V,R,d);
   let c=SPR.get(key);
-  if(!c){ if(sprFrame>28){ // creation budget per frame: reuse a neighbouring cached frame instead of hitching
+  if(!c){ if(sprFrame>28||(sprMs>3&&sprFrame>0)){ // v1.4c: TIME budget (3 ms) per frame: reuse a neighbouring cached frame instead of hitching
       for(const R2 of SPR_B){ c=SPR.get(sprKey(state,pb,cols,opts,V,R2,d)); if(c)break; }
       if(!c&&pn>1){ c=SPR.get(sprKey(state,(pb+1)%pn,cols,opts,V,R,d))||SPR.get(sprKey(state,(pb+pn-1)%pn,cols,opts,V,R,d)); } }
-    if(!c){ c=makeSprite(key,R,d,ph,state,cols,opts,V); sprFrame++; } }
+    const lk=state+"|"+pb+"|"+d+"|"+R+"|"+(opts.enemy?1:0);
+    if(!c&&(sprMs>3&&sprFrame>0)) c=SPR_LAST.get(lk); // same pose of another archetype: correct shape, built properly on a later frame
+    if(!c){ c=makeSprite(key,R,d,ph,state,cols,opts,V); sprFrame++; SPR_LAST.set(lk,c); } }
   const wx=v?(v.w*0.5+0.5):1, hy=v?v.h:1;
   // in-trench figures are cropped with the drawImage SOURCE RECT (was save/clip/restore = 50-65% of JS time)
   let shU=c.sh; if(opts.crop!=null){ shU=Math.min(c.sh,(opts.crop-sy)/(s*hy)+125-c.oy); if(shU<=0.5)return; }
@@ -1751,7 +1774,7 @@ function startCharge(){
   if(used.smk){for(let i=0;i<30+used.smk*20;i++)puff(bx+SEGL()*(0.3+Math.random()*0.5),0.1+Math.random()*0.9,0,1,"smokeW",20,9,90,2);}
   if(used.tnk){battle.tanks=[];for(let i=0;i<used.tnk;i++)battle.tanks.push({x:bx-60-i*140,z:[0.62,0.3,0.8][i%3],hp:1});battle.tank=battle.tanks[0];}
   // MONTAGE: close-up officer whistle, then bugle, then wide
-  montage={t:0,dur:4.2,seed:Math.random()*100}; queueSpriteWarm(); SFX.play("heart",0.7,{fixed:1,dur:4}); SFX.play("clock",0.6,{fixed:1,delay:1.1,dur:1}); SFX.play("bolt",0.5,{delay:0.6});
+  montage={t:0,dur:4.2,seed:Math.random()*100}; queueSpriteWarm(); queueMeleeWarm(); SFX.play("heart",0.7,{fixed:1,dur:4}); SFX.play("clock",0.6,{fixed:1,delay:1.1,dur:1}); SFX.play("bolt",0.5,{delay:0.6});
   setTimeout(()=>AU.whistle(),2150); setTimeout(()=>{SFX.play("mud",0.5,{dur:0.8});},3150); setTimeout(()=>{AU.cheer();AU.bugle();},3900);
   cam.tx=bx+80; cam.tz=sendN>44?0.9:1.1; cam.tt=0.3;
   { const zh=S.lang==="zh", n=sendN; const cap= n<15?(zh?"一个班翻出战壕":"A section goes over"): n<40?(zh?"一个排翻出战壕":"A platoon goes over"): n<120?(zh?"整个连翻出战壕":"The whole company goes over"):(zh?"整个营翻出战壕":"The battalion goes over");
@@ -2360,6 +2383,7 @@ function openSettings(){
   <div class="set-row"><span>${t.sound}</span><button class="btn ${S.snd?"":"dim"}" id="sSnd">${S.snd?"ON":"OFF"}</button></div>
   <div class="set-row"><span>${t.music}</span><button class="btn ${S.mus?"":"dim"}" id="sMus">${S.mus?"ON":"OFF"}</button></div>
   <div class="set-row"><span>${t.time}</span><span>${fmtT(Date.now()-S.start)} · ${S.day}d · ${IC.skull.replace('<svg','<svg width=16 height=16 style="filter:invert(1) brightness(.2)"')} ${S.lost}</span></div>
+  <div class="set-row"><span>${S.lang==="zh"?"画质":"Graphics"}</span><span>${[["a",S.lang==="zh"?"自动":"Auto"],["h",S.lang==="zh"?"高":"High"],["m",S.lang==="zh"?"中":"Med"],["l",S.lang==="zh"?"低":"Low"]].map(([k,n])=>`<button class="btn sm ${(S.gfx||"a")===k?"":"dim"}" data-gfx="${k}">${n}</button>`).join(" ")}</span></div>
   <div class="set-row"><span style="opacity:.6">${t.reset}</span><button class="btn dim" id="sRst">↺</button></div>
   <div class="set-row"><span>${S.lang==="zh"?"开发者模式":"Developer mode"}</span><button class="btn ${S.dev?"":"dim"}" id="sDev">${S.dev?"ON":"OFF"}</button></div>
   ${S.dev?`<div class="set-row"><span>DEV</span><span><button class="btn sm" id="sDay">+1 ${S.lang==="zh"?"天":"day"}</button> <button class="btn sm" id="sWin">+1 lvl</button> <button class="btn sm" id="sMor">${S.lang==="zh"?"士气":"Morale"} ±</button> <button class="btn sm" id="sTut">Tutorial</button></span></div>`:""}
@@ -2370,6 +2394,7 @@ function openSettings(){
   $("sMus").onclick=()=>{S.mus^=1;save();AU.set();openSettings();};
   $("sRst").onclick=()=>{if(confirm("Reset all progress?")){localStorage.removeItem(SAVE_KEY);location.reload();}};
   $("sOk").onclick=()=>{ov.classList.add("hide");};
+  ov.querySelectorAll("[data-gfx]").forEach(b=>b.onclick=()=>{ S.gfx=b.dataset.gfx; save(); if(S.gfx==="a"){ QMAX=2; } else { QUAL={h:2,m:1,l:0}[S.gfx]; resize(); } openSettings(); });
   $("sDev").onclick=()=>{S.dev^=1;save();updTop();openSettings();};
   if(S.dev){$("sDay").onclick=()=>{giveDay();updTop();toast("+1 day");};$("sWin").onclick=()=>{S.hist.push({lvl:S.lvl,day:S.day,lost:0});S.income+=levelDef(S.lvl).reward;S.lvl=Math.min(NLV-1,S.lvl+1);save();ov.classList.add("hide");toMenu();};
     $("sMor").onclick=()=>{S.morale=S.morale>50?0:100;S.moraleT=Date.now();save();updTop();openSettings();}; $("sTut").onclick=()=>{S.tut=0;save();ov.classList.add("hide");toPlan();};}
@@ -2541,7 +2566,7 @@ function frame(now){
     if(m.state==="melee"){m.phase+=rdt*4;}
     if((mode==="menu"||mode==="plan")&&!m.arriving&&Math.random()<rdt*0.004&&bubbles.length<2)say(m,pick(L_().chatter),2.4);
   }
-  sprFrame=0; bakeFrame=0; if(montage){ stepSpriteWarm(26); montage.t+=rdt; if(montage.t>montage.dur){const oe=montage.onEnd;montage=null;if(oe)oe();$("hud").style.opacity=1;BGM.play("charge");} }
+  sprFrame=0; sprMs=0; bakeFrame=0; if(mode==="charge"&&!montage&&sprWarmQ2.length&&!(battle&&battle.melee))stepSpriteWarm2(0.8); if(montage){ stepSpriteWarm(26); montage.t+=rdt; if(montage.t>montage.dur){const oe=montage.onEnd;montage=null;if(oe)oe();$("hud").style.opacity=1;BGM.play("charge");} }
   if(mode==="charge"||mode==="melee")stepBattle(dt);
   { const vis=(mode==="plan"||mode==="menu")&&!chCGon(); if(vis!==frame.stripVis){ frame.stripVis=vis; const ts=$("topStrip"); if(ts) ts.style.visibility=vis?"":"hidden"; } }
   stepRagdolls(dt); stepParts(dt); stepShells(dt); stepWeather(rdt); BGM.step(rdt);
@@ -2557,7 +2582,7 @@ function frame(now){
   drawGround(); drawSetFlat();
   const L0=Math.max(0,S.lvl-6);
   // past strongholds (captured) + current
-  for(let i=L0;i<=S.lvl+1;i++){ const dl=trenchLines(i-1); for(let k=dl-1;k>=1;k--) drawTrench(trenchX(i)+(i<=S.lvl?-1:1)*k*85, i<=S.lvl?1:-1, null); drawTrench(trenchX(i), i<=S.lvl?1:-1, i===S.lvl+1?S.lvl:null); }
+  for(let i=L0;i<=S.lvl+1;i++){ const dl=trenchLines(i-1); for(let k=dl-1;k>=1;k--) drawTrench(trenchX(i)+(i<=S.lvl?-1:1)*k*85, i<=S.lvl?1:-1, null, 1); drawTrench(trenchX(i), i<=S.lvl?1:-1, i===S.lvl+1?S.lvl:null); }
   // captured markers
   for(const h of S.hist){ const x=trenchX(h.lvl+1); if(Math.abs(x-cam.x)>W*2)continue; const [sx,sy,s]=P(x+20,0.12);
     
@@ -2596,8 +2621,7 @@ function frame(now){
   // bubbles
   drawBubbles(rdt); if(battle&&!battle.over)drawEvTags(rdt);
   // color grade & vignette & grain
-  setNightGrade(); cx.fillStyle=pal.tint;cx.fillRect(0,0,W,H);
-  const vg=cx.createRadialGradient(W/2,H/2,H*0.35,W/2,H/2,H*0.95);vg.addColorStop(0,"rgba(0,0,0,0)");vg.addColorStop(1,"rgba(0,0,0,0.55)");cx.fillStyle=vg;cx.fillRect(0,0,W,H);
+  drawGrade();
   cx.restore();
   drawInsets(rdt);
   if(montage)drawMontage();
