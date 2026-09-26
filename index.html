@@ -1356,14 +1356,14 @@ function startCharge(){
   if(used.smk){for(let i=0;i<30+used.smk*20;i++)puff(bx+SEGL()*(0.3+Math.random()*0.5),0.1+Math.random()*0.9,0,1,"smokeW",20,9,90,2);}
   if(used.tnk){battle.tanks=[];for(let i=0;i<used.tnk;i++)battle.tanks.push({x:bx-60-i*140,z:[0.62,0.3,0.8][i%3],hp:1});battle.tank=battle.tanks[0];}
   // MONTAGE: close-up officer whistle, then bugle, then wide
-  montage={t:0,dur:3.6,seed:Math.random()*100}; SFX.play("clock",0.6,{fixed:1,dur:3.5}); SFX.play("heart",0.8,{fixed:1,dur:3.8}); AU.tone&&AU.ctx&&[0,0.9].forEach(d=>setTimeout(()=>AU.tone(AU.now(),1500,0.04,0.06,"square"),d*1000));
-  setTimeout(()=>AU.whistle(),1750); setTimeout(()=>AU.bugle(),2500); setTimeout(()=>AU.thud(),2900);
+  montage={t:0,dur:6.4,seed:Math.random()*100}; SFX.play("heart",0.7,{fixed:1,dur:4}); SFX.play("clock",0.6,{fixed:1,delay:2.2,dur:1.1}); SFX.play("bolt",0.5,{delay:0.6});
+  setTimeout(()=>AU.whistle(),3250); setTimeout(()=>{SFX.play("mud",0.5,{dur:0.8});},4050); setTimeout(()=>{AU.cheer();AU.bugle();},4800);
   cam.tx=bx+80; cam.tz=sendN>44?0.9:1.1; cam.tt=0.3;
   { const zh=S.lang==="zh", n=sendN; const cap= n<15?(zh?"一个班翻出战壕":"A section goes over"): n<40?(zh?"一个排翻出战壕":"A platoon goes over"): n<120?(zh?"整个连翻出战壕":"The whole company goes over"):(zh?"整个营翻出战壕":"The battalion goes over");
-    setTimeout(()=>{ big(cap, waves.length>1?(zh?`${waves.length} 个波次`:`${waves.length} waves`):"",1800); for(let i=0;i<Math.min(5,1+Math.floor(n/30));i++)setTimeout(()=>AU.cheer(),i*260); },3700); }
+    setTimeout(()=>{ big(cap, waves.length>1?(zh?`${waves.length} 个波次`:`${waves.length} waves`):"",1800); },6500); }
   // BUFFER ZONE: from level 5 our own trench gives covering fire first (free damage)
   if(S.lvl>=4){ const cov=Math.max(1,Math.round(battle.e*0.08)); setTimeout(()=>{ let k=cov; for(let i=0;i<14;i++)setTimeout(()=>{AU.shot(0.2);const e=pick(enemies.filter(x=>x.alive));if(e)tracer(bx+10,0.5+Math.random()*0.4,40,e.x,e.z,40);},i*120);
-      battle.e=Math.max(1,battle.e-cov); battle.eKilled+=cov; cur.gr=battle.e; cur.rf*=0.85; toast((S.lang==="zh"?"掩护射击：守军 −":"Covering fire: garrison −")+cov); },3000); }
+      battle.e=Math.max(1,battle.e-cov); battle.eKilled+=cov; cur.gr=battle.e; cur.rf*=0.85; toast((S.lang==="zh"?"掩护射击：守军 −":"Covering fire: garrison −")+cov); },6600); }
   $("hud").classList.remove("hide");
 }
 function killMan(m,cause){
@@ -2002,10 +2002,56 @@ function profileHead(x,y,s,cols,opts={}){ // big side-view head & shoulders faci
   // collar / tunic shoulder
   cx.fillStyle=cols[1];cx.beginPath();cx.moveTo(x-60*s,y+60*s);cx.quadraticCurveTo(x-40*s,y+14*s,x-6*s,y+18*s);cx.quadraticCurveTo(x+22*s,y+22*s,x+40*s,y+60*s);cx.fill();
 }
+/* CINEMATIC wide shots: (a) dawn stand-to along the fire step, (b) over the top — both scale with the number of men sent */
+function drawMontWide(dawn,lt,t,bar,ih){
+  const N=Math.max(6,Math.min(140,sendN)); const S_=ih/200; const zh=S.lang==="zh";
+  cx.save(); cx.beginPath(); cx.rect(0,bar,W,ih); cx.clip();
+  const sh=dawn?0:(Math.random()-0.5)*6; cx.translate(sh,sh*0.6);
+  // sky
+  const g=cx.createLinearGradient(0,bar,0,H-bar); if(dawn){g.addColorStop(0,"#2a2a38");g.addColorStop(0.55,"#b0704a");g.addColorStop(0.75,"#f0c080");g.addColorStop(1,"#3a2a1a");} else {g.addColorStop(0,"#6a6a70");g.addColorStop(0.6,"#e8d0a0");g.addColorStop(1,"#5a4a30");}
+  cx.fillStyle=g; cx.fillRect(-10,0,W+20,H);
+  const sunX=W*(dawn?0.72:0.3), sunY=bar+ih*(dawn?0.62:0.35); const sg=cx.createRadialGradient(sunX,sunY,0,sunX,sunY,ih*0.8); sg.addColorStop(0,"rgba(255,235,180,0.9)"); sg.addColorStop(0.08,"rgba(255,220,150,0.5)"); sg.addColorStop(1,"rgba(255,200,120,0)"); cx.fillStyle=sg; cx.fillRect(0,0,W,H);
+  // distant flashes & star shell
+  for(let i=0;i<4;i++){ const ph=(t*0.9+i*0.37)%1; if(ph<0.12){ cx.fillStyle=`rgba(255,220,160,${0.5*(1-ph/0.12)})`; cx.beginPath(); cx.ellipse(W*(0.1+i*0.25),bar+ih*0.66,W*0.08,ih*0.05,0,0,7); cx.fill(); } }
+  if(dawn){ const fy=bar+ih*(0.1+lt*0.25); const fx=W*0.3+lt*W*0.05; const fg=cx.createRadialGradient(fx,fy,0,fx,fy,ih*0.3); fg.addColorStop(0,"rgba(255,255,230,0.9)"); fg.addColorStop(0.05,"rgba(255,250,210,0.5)"); fg.addColorStop(1,"rgba(255,240,200,0)"); cx.fillStyle=fg; cx.fillRect(0,0,W,H); cx.strokeStyle="rgba(255,255,240,.3)"; cx.lineWidth=1; cx.beginPath(); cx.moveTo(fx,fy); cx.lineTo(fx-4,fy-ih*0.1); cx.stroke(); }
+  // far horizon: ruined trees, church
+  cx.fillStyle=dawn?"#3a2a22":"#6a5a48"; cx.beginPath(); cx.moveTo(0,bar+ih*0.7); for(let x=0;x<=W;x+=20)cx.lineTo(x,bar+ih*0.68-Math.abs(vnoise(x/70))*ih*0.04); cx.lineTo(W,H); cx.lineTo(0,H); cx.fill();
+  for(let i=0;i<9;i++){ const x=(i*0.13+0.03)*W; cx.fillRect(x,bar+ih*0.56,3*S_,ih*0.13); cx.fillRect(x-8*S_,bar+ih*0.6,10*S_,1.5*S_); }
+  if(dawn){ // ---- STAND-TO: parapet across the frame, helmets & bayonets along the fire step, slow lateral dolly
+    const pan=-lt*W*0.08; const rows=N>60?3:N>20?2:1; const per=Math.min(46,Math.ceil(N/rows));
+    for(let r=rows-1;r>=0;r--){ const sc=S_*(0.32+r*0.2), y=bar+ih*(0.76+r*0.09); const col=r===0?["#1c1812","#0c0a08"]:["#14110c","#070605"];
+      for(let i=0;i<per;i++){ const x=pan+((i+0.5)/per)*W*1.15-W*0.05+(r%2)*20*S_; drawMan(x,y+30*sc,sc,1,i,"idle",col,{v:{h:1,w:1,stride:1,lean:0,pack:true,cap:false,hold:0}}); }
+      // parapet in front of this row
+      cx.fillStyle=r===0?"#221a12":"#15100b"; cx.beginPath(); cx.moveTo(-20,y); for(let x=-20;x<=W+20;x+=30*sc)cx.quadraticCurveTo(x+15*sc,y-10*sc,x+30*sc,y); cx.lineTo(W+20,H); cx.lineTo(-20,H); cx.fill(); }
+    // breath vapour
+    for(let i=0;i<14;i++){ const bt=(t*0.8+i*0.13)%1; cx.fillStyle=`rgba(255,240,220,${0.1*(1-bt)})`; cx.beginPath(); cx.arc((i/14)*W+bt*30,bar+ih*0.62-bt*30,8+bt*22,0,7); cx.fill(); }
+    cx.fillStyle="rgba(239,228,204,0.85)"; cx.font=`${Math.max(13,H*0.024)}px Georgia`; cx.textAlign="center";
+    cx.fillText(`${LV[S.lvl][1]} · 05:${String(40+Math.floor(lt*19)).padStart(2,"0")} — ${zh?"全体就位":"STAND TO"} · ${sendN} ${zh?"人":"men"}`,W/2,H-bar/2+5); cx.textAlign="left";
+  } else { // ---- OVER THE TOP: low angle from no man's land, men pour over the parapet toward the camera-right
+    const py=bar+ih*0.78; const shown=Math.min(N,90);
+    cx.fillStyle="#1a140e"; cx.beginPath(); cx.moveTo(-20,py+6*S_); for(let x=-20;x<=W+20;x+=26*S_)cx.quadraticCurveTo(x+13*S_,py-4*S_,x+26*S_,py+6*S_); cx.lineTo(W+20,H); cx.lineTo(-20,H); cx.fill();
+    const ord=[]; for(let i=0;i<shown;i++)ord.push(i); ord.sort((a,b)=>((a*0.37)%1)-((b*0.37)%1));
+    for(const i of ord){ const f=(i*0.618)%1; const start=f*0.6; const u=Math.max(0,Math.min(1,(lt-start)/0.55)); if(u<=0)continue;
+      const depth=((i*0.37)%1); const sc=S_*(0.28+depth*0.55); const x0=W*(0.02+((i*0.29)%1)*0.85); const x=x0+u*W*0.22*(0.5+depth); const lift=Math.min(1,u*3);
+      const y=py+2*S_+depth*ih*0.2+(1-lift)*50*sc; const col=depth>0.6?["#17120d","#080605"]:["#2e271e","#15110b"];
+      cx.save(); if(lift<1){cx.beginPath();cx.rect(0,0,W,py+depth*ih*0.2);cx.clip();} drawMan(x,y,sc,1,t*14+i,lift<1?"crouch":"run",col,{v:{h:1,w:1,stride:1.1,lean:0.05,pack:true,cap:false,hold:0}}); cx.restore(); }
+    // wire stakes silhouettes foreground
+    cx.strokeStyle="#0a0806"; cx.lineWidth=4*S_; for(let i=0;i<4;i++){ const x=W*(0.12+i*0.28); cx.beginPath(); cx.moveTo(x,H); cx.lineTo(x+6*S_,bar+ih*0.72); cx.stroke(); }
+    cx.lineWidth=1.2*S_; cx.beginPath(); for(let x=0;x<W;x+=6)cx.lineTo(x,bar+ih*0.8+Math.sin(x*0.08)*10*S_); cx.stroke();
+    // shell bursts ahead
+    for(let i=0;i<3;i++){ const ph=(lt*2+i*0.33)%1; const bx=W*(0.25+i*0.28), by=bar+ih*0.7; cx.fillStyle=`rgba(255,200,120,${ph<0.15?0.8*(1-ph/0.15):0})`; cx.beginPath(); cx.arc(bx,by,ih*0.06,0,7); cx.fill();
+      cx.fillStyle=`rgba(40,32,24,${0.6*(1-ph)})`; cx.beginPath(); cx.ellipse(bx,by-ph*ih*0.15,ih*(0.04+ph*0.1),ih*(0.05+ph*0.14),0,0,7); cx.fill(); }
+    cx.fillStyle="rgba(239,228,204,0.85)"; cx.font=`${Math.max(13,H*0.024)}px Georgia`; cx.textAlign="center"; cx.fillText(zh?"06:00 · 越过胸墙":"06:00 · OVER THE TOP",W/2,H-bar/2+5); cx.textAlign="left";
+  }
+  const vg=cx.createRadialGradient(W/2,H/2,H*0.2,W/2,H/2,H*0.9);vg.addColorStop(0,"rgba(0,0,0,0)");vg.addColorStop(1,"rgba(0,0,0,0.65)");cx.fillStyle=vg;cx.fillRect(0,0,W,H);
+  cx.restore(); cx.fillStyle="#000";cx.fillRect(0,0,W,bar);cx.fillRect(0,H-bar,W,bar);
+}
 function drawMontage(){
   $("hud").style.opacity=0;
-  const m=montage, t=m.t, bar=H*0.11, iw=W, ih=H-2*bar; const shots=[0,0.95,1.75,2.65,3.6];
-  let k=0; while(k<4&&t>=shots[k+1])k++; const lt=(t-shots[k])/(shots[k+1]-shots[k]);
+  const m=montage, t=m.t, bar=H*0.11, iw=W, ih=H-2*bar; const shots=[0,1.5,2.3,3.2,4.0,4.8,6.4];
+  let k0=0; while(k0<5&&t>=shots[k0+1])k0++; const lt=(t-shots[k0])/(shots[k0+1]-shots[k0]);
+  if(k0===0||k0===5){ drawMontWide(k0===0,lt,t,bar,ih); for(const c of shots.slice(1,-1)){const d=t-c; if(d>=0&&d<0.08){cx.fillStyle=`rgba(255,250,235,${0.5*(1-d/0.08)})`;cx.fillRect(0,0,W,H);}} return; }
+  const k=k0-1;
   cx.save(); cx.beginPath(); cx.rect(0,bar,iw,ih); cx.clip();
   const push=1+lt*0.06; cx.translate(W/2,H/2); cx.scale(push,push); cx.translate(-W/2,-H/2);
   const S_=ih/200; const jit=(Math.random()-0.5)*1.2;
@@ -2073,7 +2119,7 @@ function drawMontage(){
   for(const c of shots.slice(1)){const d=t-c; if(d>=0&&d<0.08){cx.fillStyle=`rgba(255,250,235,${0.5*(1-d/0.08)})`;cx.fillRect(0,0,W,H);}}
   // caption
   cx.fillStyle="rgba(239,228,204,0.8)";cx.font=`${Math.max(12,H*0.022)}px Georgia`;cx.textAlign="center";
-  cx.fillText([LV[S.lvl][1]+" · 05:59",S.lang==="zh"?"零时":"ZERO HOUR","",""][k],W/2,H-bar/2+5);cx.textAlign="left";
+  cx.fillText(["",S.lang==="zh"?"零时":"ZERO HOUR","",""][k],W/2,H-bar/2+5);cx.textAlign="left";
 }
 // film grain via cached noise canvas
 const grainC=document.createElement("canvas");grainC.width=grainC.height=128;{const g=grainC.getContext("2d");const id=g.createImageData(128,128);for(let i=0;i<id.data.length;i+=4){const v=Math.random()*255;id.data[i]=id.data[i+1]=id.data[i+2]=v;id.data[i+3]=14;}g.putImageData(id,0,0);}
