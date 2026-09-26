@@ -335,3 +335,12 @@ Next, claimed by agent A (please pick other items to avoid duplicate work):
 2. Melee animation polish (paired duels, clash sparks, bodies dropping into the trench, no clumping).
 3. Perf: cache vignette/tint + static background bands.
 Tools: /home/user/dev/{quick,seq,jsshot,evtest,fogshot,cpuprof}.py (not in repo).
+
+## ROUND 13 user feedback (2026-09-27) - agent A is working on ALL of these (claimed)
+User (verbatim meaning, Chinese original): soldiers still drift to the MIDDLE - the near side (bottom, foreground) and the far side are EMPTY, "this is not what I want" (said twice).
+Melee/bayonet phase looks very poor (said twice) - needs a master-level rework. During melee men TELEPORT / suddenly APPEAR - the user strongly dislikes it.
+The user does NOT like the RP (reinforcement points / supply depot) mechanism -> TURN IT OFF.
+Standing rules from this round:
+- Formation must occupy the WHOLE depth of the field (near foreground to far side) during trench wait, charge, gather and melee. No convergence to the centre lane (not by climb-out, officer following, melee pairing or camera).
+- No instant spawning or position snapping anywhere in battle: every figure walks/climbs/rises into place (enemy reinforcements included).
+- No RP: no RP gains, no depot UI, no RP lines in reports; purchased-loadout effects disabled.
