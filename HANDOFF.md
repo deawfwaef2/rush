@@ -89,3 +89,11 @@ Gameplay wishes:
 - v0.7e shell() animated arcs (barrage + enemy shelling, kills on impact), AU soundscape loop + rain bed, weather per chapter (stepWeather/drawWeather), trenchLines(i) extra trench lines (own behind, enemy deeper).
 - v0.7f segLen longer, camera pulls out with crowd size, charge caption by count (section/platoon/company/battalion), covering fire from lvl 5 (buffer zone), reinfCinema() on payday.
 TODO next: unit types (elite/flamethrower/engineer cuts wire) in waves, enemy outpost houses, far-zone terrain appearing only for big crowds, richer melee close-up inset, balance pass (lvl 5+ is hard).
+
+---
+## Feedback round 6 (2026-09-26) → v0.8
+- SFX: user HATES procedural synth sounds ("低级"). Use REAL recorded sounds from the web (CC0 / public domain / CC-BY with credit in CREDITS.md). Keep total audio small (few MB). Immersion first.
+- BGM: "好TM催泪" (very tear-jerking) — keep the melancholic music, do not remove it.
+- NO men walking on/off screen when changing counts. There is ONE front line only; more men = camera pulls back so the line LOOKS longer. Do not split into separate near/far zones.
+- Trench design was bad; men must WAIT INSIDE the trench (below parapet, helmets showing), then climb ladders over the top on the whistle.
+- Charge cinematic (montage/CG) too crude → make it much richer.
