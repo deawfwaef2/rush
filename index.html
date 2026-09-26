@@ -682,7 +682,9 @@ const HZ_BADGE={gr:"",mg:"",rf:"",mn:"",sh:"",wr:"",gs:""};
 const cv=$("c"); let cx=cv.getContext("2d");
 let W=0,H=0,DPR=1;
 let UIZ=1; function uiScale(){ UIZ=Math.max(0.74,Math.min(1.45,Math.min(innerWidth/1000,innerHeight/560))); document.getElementById("ui").style.zoom=UIZ; }
-function resize(){ uiScale();DPR=Math.min(1.5,window.devicePixelRatio||1);W=innerWidth;H=innerHeight;cv.width=W*DPR;cv.height=H*DPR;cx.setTransform(DPR,0,0,DPR,0,0);}
+let QUAL=2, qAcc=0, qT=0;
+function perfTick(rdt){ qAcc+=rdt; qT++; if(qAcc>=2){ const avg=qAcc/qT; qAcc=0; qT=0; const busy=(mode==="charge"||mode==="melee"||mode==="plan"); if(avg>0.026&&QUAL>0){ QUAL--; if(QUAL===0){ resize(); } } else if(avg<0.0175&&QUAL<2&&!busy){ QUAL++; resize(); } } }
+function resize(){ uiScale();DPR=Math.min(QUAL===0?1:1.5,window.devicePixelRatio||1);W=innerWidth;H=innerHeight;cv.width=W*DPR;cv.height=H*DPR;cx.setTransform(DPR,0,0,DPR,0,0);}
 addEventListener("resize",resize);resize();
 
 // world width per level grows: later fields are longer (fortresses extra long)
@@ -1064,7 +1066,7 @@ function traverseEnts(ents,x,side){ const seed=Math.round(x)%9973; for(let bay=M
     for(let j=0;j<5;j++){ const t=j/4; const x0=a[0]+(b[0]-a[0])*t; cx.fillStyle=TC.bag[j&3]; cx.fillRect(x0-7*s,a[1]-10*s,14*s,5.5*s); cx.fillStyle=TC.bagLit; cx.fillRect(x0-6*s,a[1]-10*s,12*s,1.3*s); cx.fillStyle=TC.bagSh; cx.fillRect(x0-6*s,a[1]-5.8*s,12*s,1.2*s); } }}); } }
 // a soldier standing on the trench floor: lowered by trench depth and clipped at the ground line, so only helmet & shoulders show
 const trenchShadeCache={}; function toHex(c){ if(c[0]==="#")return c; const m=c.match(/\d+/g); return "#"+m.slice(0,3).map(v=>(+v).toString(16).padStart(2,"0")).join(""); }
-function drawManInTrench(m,lift){ const [sx,sy,s]=P(m.x,m.z,0); const depth=TR_D*(1-lift)*0.95;
+function drawManInTrench(m,lift){ const [sx,sy,s]=P(m.x,m.z,0); if(sx<-80*s||sx>W+80*s)return; const depth=TR_D*(1-lift)*0.95;
   cx.save(); cx.beginPath(); cx.rect(sx-120*s,0,240*s,sy+1*s); cx.clip();
   const mc=manCols(m), sh=1-lift; const key2=mc[0]+mc[1]+(sh>0.5?1:0); let tc=trenchShadeCache[key2]; if(!tc){ tc=trenchShadeCache[key2]=sh>0.5?[shade(toHex(mc[0]),"#0e0a06",0.38),shade(toHex(mc[1]),"#0e0a06",0.3)]:mc; }
   drawMan(sx,sy+depth*s,s,m.dir,m.phase,m.state==="climb"?"run":"idle",tc,{vet:m.vet,v:m.v}); if(m.eng){ cx.fillStyle="#e8e0cc"; cx.fillRect(sx-3*s,sy-52*s,6*s,2.6*s); } cx.restore(); }
@@ -1101,6 +1103,7 @@ function drawFlag(sx,sy,s,h,t,rise=1){ // pole base at sx,sy; flag height fracti
 const SPR=new Map(); let sprCount=0; const SPR_B=[0.4,0.8,1.6,3.2];
 const TAU=Math.PI*2;
 function drawMan(sx,sy,s,dir,phase,state,cols,opts={}){
+  if(sx<-120*s||sx>W+120*s||sy<-20||sy>H+160*s)return;
   if(opts.nocache) return drawManRaw(sx,sy,s,dir,phase,state,cols,opts);
   const v=opts.v; const need=s*DPR*(v?Math.max(v.h,v.w):1);
   let R=SPR_B[3]; for(const b of SPR_B){ if(b>=need){R=b;break;} }
@@ -1619,7 +1622,7 @@ function killMan(m,cause){
   if(Math.random()<0.06)say(m,pick(L_().deathcries));
 }
 function pick(a){return a[Math.floor(Math.random()*a.length)];}
-function say(m,txt,dur=1.8){bubbles.push({x:m.x,z:m.z,h:80,text:txt,t:0,dur,follow:m});}
+function say(m,txt,dur=1.8){ if(bubbles.length>=3)return;bubbles.push({x:m.x,z:m.z,h:80,text:txt,t:0,dur,follow:m});}
 
 function stepBattle(dt){
   const b=battle; if(!b||b.over)return; b.t+=dt;
@@ -2115,7 +2118,7 @@ addEventListener("keydown",e=>{ if(e.code==="Space"&&mode==="plan")startCharge()
    ============================================================ */
 let last=performance.now(), secT=0;
 function frame(now){
-  let rdt=Math.min(0.05,(now-last)/1000); last=now; const dt=rdt*slowmo; time+=dt;
+  let rdt=Math.min(0.05,(now-last)/1000); last=now; perfTick(rdt); const dt=rdt*slowmo; time+=dt;
   $("edL").classList.toggle("on",edge<0); $("edR").classList.toggle("on",edge>0);
   // payday
   if((mode==="plan"||mode==="charge"||mode==="melee"||mode==="barrage")&&!chCG){ S.clock=(S.clock||0)+rdt*1000; (S.lvlT=S.lvlT||{})[S.lvl]=(S.lvlT[S.lvl]||0)+rdt*1000; clockT+=rdt; if(clockT>0.25){clockT=0; updClock();} }
@@ -2188,9 +2191,9 @@ function frame(now){
   // flag raise
   if(flagRaise){flagRaise.t+=rdt; const [sx,sy,s]=P(flagRaise.x,0.5); drawFlag(sx,sy,s*1.6,130,time,Math.min(1,flagRaise.t/2.2)); if(flagRaise.t>8)flagRaise=null;}
   // foreground layer: big dark near silhouettes (depth!)
-  groundFog();
+  if(QUAL>0)groundFog();
   drawVictoryFX(rdt);
-  drawForeground(); drawWeather();
+  drawForeground(); if(QUAL>0||wxKind===1||wxKind===2)drawWeather();
   // bubbles
   drawBubbles(rdt);
   // color grade & vignette & grain
@@ -2199,7 +2202,7 @@ function frame(now){
   cx.restore();
   drawInsets(rdt);
   if(montage)drawMontage();
-  grain();
+  if(QUAL>1)grain();
   requestAnimationFrame(frame);
 }
 /* WEATHER per chapter: 0 summer haze+pollen, 1 rain, 2 snow, 3 fog, 4 dusk embers */
@@ -2615,7 +2618,7 @@ function drawMontage(){
 }
 // film grain via cached noise canvas
 const grainC=document.createElement("canvas");grainC.width=grainC.height=128;{const g=grainC.getContext("2d");const id=g.createImageData(128,128);for(let i=0;i<id.data.length;i+=4){const v=Math.random()*255;id.data[i]=id.data[i+1]=id.data[i+2]=v;id.data[i+3]=14;}g.putImageData(id,0,0);}
-function grain(){cx.save();cx.globalCompositeOperation="overlay";const p=cx.createPattern(grainC,"repeat");cx.translate(Math.random()*128,Math.random()*128);cx.fillStyle=p;cx.fillRect(-128,-128,W+256,H+256);cx.restore();}
+function grain(){cx.save();cx.globalCompositeOperation="overlay";const p=grain.p||(grain.p=cx.createPattern(grainC,"repeat"));cx.translate(Math.random()*128,Math.random()*128);cx.fillStyle=p;cx.fillRect(-128,-128,W+256,H+256);cx.restore();}
 
 /* ---------- boot ---------- */
 (async()=>{

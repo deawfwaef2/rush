@@ -253,3 +253,6 @@ CHARGE RANDOM EVENTS (strongly requested)
 COMBAT / PERF
 - Machine guns: the DENSER the formation, the MORE deaths.
 - Still very laggy with many men -> keep optimizing performance (top priority, again).
+## v1.2d perf
+- Adaptive quality QUAL 2→1→0 (perfTick: 2s avg frame >26ms drops a level; recovers only outside battle when <17.5ms). QUAL<2: no film grain; QUAL<1: no ground fog, weather only rain/snow, DPR 1.
+- grain pattern cached; speech bubbles capped at 3 (drawBubbles was heavy with 200 men); drawMan/drawManInTrench cull off-screen.
