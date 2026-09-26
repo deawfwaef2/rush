@@ -826,9 +826,24 @@ function drawGround(){
    dugout doors, ladders, periscope, crates, iron sheets, lantern posts, wire pickets in front. Drawn per depth zone. */
 /* TRENCH v2 — one continuous fire trench with bays & traverses; men wait INSIDE (see drawManInTrench). Flat fills = fast. */
 const TR_D=34, TR_W=30;
-function trenchOff(x,z){ const seed=Math.round(x)%9973; const bay=Math.floor(z*12+seed); return (bay%2?9:-9)+Math.sin(z*9+seed)*3; }
+function trenchOff(x,z){ const seed=Math.round(x)%9973; const u=z*12+seed, bay=Math.floor(u), f=u-bay; const a=(bay%2?14:-14), b=((bay+1)%2?14:-14); const k=f<0.82?0:(f-0.82)/0.18; return a+(b-a)*k*k*(3-2*k)+Math.sin(z*7+seed)*2; }
+// narrow cut (communication trench / sap) along a polyline of [x,z]
+function drawCut(pts,w){ cx.fillStyle="#140e08"; cx.beginPath(); pts.forEach((q,i)=>{const p=P(q[0],q[1]-w/900,0);i?cx.lineTo(p[0],p[1]):cx.moveTo(p[0],p[1]);}); for(let i=pts.length-1;i>=0;i--){const p=P(pts[i][0],pts[i][1]+w/900,0);cx.lineTo(p[0],p[1]);} cx.fill();
+  cx.strokeStyle="#3a2a1a"; cx.lineWidth=Math.max(1,3*P(0,pts[0][1])[2]); cx.beginPath(); pts.forEach((q,i)=>{const p=P(q[0],q[1]+w/900,-4);i?cx.lineTo(p[0],p[1]):cx.moveTo(p[0],p[1]);}); cx.stroke();
+  cx.fillStyle="#8f7e5c"; for(let i=0;i<pts.length;i++){ const p=P(pts[i][0],pts[i][1]-w/900-0.004,0); cx.beginPath(); cx.ellipse(p[0],p[1]-2*p[2],7*p[2],3*p[2],0,0,7); cx.fill(); } }
+function drawTrenchNet(x,side){ // communication trenches back to the support line + saps to listening posts
+  const seed=Math.round(x)%9973; const back=-side*190;
+  cx.save(); for(const zc of [0.22,0.55,0.86]){ const z=zc+((seed%7)-3)*0.01; const pts=[]; for(let k=0;k<=8;k++){ const t=k/8; pts.push([x+trenchOff(x,z)-side*TR_W+back*t, z+Math.sin(t*6+seed)*0.012]); } drawCut(pts,10); }
+  // support trench (simpler) behind
+  const sp=[]; for(let k=0;k<=24;k++){ const z=k/24*1.08; sp.push([x+back+Math.sin(z*18+seed)*9, z]); }
+  cx.fillStyle="#150f09"; cx.beginPath(); sp.forEach((q,i)=>{const p=P(q[0]-12,q[1],0);i?cx.lineTo(p[0],p[1]):cx.moveTo(p[0],p[1]);}); for(let i=sp.length-1;i>=0;i--){const p=P(sp[i][0]+12,sp[i][1],0);cx.lineTo(p[0],p[1]);} cx.fill();
+  cx.fillStyle="#7a6a4c"; sp.forEach(q=>{const p=P(q[0]+side*16,q[1],0);cx.beginPath();cx.ellipse(p[0],p[1]-2*p[2],9*p[2],3.4*p[2],0,0,7);cx.fill();});
+  // saps forward to listening posts
+  for(const zc of [0.38,0.72]){ const z=zc+((seed%5)-2)*0.012; const x0=x+trenchOff(x,z)+side*TR_W; const pts=[[x0,z],[x0+side*40,z+0.01],[x0+side*80,z-0.005]]; drawCut(pts,8);
+    const p=P(x0+side*86,z,0); cx.fillStyle="#9a8862"; for(let a=0;a<7;a++){ cx.beginPath(); cx.ellipse(p[0]+Math.cos(a*0.9)*12*p[2],p[1]+Math.sin(a*0.9)*3*p[2]-3*p[2],7*p[2],3*p[2],0,0,7); cx.fill(); } }
+  cx.restore(); }
 function drawTrench(x,side,level){
-  const seed=Math.round(x)%9973, D=TR_D, Wd=TR_W, n=30, z0=0.0, z1=1.1;
+  drawTrenchNet(x,side); const seed=Math.round(x)%9973, D=TR_D, Wd=TR_W, n=52, z0=0.0, z1=1.1;
   const S_=[];for(let i=0;i<=n;i++){const z=z0+(z1-z0)*i/n;S_.push({z,x:x+trenchOff(x,z)});}
   const Q=P; const lx=q=>q.x-Wd, rx=q=>q.x+Wd;
   // spoil / churned earth band around the trench
@@ -867,7 +882,7 @@ function drawTrench(x,side,level){
   // ladders every bay on our side, periscopes, stakes; enemy: loopholes & steel plates
   for(let i=0;i<n;i++){ const r=hash(seed*13+i*5); const z=z0+(z1-z0)*(i+0.5)/n; const q=x+trenchOff(x,z);
     const [sx,sy,sc]=P(q+side*(Wd-4),z,0);
-    if(side===1&&i%2===0){ cx.strokeStyle="#3e2c16";cx.lineWidth=Math.max(1,2.2*sc);const bx0=sx-10*sc,by0=sy+D*sc*0.95;
+    if(side===1&&i%4===0){ cx.strokeStyle="#3e2c16";cx.lineWidth=Math.max(1,2.2*sc);const bx0=sx-10*sc,by0=sy+D*sc*0.95;
       cx.beginPath();cx.moveTo(bx0,by0);cx.lineTo(bx0+12*sc,sy-16*sc);cx.moveTo(bx0+8*sc,by0);cx.lineTo(bx0+20*sc,sy-16*sc);cx.stroke();
       for(let k=1;k<7;k++){const f=k/7;cx.beginPath();cx.moveTo(bx0+12*sc*f,by0+(sy-16*sc-by0)*f);cx.lineTo(bx0+8*sc+12*sc*f,by0+(sy-16*sc-by0)*f);cx.stroke();} }
     else if(side===-1&&r>0.2){ cx.fillStyle="#3a3a36"; cx.fillRect(sx-6*sc,sy-26*sc,12*sc,9*sc); cx.fillStyle="#0a0806"; cx.fillRect(sx-1.5*sc,sy-23*sc,3*sc,3*sc); }
@@ -881,8 +896,8 @@ function drawTrench(x,side,level){
     for(let j=0;j<=24;j++){const a=j*0.8;cx.lineTo(sx-6*sc+j*1.3*sc+Math.cos(a)*5*sc,sy-12*sc+Math.sin(a)*8*sc);}cx.stroke();}
 }
 // traverse blocks (earth + sandbags across the trench every other bay) — depth-sorted so they hide men behind them
-function traverseEnts(ents,x,side){ for(let k=1;k<12;k+=2){ const z=k/12; ents.push({z:z+0.001,d:()=>{
-    const q=x+trenchOff(x,z-0.01); const a=P(q-TR_W,z,0), b=P(q+TR_W,z,0); const s=a[2];
+function traverseEnts(ents,x,side){ const seed=Math.round(x)%9973; for(let bay=Math.ceil(seed-1);bay<seed+14;bay++){ const z=(bay+0.91-seed)/12; if(z<0.02||z>1.08)continue; ents.push({z:z+0.001,d:()=>{
+    const q=x+(trenchOff(x,z-0.02)+trenchOff(x,z+0.02))/2; const a=P(q-TR_W,z,0), b=P(q+TR_W,z,0); const s=a[2];
     cx.fillStyle="#5a4630"; cx.beginPath(); cx.moveTo(a[0],a[1]+TR_D*s*0.2); cx.lineTo(a[0],a[1]-6*s); cx.lineTo(b[0],b[1]-6*s); cx.lineTo(b[0],b[1]+TR_D*s*0.2); cx.fill();
     for(let j=0;j<5;j++){ const t=j/4; const x0=a[0]+(b[0]-a[0])*t; cx.fillStyle="#9a8862"; cx.beginPath(); cx.ellipse(x0,a[1]-7*s,9*s,4*s,0,0,7); cx.fill(); cx.fillStyle="#b3a078"; cx.beginPath(); cx.ellipse(x0-1*s,a[1]-8.2*s,7*s,2.2*s,0,0,7); cx.fill(); } }}); } }
 // a soldier standing on the trench floor: lowered by trench depth and clipped at the ground line, so only helmet & shoulders show
@@ -1360,7 +1375,7 @@ function startCharge(){
   setTimeout(()=>AU.whistle(),2150); setTimeout(()=>{SFX.play("mud",0.5,{dur:0.8});},3150); setTimeout(()=>{AU.cheer();AU.bugle();},3900);
   cam.tx=bx+80; cam.tz=sendN>44?0.9:1.1; cam.tt=0.3;
   { const zh=S.lang==="zh", n=sendN; const cap= n<15?(zh?"一个班翻出战壕":"A section goes over"): n<40?(zh?"一个排翻出战壕":"A platoon goes over"): n<120?(zh?"整个连翻出战壕":"The whole company goes over"):(zh?"整个营翻出战壕":"The battalion goes over");
-    setTimeout(()=>{ big(cap, waves.length>1?(zh?`${waves.length} 个波次`:`${waves.length} waves`):"",1800); },4300); }
+    montage.onEnd=()=>{ big(cap, waves.length>1?(zh?`${waves.length} 个波次`:`${waves.length} waves`):"",1800); }; }
   // BUFFER ZONE: from level 5 our own trench gives covering fire first (free damage)
   if(S.lvl>=4){ const cov=Math.max(1,Math.round(battle.e*0.08)); setTimeout(()=>{ let k=cov; for(let i=0;i<14;i++)setTimeout(()=>{AU.shot(0.2);const e=pick(enemies.filter(x=>x.alive));if(e)tracer(bx+10,0.5+Math.random()*0.4,40,e.x,e.z,40);},i*120);
       battle.e=Math.max(1,battle.e-cov); battle.eKilled+=cov; cur.gr=battle.e; cur.rf*=0.85; toast((S.lang==="zh"?"掩护射击：守军 −":"Covering fire: garrison −")+cov); },4400); }
@@ -1771,7 +1786,7 @@ function frame(now){
     if(m.state==="melee"){m.phase+=rdt*4;}
     if((mode==="menu"||mode==="plan")&&!m.arriving&&Math.random()<rdt*0.004&&bubbles.length<2)say(m,pick(L_().chatter),2.4);
   }
-  if(montage){ montage.t+=rdt; if(montage.t>montage.dur){montage=null;$("hud").style.opacity=1;BGM.play("charge");} }
+  if(montage){ montage.t+=rdt; if(montage.t>montage.dur){const oe=montage.onEnd;montage=null;if(oe)oe();$("hud").style.opacity=1;BGM.play("charge");} }
   if(mode==="charge"||mode==="melee")stepBattle(dt);
   stepRagdolls(dt); stepParts(dt); stepShells(dt); stepWeather(rdt); BGM.step(rdt);
   for(const e of enemies){e.phase+=dt;if(e.flash>0)e.flash-=dt;}
@@ -1806,7 +1821,7 @@ function frame(now){
   for(const m of men) if(m.alive&&m.intrench) ents.push({z:m.z,d:()=>drawManInTrench(m,m.state==="climb"?m.lift:0)});
   for(const m of men) if(m.alive&&!m.intrench) ents.push({z:m.z,d:()=>{const [sx,sy,s]=P(m.x,m.z,m.state==="cheer"?Math.abs(Math.sin(m.jump||0))*14:0);drawMan(sx,sy,s,m.dir,m.phase,m.stumble>0?"crouch":(m.state==="wait"||m.state==="gather")?"crouch":m.state==="cheer"?"cheer":(m.arriving?"run":m.state),manCols(m),{vet:m.vet,v:m.v});
      if(m.state==="cheer"){ /* rifle raised */ }}});
-  for(const e of enemies) if(e.alive) ents.push({z:e.z,d:()=>{const fight=battle&&battle.melee&&!battle.over; const [sx,sy,s]=P(e.x,e.z,0); cx.save(); if(!fight){cx.beginPath();cx.rect(sx-120*s,0,240*s,sy+1*s);cx.clip();} drawMan(sx,sy+(fight?0:TR_D*0.55)*s,s,-1,e.phase,fight?"melee":"aim",pal.en,{enemy:true,flash:e.flash>0}); cx.restore();}});
+  for(const e of enemies) if(e.alive) ents.push({z:e.z,d:()=>{const fight=battle&&battle.melee&&!battle.over; const [sx,sy,s]=P(e.x,e.z,0); cx.save(); if(!fight){cx.beginPath();cx.rect(sx-120*s,0,240*s,sy+1*s);cx.clip();} drawMan(sx,sy+(fight?0:TR_D*0.85)*s,s,-1,e.phase,fight?"melee":"aim",pal.en,{enemy:true,flash:e.flash>0}); cx.restore();}});
   if(battle&&battle.tanks&&(mode==="charge"||mode==="melee")) for(const tk of battle.tanks) ents.push({z:tk.z,d:()=>drawTank(tk)});
   ents.sort((a,b)=>a.z-b.z); drawParts(false); for(const e of ents)e.d(); drawParts(true);
   drawTracers(rdt); drawShells();
@@ -1846,7 +1861,7 @@ function drawForeground(){
   const step=700; const k0=Math.floor((cam.x*par - W)/step)-1;
   for(let k=k0;k<k0+Math.ceil(W*2/step)+3;k++){
     const r=hash(k*97+5); const x=k*step - cam.x*par + W/2;
-    if(r>0.2){ // barbed wire post + tangled wire
+    if(false){ // (removed: giant foreground post looked wrong)
       cx.fillRect(x,baseY-150*s*0.6,6*s,150*s*0.6);
       cx.strokeStyle="rgba(18,14,10,0.9)";cx.lineWidth=1.3;cx.beginPath();
       for(let j=0;j<40;j++){const a=j*0.7;cx.lineTo(x-60*s+j*8*s,baseY-60*s*0.6-Math.sin(a)*22*s*0.6-Math.cos(a*1.7)*10*s);}cx.stroke();
