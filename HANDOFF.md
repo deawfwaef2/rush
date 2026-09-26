@@ -116,3 +116,16 @@ TODO next: plan camera should frame own trench better; unit types; enemy outpost
 ## v0.9e (chapter CG)
 - playChapterCG(ch,done)/drawChapterCG: 13.5s, 3 scenes per chapter (per-chapter kinds: march/trench/dig/flood/sentry/gas/masks/advance/tanks), typewriter captions CGTXT en/zh, letterbox, tap to skip. Triggered in toPlan when S.lvl%8===2 && !S.seenCG<ch>. body.cgon hides UI.
 - Remaining TODO: battle immersion (smoke, craters, wounded, MG tracers), map glitch checks, balance.
+
+---
+## Feedback round 8 (2026-09-26) → v1.0
+- Victory FX STILL too flashy/"失真" → minimal: no bursts, just quiet text + stats.
+- Artillery support must NOT be unlocked from the start (unlock later, e.g. chapter I level 5).
+- Veteran-adding mechanic has BUGS and its UI is bad → redesign.
+- Level/chapter UI must NOT be on the right side → put it in the empty TOP area.
+- NO EMOJI anywhere in the UI.
+- NO tear-jerking BGM anymore (reverses round 6) → tense/martial/ambient instead.
+- Trench v0.9 is UGLIER than before → redraw at master level.
+- Melee has many TELEPORT bugs (men jump positions) → fix smooth movement.
+- Chapter CG quality too low → improve; CG needs an explicit SKIP button (only the button skips, not tapping anywhere).
+- Overall: wants master-level quality.
