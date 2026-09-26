@@ -314,3 +314,9 @@ COMBAT / PERF
 - BIG event: one "Fortune of war" d6 per charge (2 on sectors > 2100 long) when the lead passes 30-58% of the crossing; modifier +1 if runner morale >= 90 / S.morale >= 80, -1 if < 45 / < 35. 1 = rout (if morale < 62) or stall; 2 = our shells fall short or gunners find range (+45% MG 5 s); 3-4 steady; 5 = MG jam (6 s) or drifting smoke; 6 = surge (+30% speed, +12 morale); 7 = enemy panic (garrison bolts). Logged in the result report.
 - Presentation: speech bubbles + small italic effect tags above the man (de-overlapped, 2 s) + corner feed #evFeed (top-left, max 4, die SVG for the big roll). Nothing centre-screen.
 - Successive trench ranks now go over one after another (delay + rank*[1.35,1.0,0.7]) -> visible waves of lines instead of one thick mass.
+## v1.3h horizontal-stripes fix (2026-09-26, agent A)
+- ROOT CAUSE of the "mysterious horizontal stripes" (only visible at QUAL 2, i.e. on real devices - headless tests drop to QUAL 0 so we never saw them):
+  groundFog() drew 9 radial gradients inside ellipses 14-38 px tall -> the ellipse cut the gradient at ~full alpha = hard-edged horizontal bands drifting over the field.
+  Same bug in drawGround mottling (circle gradient clipped by a 0.28-flat ellipse), atmos() ended at 60% alpha with a hard rect edge, far patchwork all ended on one line at z=0.12, and grass/crater rows skipped the z 0.5-0.56 band.
+- Fix: fog + mottling now blit a cached soft radial sprite (softSpr) squashed vertically (fades in every direction, also cheaper: no per-frame gradients); atmos fades to 0; patchwork fades out; rows fill the gap.
+- To inspect at full quality in headless: `python3 /home/user/dev/fogshot.py file:///home/user/rush/index.html <lvl> <tag>` (pins QUAL=2).

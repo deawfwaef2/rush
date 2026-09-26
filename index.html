@@ -960,7 +960,7 @@ function drawBackground(){
   atmos(0.12);
 }
 function shade(a,b,t){const pa=parseInt(a.slice(1),16),pb=parseInt(b.slice(1),16);const r=((pa>>16)*(1-t)+(pb>>16)*t)|0,g=(((pa>>8)&255)*(1-t)+((pb>>8)&255)*t)|0,bl=((pa&255)*(1-t)+(pb&255)*t)|0;return `rgb(${r},${g},${bl})`;}
-function atmos(a){const hz=horizon();const g=cx.createLinearGradient(0,hz-H*0.2,0,hz+H*0.15);g.addColorStop(0,pal.fog+"0)");g.addColorStop(0.7,pal.fog+a+")");g.addColorStop(1,pal.fog+(a*0.6)+")");cx.fillStyle=g;cx.fillRect(0,hz-H*0.2,W,H*0.35);}
+function atmos(a){const hz=horizon();const g=cx.createLinearGradient(0,hz-H*0.2,0,hz+H*0.15);g.addColorStop(0,pal.fog+"0)");g.addColorStop(0.55,pal.fog+a+")");g.addColorStop(1,pal.fog+"0)");cx.fillStyle=g;cx.fillRect(0,hz-H*0.2,W,H*0.35);}
 
 function drawGround(){
   const y0=groundY(0), y1=H;
@@ -971,23 +971,24 @@ function drawGround(){
   // far patchwork fields & hedgerows between horizon haze and the battle zone
   { const yA=groundY(0), yB=groundY(0.12); const s0=scaleZ(0.02); const step=260;
     const k0=Math.floor((cam.x-W/2/s0)/step)-1,k1=Math.floor((cam.x+W/2/s0)/step)+1;
+    const fg=(c,a)=>{ const q=cx.createLinearGradient(0,yA,0,yB); q.addColorStop(0,`rgba(${c},${a})`); q.addColorStop(0.55,`rgba(${c},${a*0.8})`); q.addColorStop(1,`rgba(${c},0)`); return q; };
+    const FL=fg("255,245,210",0.07), FD=fg("40,30,15",0.10), FM=fg("120,130,60",0.06), FH=fg("30,24,14",0.25);
     for(let k=k0;k<=k1;k++){ const x0=W/2+(k*step-cam.x)*s0, x1=W/2+((k+1)*step-cam.x)*s0; const tone=hash(k*17);
-      cx.fillStyle=tone>0.3?"rgba(255,245,210,0.07)":tone<-0.3?"rgba(40,30,15,0.10)":"rgba(120,130,60,0.06)";
+      cx.fillStyle=tone>0.3?FL:tone<-0.3?FD:FM;
       cx.beginPath();cx.moveTo(x0,yA);cx.lineTo(x1,yA);cx.lineTo(x1+(x1-W/2)*0.25,yB);cx.lineTo(x0+(x0-W/2)*0.25,yB);cx.fill();
-      cx.strokeStyle="rgba(30,24,14,0.25)";cx.lineWidth=1;cx.beginPath();cx.moveTo(x0,yA);cx.lineTo(x0+(x0-W/2)*0.25,yB);cx.stroke(); } }
+      cx.strokeStyle=FH;cx.lineWidth=1;cx.beginPath();cx.moveTo(x0,yA);cx.lineTo(x0+(x0-W/2)*0.25,yB);cx.stroke(); } }
   // painterly mottling: big soft light/dark patches anchored in the world
   for(const [zA,zB,cnt] of [[0.02,MIDZ,7],[NEARZ,1,5]]){ const zm=(zA+zB)/2, s=scaleZ(zm), step=420;
     const k0=Math.floor((cam.x-W/2/s)/step)-1,k1=Math.floor((cam.x+W/2/s)/step)+1;
     for(let k=k0;k<=k1;k++){ for(let j=0;j<2;j++){ const hv=hash(k*31+j*7+zA*100); const z=zA+(zB-zA)*(0.2+0.6*Math.abs(hash(k*13+j)));
       const [sx,sy,sc]=P(k*step+hash(k+j*5)*200,z); const r=(180+hv*120)*sc;
-      const g=cx.createRadialGradient(sx,sy,0,sx,sy,r); const c=hv>0?"255,240,200":"30,22,12"; const a=hv>0?0.07:0.12;
-      g.addColorStop(0,`rgba(${c},${a})`);g.addColorStop(1,`rgba(${c},0)`);cx.fillStyle=g;cx.beginPath();cx.ellipse(sx,sy,r,r*0.28,0,0,7);cx.fill(); } } }
+      cx.globalAlpha=hv>0?0.07:0.12; cx.drawImage(hv>0?softSpr("mL",255,240,200,0.05):softSpr("mD",30,22,12,0.05),sx-r,sy-r*0.3,r*2,r*0.6); } } cx.globalAlpha=1; }
   // wheel ruts / tracks across the field
   cx.strokeStyle="rgba(30,22,12,0.12)";cx.lineWidth=2;
   for(let j=0;j<3;j++){ cx.beginPath(); for(let z=0.05;z<=MIDZ;z+=0.03){ const [sx,sy]=P(cam.x-600+j*700+Math.sin(z*9+j)*120,z); z<0.06?cx.moveTo(sx,sy):cx.lineTo(sx,sy);} cx.stroke(); }
   const summer=pal===PAL.summer||pal===PAL.dusk, snow=pal===PAL.winter;
   for(let row=0;row<26;row++){
-    const z=row<16?row/15*MIDZ:NEARZ+(row-16)/9*(1-NEARZ); const s=scaleZ(z); const step=110;
+    const z=row<16?row/15*MIDZ:(MIDZ+0.03)+(row-16)/9*(1-MIDZ-0.03); const s=scaleZ(z); const step=110;
     const ks=Math.floor((cam.x - W/2/s)/step)-1, ke=Math.floor((cam.x + W/2/s)/step)+1;
     for(let k=ks;k<=ke;k++){
       const hv=hash(k*131+row*17); const wx=k*step+hash(k*7+row)*70; const zz=z+hash(k+row*3)*0.025;
@@ -2546,8 +2547,9 @@ function birds(){ cx.fillStyle="rgba(20,16,12,0.7)"; const hz=horizon();
 function groundFog(){ // low drifting mist bands over both battle zones
   for(let i=0;i<9;i++){ const z=i<6?0.05+i*0.08:NEARZ+0.05+(i-6)*0.14; const s=scaleZ(z); const [,sy]=P(0,z);
     const wx=((i*977+time*(8+i*2))%3000); const x=W/2+((wx-1500)-((cam.x*0.3)%3000-1500))*s*0.6;
-    const w=(600+i*80)*s, h=(14+i*3)*s; const g=cx.createRadialGradient(x,sy,0,x,sy,w);
-    g.addColorStop(0,pal.fog+"0.16)");g.addColorStop(1,pal.fog+"0)");cx.fillStyle=g;cx.beginPath();cx.ellipse(x,sy-h*0.5,w,h,0,0,7);cx.fill(); } }
+    const w=(600+i*80)*s, h=(14+i*3)*s*2.2; const fc=pal.fog.match(/\d+/g)||[220,210,190];
+    cx.globalAlpha=0.2; cx.drawImage(softSpr("fog"+fc.join(","),+fc[0],+fc[1],+fc[2],0.05),x-w,sy-h*0.7,w*2,h*2); }
+  cx.globalAlpha=1; }
 /* ---------- VICTORY FX: signal flares, golden burst, tossed helmets, paper, light sweep ---------- */
 let vfx=null;
 function startVictoryFX(x,surv,grand){ vfx={t:0,x,flares:[],grand}; if(grand){ const cols=["255,250,230","140,255,150","255,120,90","255,250,230","255,230,140"]; for(let i=0;i<14;i++) setTimeout(()=>{ if(!vfx)return; vfx.flares.push({x:x-420+Math.random()*840,z:0.2+Math.random()*0.7,h:0,vh:620+Math.random()*260,t:0,c:cols[i%cols.length]}); SFX.play("rifle_rev",0.25,{lp:1400,gap:0.1}); },200+i*380+Math.random()*200); return; } // somber: two white star shells over the taken line, drifting smoke
