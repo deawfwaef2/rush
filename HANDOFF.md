@@ -101,3 +101,14 @@ TODO next: unit types (elite/flamethrower/engineer cuts wire) in waves, enemy ou
 - v0.8b: ONE continuous battlefield (laneZ 0.06–0.96, continuous scaleZ/groundY, berm removed). Trench v2 (`drawTrench`, TR_D/TR_W, trenchOff(), traverseEnts() depth-sorted blocks, ladders each bay, flat fills). Men WAIT INSIDE trench (`m.intrench`, drawManInTrench clips at ground line), appear in place (no walking in/out), on whistle state "climb" (m.lift) up the ladder then "run". Slots fill near→far along the trench (slotZ/slotRank); more men → camera pulls back. Enemies stand inside their trench too (clipped) until melee.
 - v0.8c: CINEMATIC 6.4s, 6 shots (drawMontWide dawn stand-to with star shell + breath, rows of helmets/bayonets scaled by sendN → face profile → pocket watch → whistle → boots on ladder → OVER THE TOP low angle, men pour over parapet, count scales with sendN, shell bursts). Real SFX cues: heartbeat, bolt, clock, whistle@3.25s, mud, crowd "charge"+bugle@4.8s. No synth ticks.
 TODO next: plan camera should frame own trench better; unit types; enemy outposts; balance.
+
+---
+## Feedback round 7 (2026-09-26) → v0.9
+- Victory FX TOO FLASHY → tone down (somber, historical).
+- Battle process too crude → more immersion, historical environment (smoke, craters, wounded, MG nests, muzzle flashes...).
+- MELEE: must last longer; attackers must NOT trickle in and die one by one → survivors gather at the enemy wire / dead ground, then assault together.
+- Show "chapter-level" (e.g. II-3) + a chapter strip with symbols: level 3 of each chapter = chapter CG (special), fortress (special), new-mechanic unlock (special); symbols can stack.
+- Chapter CG cinematic on level 3 of every chapter.
+- Trench unrealistic ("just a line") → real trench system: zigzag bays/traverses, communication trenches, support line, saps.
+- Map drawing has problems; game had BUGS; charge ended right after starting (bug: climbing men not counted → instant fail, fixed v0.9a).
+- User prefers the ORIGINAL charge CG (v0.5 4-shot montage) over v0.8 wide shots.
