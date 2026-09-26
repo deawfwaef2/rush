@@ -167,3 +167,7 @@ NEW wishes:
 - NEWM(i): auto list of mechanics first appearing on level i (hazards, supports via supMaxAt, tools TOOL_AT={eng:10,flare:12,off:17}). lvlTags "new" uses it. showNewMechs() pops mechCard(k,isSup,isNew) with NEW ribbon for each unseen (S.seenM). Enemy panel #nextU lists what appears AFTER this level (clickable).
 - MECH text + IC icons added for eng/flare/off (gameplay implemented in next stages).
 - Remaining ★ glyphs replaced by VETI svg.
+
+## v1.1d
+- belts[] barbed-wire belts (count=cur.wr, at 0.52/0.66/0.40 SEGL) drawn by drawBelt (screw pickets, 3 strands, coils; gaps when cut). Men slow hard in uncut wire (0.18-0.34), 0.85 when cut.
+- Engineers (unlock lvl 10): wave.e (<=8, from recruits), #engRow stepper. m.eng men stop at an uncut belt (state "cut"), cut progress dt/3.6 each; exposed to fire; white armband.
