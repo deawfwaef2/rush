@@ -392,3 +392,4 @@ User LIKES this version (v1.4b). Requests:
 - Playgama: saves via bridge.storage (required by Playgama), language from the platform unless S.langPicked, game_ready + level messages.
 - Build: `python3 tools/build_zips.py` -> ../zips/rush-{crazygames,playgama,web}.zip (4.4 MB each). NEVER commit ZIPs. Details and test results in ADS.md.
 - Portal caps are outside our control: CrazyGames enforces about 3 min between midgames on its side (adCooldown -> the game continues).
+- ZIPs are also attached to GitHub Release v1.4e (https://github.com/deawfwaef2/rush/releases/tag/v1.4e); rebuild + upload new assets for later versions.
