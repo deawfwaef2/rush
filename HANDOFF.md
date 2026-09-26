@@ -180,3 +180,8 @@ NEW wishes:
 ## v1.1f OFFICER
 - startOfficer() (O key / #tools button, lvl>=17, once per charge): officer spawns at rearmost runner; runners within 0.35 SEGL get m.fol and keep just behind him (speed modulated, z drifts toward him). WASD/arrows or on-screen #offpad move him. SPACE/H or HALT/GO toggles halt: followers go state "rally" (crouch around him, morale regen); GO → morale +25 if halted >2s, b.shock if regrouped ≥max(6,0.8·garrison). Takes fire (reduced when halted / dead ground). officerDown(): ragdoll, slowmo 0.25 + camera zoom + "THE OFFICER IS DOWN", others continue. Reaching the wire hands over. Camera follows him.
 - #topStrip hidden outside plan/menu (was overlapping battle HUD).
+
+## v1.1g CHAPTER CG v2 (quality + perf)
+- drawChapterCG rewritten: per-scene baked layers (cgBake → sky/far/mid/fg offscreen canvases, cached by ch:kind:size) + live figures; parallax push-in camera per layer; painterly clouds, haze bands, ruined church/houses, poplars, dead trees, sandbag parapet, wire coils, revetment, crosses, tanks; weather (rain/snow/pollen), god rays, baked vignette. Scenes CGK per chapter (march/dig/line, rain/flood/stretcher, sentry/flare/ruins, gasfield/masks/crosses, tanks/advance/dawn).
+- PERF: when chCG is active, frame() skips the whole world render (was drawing world + CG → lag).
+- Only SKIP button skips (from v1.0a).
