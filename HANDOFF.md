@@ -80,3 +80,12 @@ Gameplay wishes:
 - Better ambience: battlefield soundscape (distant artillery, MG echoes, shouts, whistles, wind, rain).
 - Weather changes per chapter. Artillery shells animated (arc, flash, dirt). Longer levels.
 - Historical realism over simplification.
+
+### v0.7 done (2026-09-26)
+- v0.7a PERF: `SPR` sprite cache in drawMan (poses cached per colour/state/phase bucket/scale bucket; drawManRaw = uncached). DPR≤1.5, corpses ≤600.
+- v0.7b WAVES: `waves=[{r,v,f,d}]`, `wSel`, UI tabs W1..Wn (+ add, × remove, MAXW grows with level), recruits stepper/slider/presets act on selected wave, ★veterans stepper, formation Loose/Line/Dense (`FORM` fire & melee factors), delay after previous wave, warnings. `syncMen()/pushList` keeps visible men == waves; slotZ fills NEAR zone first then FAR.
+- v0.7c COMBAT: hitK() = proximity^1.6 × formation × vet 0.62. Per-man morale `m.mor`, shockNear() on each death, <22 → pinMan() (prone, lost). Continuous melee: arrivals joinMelee(); meleeTick() Lanchester (sqrt ratio), vets 1.55, formation cohesion; `b.supp` suppresses enemy fire; `b.front` moves melee through trench depth. reportHTML() table + remark; S.fails[lvl] ledger shown in enemy panel + wooden markers at wire.
+- v0.7d ads 3/day (adLeft(), real calendar date), adOffer() telegram when reserve < garrison. drawFlag() green regimental colour (cached FLAGC).
+- v0.7e shell() animated arcs (barrage + enemy shelling, kills on impact), AU soundscape loop + rain bed, weather per chapter (stepWeather/drawWeather), trenchLines(i) extra trench lines (own behind, enemy deeper).
+- v0.7f segLen longer, camera pulls out with crowd size, charge caption by count (section/platoon/company/battalion), covering fire from lvl 5 (buffer zone), reinfCinema() on payday.
+TODO next: unit types (elite/flamethrower/engineer cuts wire) in waves, enemy outpost houses, far-zone terrain appearing only for big crowds, richer melee close-up inset, balance pass (lvl 5+ is hard).

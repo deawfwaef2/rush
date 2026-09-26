@@ -585,7 +585,7 @@ function resize(){ uiScale();DPR=Math.min(1.5,window.devicePixelRatio||1);W=inne
 addEventListener("resize",resize);resize();
 
 // world width per level grows: later fields are longer (fortresses extra long)
-const segLen=i=>Math.round(1500+i*38+((i%8)===7?500:0));
+const segLen=i=>Math.round(1600+i*60+((i%8)===7?700:0));
 const TX=[0];for(let i=0;i<60;i++)TX.push(TX[i]+segLen(i));
 const trenchX=i=>TX[Math.max(0,Math.min(TX.length-1,i))];
 const SEGL=()=>segLen(S.lvl);
@@ -1081,6 +1081,9 @@ function setupFront(){
   const r=rng(S.lvl*991+7); for(let i=0;i<cur.mn;i++){mines.push({x:trenchX(S.lvl)+300+r()*(SEGL()-520),z:laneZ(r()),live:true});}
   // idle troops in own trench (visual reserve)
 }
+function reinfCinema(k){ const zh=S.lang==="zh"; big(`+${k}`, zh?(k>=60?"一整个营开进了前线":"援军开进战壕"):(k>=60?"A whole battalion marches up":"Reinforcements march in"),2200); AU.bugle();
+  if(mode!=="menu")return; const bx=trenchX(S.lvl); const n=Math.min(60,k);
+  for(let i=0;i<n;i++){ const m=mkMan(cam.x-(W/2)/scaleZ(0.8)-40-i*18,laneZ(0.6+Math.random()*0.4),false); m.arriving=true; m.tx=bx-20-Math.random()*60; m.state="run"; m.speed=120+Math.random()*20; men.push(m);} sortMen(); cam.tt=0.4; cam.tz=0.95; }
 function worldVisibleIdle(){ // soldiers idling in own trench on menu
   men=[];const n=Math.min(40,S.reserve);const bx=trenchX(S.lvl);
   for(let i=0;i<n;i++){men.push(mkMan(bx-10-Math.random()*20,laneZ(Math.random()),i<Math.min(S.vets,n)));}
@@ -1331,7 +1334,12 @@ function startCharge(){
   // MONTAGE: close-up officer whistle, then bugle, then wide
   montage={t:0,dur:3.6,seed:Math.random()*100}; AU.tone&&AU.ctx&&[0,0.9].forEach(d=>setTimeout(()=>AU.tone(AU.now(),1500,0.04,0.06,"square"),d*1000));
   setTimeout(()=>AU.whistle(),1750); setTimeout(()=>AU.bugle(),2500); setTimeout(()=>AU.thud(),2900);
-  cam.tx=bx+80; cam.tz=1.1; cam.tt=0.3;
+  cam.tx=bx+80; cam.tz=sendN>44?0.9:1.1; cam.tt=0.3;
+  { const zh=S.lang==="zh", n=sendN; const cap= n<15?(zh?"一个班翻出战壕":"A section goes over"): n<40?(zh?"一个排翻出战壕":"A platoon goes over"): n<120?(zh?"整个连翻出战壕":"The whole company goes over"):(zh?"整个营翻出战壕":"The battalion goes over");
+    setTimeout(()=>{ big(cap, waves.length>1?(zh?`${waves.length} 个波次`:`${waves.length} waves`):"",1800); for(let i=0;i<Math.min(5,1+Math.floor(n/30));i++)setTimeout(()=>AU.cheer(),i*260); },3700); }
+  // BUFFER ZONE: from level 5 our own trench gives covering fire first (free damage)
+  if(S.lvl>=4){ const cov=Math.max(1,Math.round(battle.e*0.08)); setTimeout(()=>{ let k=cov; for(let i=0;i<14;i++)setTimeout(()=>{AU.shot(0.2);const e=pick(enemies.filter(x=>x.alive));if(e)tracer(bx+10,0.5+Math.random()*0.4,40,e.x,e.z,40);},i*120);
+      battle.e=Math.max(1,battle.e-cov); battle.eKilled+=cov; cur.gr=battle.e; cur.rf*=0.85; toast((S.lang==="zh"?"掩护射击：守军 −":"Covering fire: garrison −")+cov); },3000); }
   $("hud").classList.remove("hide");
 }
 function killMan(m,cause){
@@ -1663,7 +1671,7 @@ function moraleCard(){ const t=L_(),zh=S.lang==="zh",ov=$("ov"); ov.classList.re
    <ul class="mech"><li>${zh?"胜利：士气 +18（要塞 +30）":"Victory: +18 (fortress +30)"}</li><li>${zh?"失败：士气 −20，惨败再 −5":"Defeat: −20, a massacre −5 more"}</li><li>${zh?"士气会随时间慢慢回到 50":"Over time it always drifts back to 50"}</li><li>${zh?"士气为 0 时，士兵拒绝冲锋":"At 0 the men refuse to charge"}</li></ul>
    <button class="btn" id="mOk" style="margin-top:10px">OK</button></div>`; $("mOk").onclick=()=>ov.classList.add("hide"); }
 $("cTimer").onclick=reinfCard; $("cTroops").onclick=reinfCard; $("cMorale").onclick=moraleCard;
-$("bDev").onclick=()=>{AU.init();giveDay();updTop();toast("DEV: +1 day");if(mode==="menu")worldVisibleIdle();if(mode==="plan"){buildSupports();setSend(sendN);}};
+$("bDev").onclick=()=>{AU.init();giveDay();updTop();reinfCinema(dailyMen());if(mode==="plan"){buildSupports();setSend(sendN);}};
 // --- tutorial ---
 const TUT={en:[
  ["#right","THE ENEMY","This is what waits across no man's land. Tap any line to see exactly how it works."],
@@ -1714,10 +1722,11 @@ function frame(now){
   let rdt=Math.min(0.05,(now-last)/1000); last=now; const dt=rdt*slowmo; time+=dt;
   $("edL").classList.toggle("on",edge<0); $("edR").classList.toggle("on",edge>0);
   // payday
-  secT+=rdt; if(secT>1){secT=0; const n=payDays(); if(n){toast(`+${S.income*n} ${IC.man.replace('<svg','<svg width=18 height=18 style="vertical-align:middle"')}`); if(mode==="menu")worldVisibleIdle();} updTop(); if(mode!=="menu"&&mode!=="result")S.playMs+=1000;}
+  secT+=rdt; if(secT>1){secT=0; const n=payDays(); if(n){ reinfCinema(dailyMen()*n); } updTop(); if(mode!=="menu"&&mode!=="result")S.playMs+=1000;}
   // camera easing
   if(mode==="menu"){ if(edge&&!drag)cam.tx=Math.min(trenchX(S.lvl)+400,Math.max(-300,cam.tx+edge*700*rdt)); lookOff=0; }
   else { if(edge&&!montage) lookOff=Math.max(-SEGL()*0.7,Math.min(SEGL()*0.7,lookOff+edge*900*rdt)); else if(mode==="charge"||mode==="melee"||mode==="barrage") lookOff*=Math.pow(0.4,rdt); }
+  if(mode==="plan"){ cam.tz = sendN>44?0.74:sendN>20?0.86:1.0; }
   let tx=cam.tx+lookOff+(camPeek>0?SEGL()*0.35:0); if(camPeek>0)camPeek-=rdt;
   cam.x+=(tx-cam.x)*Math.min(1,rdt*(mode==="pan"?1.6:2.2));
   cam.zoom+=(cam.tz-cam.zoom)*Math.min(1,rdt*1.5);
