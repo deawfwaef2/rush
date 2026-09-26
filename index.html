@@ -531,7 +531,7 @@ function drawMan(sx,sy,s,dir,phase,state,cols,opts={}){
   }
   // arms + rifle
   let rA, handX, handY;
-  if(run){ rA=-0.5+Math.sin(phase*2)*0.08; } else if(state==="melee"){ rA=-0.1+Math.sin(phase*3)*0.35; } else if(aim){ rA=-0.05; } else rA=-1.2;
+  if(run){ rA=-0.18+Math.sin(phase*2)*0.05; } else if(state==="melee"){ rA=-0.1+Math.sin(phase*3)*0.35; } else if(aim){ rA=-0.05; } else rA=-1.2;
   handX=shX+dir*16*s; handY=shY+8*s+(run?Math.sin(phase)*1.5*s:0);
   if(state==="melee"){handX+=dir*Math.max(0,Math.sin(phase*3))*10*s;}
   limb(shX,shY+2*s,shX+dir*8*s,shY+10*s,5*s);limb(shX+dir*8*s,shY+10*s,handX,handY,4.5*s);
