@@ -1,0 +1,20 @@
+{
+    "advertisement": {
+        "minimumDelayBetweenInterstitial": 0,
+        "initialInterstitialDelay": 0,
+        "interstitial": {
+            "preloadOnStart": "level_failed",
+            "placementFallback": "level_failed",
+            "placements": []
+        },
+        "rewarded": {
+            "preloadOnStart": "extra_draft",
+            "placementFallback": "extra_draft",
+            "placements": []
+        },
+        "banner": {
+            "placementFallback": "result",
+            "placements": []
+        }
+    }
+}

@@ -385,3 +385,10 @@ User LIKES this version (v1.4b). Requests:
 - Flamethrower teams are visible: figure with tanks/hose/lance + pilot flame in the enemy trench, label during the approach;
   every flame burst is a jet from the nearest team to the victims (drawFlJets); knocked-out teams vanish in a fireball. b.flK remains the count.
 - Panels: backdrop-filter blur removed (was re-blurred every frame over the animated canvas).
+## v1.4e ads + portals (2026-09-27, agent A)
+- User requirement (round 14): EVERY failed attack plays one forced interstitial; integrate CrazyGames SDK and Playgama SDK; ship several ZIPs.
+- One wrapper `AD` (alias CG) with providers crazygames (SDK v3) / playgama (Bridge v2) / none, chosen by window.PLATFORM set by the build (auto in the repo).
+- Fail card: notice + ▶ locks + AD.midgame(...,{force:true}). No game-side throttle for fails; wins keep 180 s. The frame loop pauses and sound mutes during ads.
+- Playgama: saves via bridge.storage (required by Playgama), language from the platform unless S.langPicked, game_ready + level messages.
+- Build: `python3 tools/build_zips.py` -> ../zips/rush-{crazygames,playgama,web}.zip (4.4 MB each). NEVER commit ZIPs. Details and test results in ADS.md.
+- Portal caps are outside our control: CrazyGames enforces about 3 min between midgames on its side (adCooldown -> the game continues).

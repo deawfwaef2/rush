@@ -139,6 +139,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 .hz .bar i{display:block;height:100%;background:linear-gradient(90deg,#c9862f,#c8432f);transition:width .5s}
 .hz .ds{grid-column:2/4;font-size:11px;color:var(--dim);font-style:italic;line-height:1.3}
 #hzList.many .hz{padding:3px 2px;grid-template-columns:32px 1fr auto}#hzList.many .hz .ds{display:none}#hzList.many .hz .badge{width:30px;height:30px}#hzList.many .hz .badge svg{width:21px;height:21px}#hzList.many .hz .nm{font-size:13.5px}#hzList.many .hz .val{font-size:18px}#hzList.many .hz .bar{height:4px;margin:2px 0}
+.adnote{font-size:12px;color:#6d5a36;margin-top:7px;letter-spacing:.05em;font-style:italic}
 .hz .inf{font-size:10px;color:var(--brass);font-style:normal;margin-left:4px;opacity:.8}
 .hz.fx{animation:shake .4s}
 @keyframes shake{25%{transform:translateX(-4px)}50%{transform:translateX(4px)}75%{transform:translateX(-2px)}}
@@ -201,7 +202,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 #toast{position:absolute;left:50%;top:24%;transform:translateX(-50%);background:#14110dee;border:1px solid var(--brass2);padding:8px 18px;border-radius:4px;font-size:16px;opacity:0;transition:opacity .3s;pointer-events:none!important}
 #toast.show{opacity:1}
 .set-row{display:flex;justify-content:space-between;align-items:center;gap:20px;margin:10px 0;font-size:17px}
-#adbanner{position:absolute;right:12px;bottom:12px;width:300px;height:250px;display:none}
+#adbanner{position:fixed;right:10px;bottom:10px;width:300px;height:250px;display:none;z-index:40}
 /* tutorial */
 #tut{position:absolute;inset:0;z-index:5}
 #tutHole{position:absolute;border-radius:8px;box-shadow:0 0 0 9999px #000b;border:2px solid #f3d890;transition:all .35s;pointer-events:none!important}
@@ -349,14 +350,18 @@ body.cgon #hud,body.cgon #menu,body.cgon #top,body.cgon #advisor,body.cgon #adba
   <div id="toast"></div>
   <div id="ov" class="ov hide"></div>
   <div id="tut" class="hide"><div id="tutHole"></div><div id="tutBox"></div></div>
-  <div id="adbanner"></div><div class="edgeL" id="edL"></div><div class="edgeR" id="edR"></div>
+  <div class="edgeL" id="edL"></div><div class="edgeR" id="edR"></div>
 </div>
+<div id="adbanner"></div><!-- outside #ui: not zoomed, the container must be exactly 300x250 for CrazyGames -->
 <button id="cgSkip" class="stencil">SKIP ▸</button>
 <div id="rot"><svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#efe4cc" stroke-width="1.5"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M2 12a10 10 0 0 0 10 10M22 12A10 10 0 0 0 12 2"/></svg><span>↻</span></div>
 
 <!-- CrazyGames SDK v3 (AD INTEGRATION — see ADS.md). Fails silently offline. -->
 <script src="audio/sfx.js"></script>
+<!--PLATFORM:BEGIN  (tools/build_zips.py replaces this block: crazygames / playgama / web builds)-->
+<script>window.PLATFORM=window.PLATFORM||"auto";</script>
 <script src="https://sdk.crazygames.com/crazygames-sdk-v3.js" onerror="window.__noCG=1"></script>
+<!--PLATFORM:END-->
 <script>
 "use strict";
 /* ============================================================
@@ -490,7 +495,7 @@ function newSave(){return {rp:2,lvl:0,reserve:START_TROOPS,vets:0,income:START_I
   snd:1,mus:1,done:false,lvlDay:1,lvlLost:0,morale:60,moraleT:Date.now(),tut:0,dev:0,lastGain:0,econ:3,stars:{}}}
 function load(){try{S=JSON.parse(localStorage.getItem(SAVE_KEY))}catch(e){} if(!S||typeof S.lvl!=="number")S=newSave(); S=Object.assign(newSave(),S);
   if(S.econ!==3){ S.income=START_INCOME+Math.max(0,(S.income||20)-20)*3; S.econ=3; } if(!S.stars)S.stars={}; }
-function save(){try{localStorage.setItem(SAVE_KEY,JSON.stringify(S))}catch(e){}}
+function save(){ const j=JSON.stringify(S); if(AD&&AD.store(j))return; try{localStorage.setItem(SAVE_KEY,j)}catch(e){} }
 load();
 const L_ = ()=>T[S.lang];
 function supMaxAt(i){const ch=Math.floor(i/8);return {art: i>=4?3+Math.min(4,ch):0, snp: i>=3?2+Math.floor(ch/2):0, smk: i>=9?2+Math.floor(ch/3):0, tnk: i>=32?2:0};}
@@ -599,27 +604,95 @@ const AU={ctx:null,master:null,music:null,
    loop(); }
 };
 
-/* ---------------- CrazyGames SDK wrapper (see ADS.md) ---------------- */
-const CG={ok:false,
- async init(){try{if(window.CrazyGames&&window.CrazyGames.SDK){await window.CrazyGames.SDK.init();this.ok=true;}}catch(e){this.ok=false;}},
- gameplayStart(){try{this.ok&&CrazyGames.SDK.game.gameplayStart()}catch(e){}},
- gameplayStop(){try{this.ok&&CrazyGames.SDK.game.gameplayStop()}catch(e){}},
- happy(){try{this.ok&&CrazyGames.SDK.game.happytime()}catch(e){}},
- loadingStop(){try{this.ok&&CrazyGames.SDK.game.loadingStop&&CrazyGames.SDK.game.loadingStop()}catch(e){}},
- // [AD SPOT A] rewarded: skip a day
- rewarded(done){ muteForAd(true);
-   const fin=(ok)=>{muteForAd(false);done(ok)};
-   if(this.ok){try{CrazyGames.SDK.ad.requestAd("rewarded",{adStarted(){},adFinished(){fin(true)},adError(){fin(false)}});return;}catch(e){}}
-   fakeAd(()=>fin(true)); },
- // [AD SPOT B] midgame: after battle result (max once per 3 min)
- lastMid:0,
- midgame(done){ if(Date.now()-this.lastMid<180000||!this.ok){done();return;} this.lastMid=Date.now(); muteForAd(true);
-   try{CrazyGames.SDK.ad.requestAd("midgame",{adStarted(){},adFinished(){muteForAd(false);done()},adError(){muteForAd(false);done()}});}catch(e){muteForAd(false);done();} },
- // [AD SPOT C] static banner on result card
- banner(show){const el=document.getElementById("adbanner"); if(!this.ok){el.style.display="none";return;}
-   try{ if(show){el.style.display="block";CrazyGames.SDK.banner.requestBanner({id:"adbanner",width:300,height:250});}
-        else{el.style.display="none";CrazyGames.SDK.banner.clearAllBanners&&CrazyGames.SDK.banner.clearAllBanners();} }catch(e){el.style.display="none";} }
+/* ---------------- ADS + PLATFORM wrapper v1.4e (see ADS.md) ----------------
+   One API, three providers, chosen per build by window.PLATFORM ("crazygames" | "playgama" | "web" | "auto"):
+     crazygames = CrazyGames HTML5 SDK v3 · playgama = Playgama Bridge v2 · none = offline / web build.
+   [AD SPOT A] AD.rewarded(cb(ok))        top-bar "Extra draft" (+33 men, 3 per day)
+   [AD SPOT B] AD.midgame(cb,{force,tag}) result card: EVERY failed attack (force = no game-side throttle); wins max 1 / 180 s
+   [AD SPOT C] AD.banner(on)              result card only
+   While a full-screen ad is open the game is muted and the frame loop is paused (AD.paused).
+   Portals may still apply their own caps (CrazyGames: ~3 min between midgames, returns adCooldown). */
+var AD={prov:"none",ok:false,busy:false,paused:false,lastMid:0,_pz:{},_mz:{},_pend:null,_rew:null,_st:0,
+ plat(){ return String(window.PLATFORM||"auto").toLowerCase(); },
+ setPause(k,on){ this._pz[k]=!!on; this.paused=Object.values(this._pz).some(Boolean); },
+ setMute(k,on){ this._mz[k]=!!on; try{ muteForAd(Object.values(this._mz).some(Boolean)); }catch(e){} },
+ adOpen(on){ this.busy=!!on; this.setPause("ad",on); this.setMute("ad",on); },
+ wait(p,ms){ return Promise.race([Promise.resolve(p).catch(()=>"error"),new Promise(r=>setTimeout(()=>r("timeout"),ms))]); },
+ async init(){ if(this._init)return this._init; return this._init=this._doInit(); },
+ async _doInit(){ const pl=this.plat(); if(pl==="web"){ this.prov="none"; return; }
+   try{ const C=window.CrazyGames; if((pl==="crazygames"||pl==="auto")&&C&&C.SDK){ const sdk=C.SDK;
+       const ip=sdk.init(); const r=await this.wait(ip,6000);
+       if(r==="timeout"){ Promise.resolve(ip).then(()=>{ if(this.prov==="none"&&(sdk.environment==="crazygames"||sdk.environment==="local")){ this.prov="crazygames"; this.ok=true; } }).catch(()=>{}); }
+       const env=sdk.environment;
+       if(env==="crazygames"||env==="local"){ this.prov="crazygames"; this.ok=true;
+         try{ const st=sdk.game.settings; if(st&&st.muteAudio)this.setMute("host",true);
+              sdk.game.addSettingsChangeListener(ns=>this.setMute("host",!!(ns&&ns.muteAudio))); }catch(e){}
+         try{ sdk.game.loadingStart(); sdk.game.loadingStop(); }catch(e){}
+         return; } } }catch(e){}
+   try{ const B=window.bridge; if((pl==="playgama"||pl==="auto")&&B&&B.initialize){ const ip=B.initialize(); const r=await this.wait(ip,9000);
+       if(r==="timeout"){ Promise.resolve(ip).then(()=>{ if(this.prov==="none")this._pgSetup(B); }).catch(()=>{}); throw 0; } if(r==="error")throw 0;
+       this._pgSetup(B); return; } }catch(e){}
+   this.prov="none"; this.ok=false; },
+ _pgSetup(B){ this.prov="playgama"; this.ok=true; const ad=B.advertisement, E=B.EVENT_NAME||{};
+       try{ ad.setMinimumDelayBetweenInterstitial(0); }catch(e){}
+       try{ ad.on(E.INTERSTITIAL_STATE_CHANGED||"interstitial_state_changed",st=>this._pgInter(st)); }catch(e){}
+       try{ ad.on(E.REWARDED_STATE_CHANGED||"rewarded_state_changed",st=>this._pgRew(st)); }catch(e){}
+       try{ B.platform.on(E.AUDIO_STATE_CHANGED||"audio_state_changed",en=>this.setMute("host",!en)); if(B.platform.isAudioEnabled===false)this.setMute("host",true); }catch(e){}
+       try{ B.platform.on(E.PAUSE_STATE_CHANGED||"pause_state_changed",p=>this.setPause("host",!!p)); }catch(e){} },
+ /* Playgama: saves go through bridge.storage (cloud where available), language from the platform */
+ async loadSave(){ if(this.prov!=="playgama")return false;
+   try{ const d=await this.wait(bridge.storage.get([SAVE_KEY]),6000); if(!Array.isArray(d))return false; let v=d[0]; if(v==null)return false;
+        if(typeof v==="string")v=JSON.parse(v); if(v&&typeof v.lvl==="number"){ S=Object.assign(newSave(),v); return true; } }catch(e){} return false; },
+ store(json){ if(this.prov!=="playgama")return false; clearTimeout(this._st);
+   this._st=setTimeout(()=>{ const loc=()=>{ try{localStorage.setItem(SAVE_KEY,json)}catch(e){} }; try{ const p=bridge.storage.set([SAVE_KEY],[json]); p&&p.catch?p.catch(loc):0; }catch(e){ loc(); } },500); return true; },
+ flush(){ if(this.prov!=="playgama")return; clearTimeout(this._st); try{ const p=bridge.storage.set([SAVE_KEY],[JSON.stringify(S)]); p&&p.catch&&p.catch(()=>{}); }catch(e){} },
+ lang(){ if(this.prov!=="playgama"||S.langPicked)return; try{ const l=String(bridge.platform.language||"").toLowerCase(); S.lang=l.startsWith("zh")?"zh":"en"; }catch(e){} },
+ ready(){ try{ if(this.prov==="playgama")bridge.platform.sendMessage("game_ready"); }catch(e){} },
+ msg(m){ try{ if(this.prov==="playgama")bridge.platform.sendMessage(m,{world:"western_front",level:String((S&&S.lvl||0)+1)}); }catch(e){} },
+ gameplayStart(){ try{ if(this.prov==="crazygames")CrazyGames.SDK.game.gameplayStart(); }catch(e){} this.msg("level_started"); },
+ gameplayStop(){ try{ if(this.prov==="crazygames")CrazyGames.SDK.game.gameplayStop(); }catch(e){} },
+ happy(){ try{ if(this.prov==="crazygames")CrazyGames.SDK.game.happytime(); }catch(e){} },
+ loadingStop(){},
+ canInter(){ if(this.prov==='crazygames')return true; if(this.prov==='playgama'){ try{ return bridge.advertisement.isInterstitialSupported!==false; }catch(e){} } return false; },
+ // [AD SPOT B] interstitial
+ midgame(done,o={}){ const self=this; let fired=false;
+   const fin=()=>{ if(fired)return; fired=true; clearTimeout(fin.t); self._pend=null; self.adOpen(false); try{ done&&done(); }catch(e){ console.error(e); } };
+   if(this.busy||!this.ok){ done&&done(); return; }
+   if(!o.force&&Date.now()-this.lastMid<180000){ done&&done(); return; }
+   this.lastMid=Date.now();
+   if(this.prov==="crazygames"){ this.gameplayStop(); fin.t=setTimeout(fin,150000);
+     try{ CrazyGames.SDK.ad.requestAd("midgame",{adStarted:()=>self.adOpen(true),adFinished:fin,adError:fin}); }catch(e){ fin(); } return; }
+   if(this.prov==="playgama"){ const ad=bridge.advertisement; if(ad.isInterstitialSupported===false){ done&&done(); return; }
+     this._pend=fin; fin.t=setTimeout(()=>{ if(!self.busy)fin(); },7000);   // never opened -> continue, never strand the player
+     try{ ad.showInterstitial(o.tag||"level_failed"); }catch(e){ fin(); } return; }
+   done&&done(); },
+ _pgInter(st){ const f=this._pend;
+   if(st==="opened"){ this.adOpen(true); if(f){ clearTimeout(f.t); f.t=setTimeout(f,150000); } }
+   else if(st==="closed"||st==="failed"){ this.adOpen(false); if(f)f(); } },
+ // [AD SPOT A] rewarded
+ rewarded(done){ const self=this; let fired=false;
+   const fin=(ok)=>{ if(fired)return; fired=true; clearTimeout(fin.t); self._rew=null; self.adOpen(false); try{ done(ok); }catch(e){ console.error(e); } };
+   if(this.busy)return;
+   if(this.prov==="crazygames"){ fin.t=setTimeout(()=>fin(false),150000);
+     try{ CrazyGames.SDK.ad.requestAd("rewarded",{adStarted:()=>self.adOpen(true),adFinished:()=>fin(true),adError:()=>{ fin(false); toast(adNoFill()); }}); }catch(e){ fin(false); } return; }
+   if(this.prov==="playgama"){ const ad=bridge.advertisement; if(ad.isRewardedSupported===false){ toast(adNoFill()); done(false); return; }
+     this._rew={fin,got:false}; fin.t=setTimeout(()=>{ if(!self.busy)fin(false); },9000);
+     try{ ad.showRewarded("extra_draft"); }catch(e){ fin(false); } return; }
+   muteForAd(true); fakeAd(()=>{ muteForAd(false); done(true); }); },   // offline/web build: short countdown, reward granted
+ _pgRew(st){ const r=this._rew;
+   if(st==="opened"){ this.adOpen(true); if(r){ clearTimeout(r.fin.t); r.fin.t=setTimeout(()=>r.fin(r.got),150000); } }
+   else if(st==="rewarded"){ if(r)r.got=true; }
+   else if(st==="closed"||st==="failed"){ this.adOpen(false); if(r){ const g=r.got; r.fin(g); if(!g&&st==="failed")toast(adNoFill()); } } },
+ // [AD SPOT C] banner on the result card
+ banner(show){ const el=document.getElementById("adbanner");
+   if(this.prov==="crazygames"){ try{ if(show){ el.style.display="block"; const p=CrazyGames.SDK.banner.requestBanner({id:"adbanner",width:300,height:250}); p&&p.catch&&p.catch(()=>{ el.style.display="none"; }); }
+       else { el.style.display="none"; CrazyGames.SDK.banner.clearAllBanners(); } }catch(e){ el.style.display="none"; } return; }
+   if(el)el.style.display="none";
+   if(this.prov==="playgama"){ try{ const ad=bridge.advertisement; if(ad.isBannerSupported){ if(show)ad.showBanner("bottom","result"); else ad.hideBanner(); } }catch(e){} } }
 };
+var CG=AD;   // old name kept for older call sites
+function adNoFill(){ return S.lang==="zh"?"暂时没有可播放的广告，请稍后再试。":"No ad available right now - try again later."; }
+document.addEventListener("visibilitychange",()=>{ if(document.hidden)AD.flush(); });
 function muteForAd(m){ if(AU.ctx){ if(m)AU.ctx.suspend(); else AU.ctx.resume(); } BGM.pauseAll(m); }
 /* BGM: Kevin MacLeod tracks (CC BY 4.0, see CREDITS.md) with crossfade. Falls back to procedural pad if files are missing. */
 const BGM={el:{},cur:null,ok:false,paused:false,
@@ -2366,7 +2439,7 @@ function result(win){ $("tools")&&$("tools").classList.add("hide");
   if(RP_ON)S.rp=(S.rp||0)+(win?2+(lvl.fort?3:0):1);
   S.lost+=b.dead; S.lastMoraleD = win ? (lvl.fort?30:18) : -20; if(!win&&b.dead>b.sent*0.8)S.lastMoraleD-=5; S.morale=Math.max(0,Math.min(100,S.morale+S.lastMoraleD)); S.moraleT=Date.now();
   if(win){
-    CG.happy();
+    CG.happy(); AD.msg("level_completed");
     const zhM=S.lang==="zh"; const merits=[]; if(b.shock)merits.push(zhM?"集中突击":"Massed assault"); if(b.flared&&b.holdMsg)merits.push(zhM?"信号弹协同":"Flare timing"); if(b.offUsed&&!b.offDied)merits.push(zhM?"军官指挥":"Officer's lead"); if(b.sent&&b.dead/b.sent<0.35)merits.push(zhM?"低伤亡":"Low losses"); if(!b.pinned&&!b.fled)merits.push(zhM?"无人溃散":"Nobody broke"); if((b.covUsed||0)>=2)merits.push(zhM?"眼疾手快":"Quick reflexes");
     b.merits=merits; if(RP_ON){ S.rp+=merits.length; b.rpGain=2+(lvl.fort?3:0)+merits.length; } const vetGain=surv>0?Math.min(surv,Math.max(1,Math.floor(surv*(0.25+0.05*merits.length)))):0; const need=Math.max(1,Math.ceil(b.e0*0.6)); const hold=Math.min(surv-vetGain,need); const rear=surv-vetGain-hold;
     const pst=perfStars(rear,b.sent), gain=perfGain(lvl.reward,pst); b.pst=pst; b.gain=gain; const base=lvl.reward;   // v1.3 PERFECTION
@@ -2405,14 +2478,15 @@ function result(win){ $("tools")&&$("tools").classList.add("hide");
     },grand?6200:3200);
   } else {
     (S.fails=S.fails||{})[S.lvl]=(S.fails[S.lvl]||[]).concat([{day:S.day,w:S.lastWaves||[],dead:b.dead,pin:b.pinned,e:Math.round(b.e)}]).slice(-8);
-    save();
+    save(); AD.msg("level_failed");
     big(t.fail,t.failS,2400);
     setTimeout(()=>{
       const ov=$("ov");ov.classList.remove("hide");
       ov.innerHTML=`<div class="card"><h2 class="stencil">${t.fail}</h2><div style="font-size:16px;line-height:1.9">${IC.skull.replace('<svg','<svg width=18 height=18 style="vertical-align:-3px"')} <b>${b.dead}</b> ${t.winLost} · ${IC.gr.replace('<svg','<svg width=18 height=18 style="vertical-align:-3px"')} <b>${Math.round(cur.gr)}</b> ${t.hz.gr}</div>${reportHTML(b,0,0,0,0,true)}
         <p>${S.lang==="zh"?"战壕里又空出了几个位置。":"More empty places in the trench tonight."}</p><div style="font-size:15px">${IC.morale.replace('<svg','<svg width=18 height=18 style="vertical-align:-3px"')} <b>${S.lastMoraleD}</b> ${t.morale} (${Math.round(S.morale)} · ${moraleWord()})</div><button class="btn" id="okr">▶︎</button></div>`;
-      CG.banner(true);
-      $("okr").onclick=()=>{AU.click();CG.banner(false);CG.midgame(()=>advanceCamp());};
+      AD.banner(true);
+      if(AD.canInter()){ const bt=$("okr"); const nt=document.createElement("div"); nt.className="adnote"; nt.textContent=S.lang==="zh"?"继续前将播放一段广告":"An ad will play before you continue"; bt.insertAdjacentElement("afterend",nt); }
+      $("okr").onclick=()=>{ const bt=$("okr"); if(bt.disabled)return; bt.disabled=true; AU.click(); AD.banner(false); AD.midgame(()=>advanceCamp(),{force:true,tag:"level_failed"}); };   // [AD SPOT B] every failed attack
     },2600);
   }
 }
@@ -2443,8 +2517,8 @@ function openSettings(){
   <div class="set-row"><span>${S.lang==="zh"?"开发者模式":"Developer mode"}</span><button class="btn ${S.dev?"":"dim"}" id="sDev">${S.dev?"ON":"OFF"}</button></div>
   ${S.dev?`<div class="set-row"><span>DEV</span><span><button class="btn sm" id="sDay">+1 ${S.lang==="zh"?"天":"day"}</button> <button class="btn sm" id="sWin">+1 lvl</button> <button class="btn sm" id="sMor">${S.lang==="zh"?"士气":"Morale"} ±</button> <button class="btn sm" id="sTut">Tutorial</button></span></div>`:""}
   <button class="btn red" id="sOk">✓</button></div>`;
-  $("sEn").onclick=()=>{S.lang="en";save();applyTexts();openSettings();refreshTexts();};
-  $("sZh").onclick=()=>{S.lang="zh";save();applyTexts();openSettings();refreshTexts();};
+  $("sEn").onclick=()=>{S.lang="en";S.langPicked=1;save();applyTexts();openSettings();refreshTexts();};
+  $("sZh").onclick=()=>{S.lang="zh";S.langPicked=1;save();applyTexts();openSettings();refreshTexts();};
   $("sSnd").onclick=()=>{S.snd^=1;save();AU.set();applyTexts();openSettings();};
   $("sMus").onclick=()=>{S.mus^=1;save();AU.set();openSettings();};
   $("sRst").onclick=()=>{if(confirm("Reset all progress?")){localStorage.removeItem(SAVE_KEY);location.reload();}};
@@ -2597,6 +2671,7 @@ addEventListener("keydown",e=>{ if(e.code==="Space"&&mode==="plan")startCharge()
    ============================================================ */
 let last=performance.now(), secT=0;
 function frame(now){
+  if(AD.paused){ last=now; requestAnimationFrame(frame); return; }
   let rdt=Math.min(0.05,(now-last)/1000); last=now; perfTick(rdt); const dt=rdt*slowmo; time+=dt;
   $("edL").classList.toggle("on",edge<0); $("edR").classList.toggle("on",edge>0);
   // payday
@@ -3111,9 +3186,12 @@ function grain(){cx.save();cx.globalCompositeOperation="overlay";const p=grain.p
 
 /* ---------- boot ---------- */
 (async()=>{
+  const PG=AD.plat()==="playgama";
+  if(PG){ await AD.init(); await AD.loadSave(); AD.lang(); }
   applyTexts(); payDays(); updTop(); toMenu(); cam.x=cam.tx; cam.zoom=cam.tz; cam.tilt=cam.tt;
   requestAnimationFrame(frame);
-  await CG.init(); CG.loadingStop();
+  if(!PG) await AD.init();
+  AD.ready();
   document.addEventListener("pointerdown",()=>AU.init(),{once:true});
 })();
 </script>
