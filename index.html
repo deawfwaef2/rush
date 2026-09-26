@@ -944,8 +944,47 @@ function pushSetEnts(ents){ const i=S.lvl, bx=trenchX(i), ex=trenchX(i+1), L=ex-
 }
 function setNightGrade(){ if(setHas("night")){ cx.fillStyle="rgba(12,20,40,0.38)"; cx.fillRect(0,0,W,H); } }
 
+/* v1.3j FAR FIELD (agent A): the empty band under the horizon + sky get life: enemy support/reserve trench lines and wire pickets
+   on the far ground, tethered observation balloons, distant gun flashes on the horizon followed by slow smoke. All world-anchored, cheap. */
+const FARFX={list:[],t0:0,next:2};
+function balloons(){ const hz=horizon(), k=H/720; const n=1+(S.lvl%3===1?1:0); const par=((cam.x||0)-trenchX(S.lvl))*0.04;
+  for(let i=0;i<n;i++){ const x=W*(i?0.13:0.8)-par, y=hz-H*(0.14+0.035*i)+Math.sin(time*0.45+i*2)*2.5*k; if(x<-60||x>W+60)continue;
+    const c=shade(pal.far,"#000000",0.35); cx.globalAlpha=0.8; cx.strokeStyle=c; cx.lineWidth=0.8; cx.beginPath(); cx.moveTo(x,y+7*k); cx.quadraticCurveTo(x+6*k,(y+hz)/2,x+3*k,hz); cx.stroke();
+    cx.fillStyle=c; cx.save(); cx.translate(x,y); cx.rotate(-0.08+Math.sin(time*0.3+i)*0.03); if(i)cx.scale(-0.8,0.8);
+    cx.beginPath(); cx.ellipse(0,0,17*k,6.2*k,0,0,7); cx.fill();
+    cx.beginPath(); cx.ellipse(-15*k,-4*k,5*k,2.4*k,0.5,0,7); cx.ellipse(-15*k,4*k,5*k,2.4*k,-0.5,0,7); cx.ellipse(-17*k,0,4*k,2*k,0,0,7); cx.fill();
+    cx.fillRect(-1.5*k,7*k,3*k,2.4*k); cx.fillStyle="rgba(255,245,220,0.12)"; cx.beginPath(); cx.ellipse(2*k,-2.6*k,11*k,2.2*k,0,0,7); cx.fill(); cx.restore(); cx.globalAlpha=1; } }
+function farFlashes(){ const now=performance.now()/1000, dt=Math.min(0.1,FARFX.t0?now-FARFX.t0:0); FARFX.t0=now; const hz=horizon(), k=H/720;
+  FARFX.next-=dt; if(FARFX.next<=0&&FARFX.list.length<5){ FARFX.next=2+Math.random()*4.5; const x=W*(0.08+Math.random()*0.84); const fz=Math.random()<0.45?Math.random()*0.14:-1; const y=fz<0?hz-2*k+Math.random()*4*k:groundY(fz); FARFX.list.push({x,y,t:0,r:(fz<0?24+Math.random()*26:34+Math.random()*30)*k*(fz<0?1:scaleZ(fz)*2.2),dirt:fz>=0}); if(mode!=="menu"&&Math.random()<0.6)SFX.play("boom_far",0.1+Math.random()*0.06,{gap:2.5,delay:0.8+Math.random()*1.2}); }
+  const FL=softSpr("ff",255,214,150,0.15), SMK=softSpr("fs",64,58,50,0.25), DRT=softSpr("fd",78,62,44,0.3);
+  for(let i=FARFX.list.length-1;i>=0;i--){ const f=FARFX.list[i]; f.t+=dt; if(f.t>9){ FARFX.list.splice(i,1); continue; }
+    if(f.t<0.35){ cx.globalAlpha=(1-f.t/0.35)*0.75; cx.drawImage(FL,f.x-f.r,f.y-f.r*0.6,f.r*2,f.r*1.2); }
+    const g=Math.min(1,f.t/1.2), a=(f.dirt?0.34:0.26)*Math.min(1,f.t*2)*Math.max(0,1-f.t/9); if(a>0.01){ const r=(f.dirt?f.r*0.35+f.t*3.5*k:(6+f.t*4.5)*k); cx.globalAlpha=a; cx.drawImage(f.dirt?DRT:SMK,f.x-r+f.t*3*k,f.y-r*1.6-f.t*5*k*g,r*2,r*2.2); } }
+  cx.globalAlpha=1; }
+function nmlProps(summer,snow){ // sparse larger props scattered over the field (world-anchored)
+  const bands=[0.1,0.2,0.31,0.43,0.6,0.72,0.84,0.95]; const ink=snow?"rgba(40,40,44,0.7)":"rgba(30,22,14,0.62)";
+  for(let bi=0;bi<bands.length;bi++){ const z0=bands[bi], s0=scaleZ(z0), step=210; const ks=Math.floor((cam.x-W/2/s0)/step)-1, ke=Math.floor((cam.x+W/2/s0)/step)+1;
+    for(let kk=ks;kk<=ke;kk++){ const h=hash(kk*57+bi*131); if(h<-0.3)continue; const t=Math.floor((hash(kk*11+bi*7)+1)*2.999)+(h>0.7?3:0); const wx=kk*step+hash(kk*5+bi)*120, z=z0+hash(kk+bi*9)*0.04;
+      if(trenchVisible&&Math.abs(wx-trenchX(S.lvl))<70||Math.abs(wx-trenchX(S.lvl+1))<70)continue;
+      const [sx,sy,sc]=P(wx,z); if(sx<-80||sx>W+80)continue; cx.fillStyle=ink; cx.strokeStyle=ink;
+      if(t===0){ // shattered stump
+        const hh=(22+h*26)*sc, w=4.5*sc; cx.beginPath(); cx.moveTo(sx-w,sy); cx.lineTo(sx-w*0.6,sy-hh*0.8); cx.lineTo(sx-w*0.2,sy-hh); cx.lineTo(sx+w*0.1,sy-hh*0.78); cx.lineTo(sx+w*0.5,sy-hh*0.92); cx.lineTo(sx+w*0.7,sy-hh*0.6); cx.lineTo(sx+w,sy); cx.closePath(); cx.fill();
+        cx.lineWidth=Math.max(0.8,1.6*sc); cx.beginPath(); cx.moveTo(sx,sy-hh*0.55); cx.lineTo(sx+9*sc,sy-hh*0.8); cx.stroke(); cx.fillStyle="rgba(0,0,0,0.16)"; cx.beginPath(); cx.ellipse(sx+5*sc,sy+1*sc,12*sc,2.4*sc,0,0,7); cx.fill(); }
+      else if(t===1){ // wire tangle on two stakes
+        cx.lineWidth=Math.max(0.7,1.3*sc); cx.beginPath(); cx.moveTo(sx-16*sc,sy); cx.lineTo(sx-15*sc,sy-13*sc); cx.moveTo(sx+15*sc,sy); cx.lineTo(sx+16*sc,sy-11*sc); cx.stroke();
+        cx.lineWidth=Math.max(0.5,0.8*sc); cx.beginPath(); for(let j=0;j<4;j++){ cx.moveTo(sx-12*sc+j*8*sc+6*sc,sy-5*sc); cx.ellipse(sx-12*sc+j*8*sc,sy-5*sc,6*sc,5*sc,0.3,0,6.3); } cx.stroke(); }
+      else if(t===2){ // rifle grave marker with helmet
+        cx.lineWidth=Math.max(0.8,1.6*sc); cx.beginPath(); cx.moveTo(sx,sy+1*sc); cx.lineTo(sx+1*sc,sy-22*sc); cx.stroke(); cx.beginPath(); cx.ellipse(sx+1*sc,sy-22*sc,6*sc,3.2*sc,0,Math.PI,0); cx.fill(); cx.fillRect(sx-6*sc,sy-22.5*sc,14*sc,1.4*sc);
+        cx.fillStyle="rgba(0,0,0,0.12)"; cx.beginPath(); cx.ellipse(sx+2*sc,sy+1*sc,9*sc,2*sc,0,0,7); cx.fill(); }
+      else if(t===3){ // half-sunk wagon wheel
+        const r=11*sc; cx.lineWidth=Math.max(0.8,1.8*sc); cx.beginPath(); cx.arc(sx,sy+2*sc,r,Math.PI*1.05,Math.PI*1.95); cx.stroke(); cx.lineWidth=Math.max(0.5,1*sc); cx.beginPath(); for(let j=1;j<5;j++){ const a=Math.PI*(1+j/5); cx.moveTo(sx,sy+2*sc); cx.lineTo(sx+Math.cos(a)*r,sy+2*sc+Math.sin(a)*r); } cx.stroke(); }
+      else if(t===4){ // sandbag pile
+        cx.fillStyle=snow?"rgba(120,118,112,0.7)":"rgba(96,84,60,0.75)"; for(let j=0;j<5;j++){ const bx2=sx+(j%3-1)*9*sc+(j>2?4.5*sc:0), by=sy-(j>2?5*sc:0); cx.beginPath(); cx.ellipse(bx2,by-2.5*sc,5.5*sc,2.8*sc,0,0,7); cx.fill(); } }
+      else if(t===5){ // broken limber / crate
+        cx.save(); cx.translate(sx,sy); cx.rotate(-0.18+h*0.3); cx.fillRect(-12*sc,-8*sc,24*sc,8*sc); cx.fillStyle="rgba(255,240,210,0.07)"; cx.fillRect(-12*sc,-8*sc,24*sc,1.5*sc); cx.restore(); }
+    } } }
 function drawBackground(){
-  drawSky(); clouds(); godRays(); birds();
+  drawSky(); clouds(); godRays(); birds(); balloons(); farFlashes();
   const hz=horizon(), summer=pal===PAL.summer||pal===PAL.dusk;
   ridge(0.03,H*0.015,H*0.12,520,pal.far,11,1);
   atmos(0.35);
@@ -1011,6 +1050,7 @@ function drawGround(){
       }
     }
   }
+  nmlProps(summer,snow);
 }
 
 /* trench drawing (own/enemy) at world x, spanning depth */

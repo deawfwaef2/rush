@@ -324,3 +324,7 @@ COMBAT / PERF
 - Last defender falls: 0.85 s slow-motion + small shake before result().
 - Normal wins now also fire the existing somber startVictoryFX(x,surv,false) (two white star shells over the taken line); fortress wins unchanged (grand).
 - big(txt,sub,ms,low): new 4th arg puts the caption in a lower-third band; used for LINE TAKEN so it no longer hides the raised flag. Other captions sit at 21% (below the HUD pill) with a small pop-in.
+## v1.3j far field + no man's land props (2026-09-26, agent A)
+- drawBackground: balloons() (1-2 tethered observation balloons, screen-anchored with slight parallax) + farFlashes() (distant gun flashes on the horizon and shell bursts in the far field with slow smoke; quiet boom_far after a delay).
+- drawGround end: nmlProps() - sparse world-anchored props over the field: shattered stumps, wire tangles, rifle+helmet grave markers, half-sunk wagon wheels, sandbag piles, broken crates (skipped near both trenches).
+- NOTE: the field runs ALONG the front (x = attack direction, z = along the trench), so anything drawn as a horizontal line at fixed z would be a trench crossing no man's land - avoid that.
