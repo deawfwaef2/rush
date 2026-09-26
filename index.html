@@ -1093,9 +1093,8 @@ function traverseEnts(ents,x,side){ const seed=Math.round(x)%9973; for(let bay=M
 // a soldier standing on the trench floor: lowered by trench depth and clipped at the ground line, so only helmet & shoulders show
 const trenchShadeCache={}; function toHex(c){ if(c[0]==="#")return c; const m=c.match(/\d+/g); return "#"+m.slice(0,3).map(v=>(+v).toString(16).padStart(2,"0")).join(""); }
 function drawManInTrench(m,lift){ const [sx,sy,s]=P(m.x,m.z,0); if(sx<-80*s||sx>W+80*s)return; const depth=TR_D*(1-lift)*0.95;
-  cx.save(); cx.beginPath(); cx.rect(sx-120*s,0,240*s,sy+1*s); cx.clip();
   const mc=manCols(m), sh=1-lift; const key2=mc[0]+mc[1]+(sh>0.5?1:0); let tc=trenchShadeCache[key2]; if(!tc){ tc=trenchShadeCache[key2]=sh>0.5?[shade(toHex(mc[0]),"#0e0a06",0.38),shade(toHex(mc[1]),"#0e0a06",0.3)]:mc; }
-  drawMan(sx,sy+depth*s,s,m.dir,m.phase,m.state==="climb"?"run":"idle",tc,{vet:m.vet,v:m.v}); if(m.eng){ cx.fillStyle="#e8e0cc"; cx.fillRect(sx-3*s,sy-52*s,6*s,2.6*s); } cx.restore(); }
+  drawMan(sx,sy+depth*s,s,m.dir,m.phase,m.state==="climb"?"run":"idle",tc,{vet:m.vet,v:m.v,clipY:sy+1*s}); if(m.eng){ cx.fillStyle="#e8e0cc"; cx.fillRect(sx-3*s,sy-52*s,6*s,2.6*s); } }
 
 /* ============================================================
    SOLDIERS — silhouette + ragdoll
@@ -1149,11 +1148,16 @@ function drawMan(sx,sy,s,dir,phase,state,cols,opts={}){
   }
   const wx=v?(v.w*0.5+0.5):1, hy=v?v.h:1;
   const dw=170*s*wx, dh=150*s*hy;
-  if(dir>=0) cx.drawImage(c,sx-75*s*wx,sy-125*s*hy,dw,dh);
-  else { cx.save(); cx.translate(sx,sy); cx.scale(-1,1); cx.drawImage(c,-75*s*wx,-125*s*hy,dw,dh); cx.restore(); }
+  // PERF v1.3b: pre-mirrored sprite (no save/scale/restore) + crop via source rect (no clip())
+  let cc=c; if(dir<0){ cc=c._m; if(!cc){ cc=document.createElement("canvas"); cc.width=c.width; cc.height=c.height; const g2=cc.getContext("2d"); g2.translate(c.width,0); g2.scale(-1,1); g2.drawImage(c,0,0); c._m=cc; } }
+  const dx0=dir>=0? sx-75*s*wx : sx-(170-75)*s*wx, dy0=sy-125*s*hy;
+  const cy=opts.clipY;
+  if(cy!==undefined){ const vis=cy-dy0; if(vis<=0) return; if(vis<dh){ const f=vis/dh; cx.drawImage(cc,0,0,cc.width,Math.max(1,cc.height*f),dx0,dy0,dw,vis); } else cx.drawImage(cc,dx0,dy0,dw,dh); }
+  else cx.drawImage(cc,dx0,dy0,dw,dh);
   if(opts.flash){ const fx=sx+dir*58*s, fy=sy-58*s; cx.fillStyle="rgba(255,210,110,0.85)"; cx.beginPath(); cx.arc(fx,fy,7*s,0,7); cx.fill(); cx.fillStyle="#fffbe0"; cx.beginPath(); cx.arc(fx,fy,3*s,0,7); cx.fill(); }
 }
 function drawManRaw(sx,sy,s,dir,phase,state,cols,opts={}){
+  if(opts.clipY!==undefined){ const o2=Object.assign({},opts); delete o2.clipY; cx.save(); cx.beginPath(); cx.rect(sx-200*s,0,400*s,opts.clipY); cx.clip(); drawManRaw(sx,sy,s,dir,phase,state,cols,o2); cx.restore(); return; }
   const v=opts.v; if(v){ cx.save(); cx.translate(sx,sy); cx.scale(v.w*0.5+0.5,v.h); cx.translate(-sx,-sy); drawMan0(sx,sy,s,dir,phase,state,cols,opts); cx.restore(); } else drawMan0(sx,sy,s,dir,phase,state,cols,opts); }
 function drawMan0(sx,sy,s,dir,phase,state,cols,opts){
   const V=opts.v||{stride:1,lean:0,pack:true,cap:false,hold:0,w:1};
@@ -2227,7 +2231,7 @@ function frame(now){
   { const oe=drawOfficer(); if(oe)ents.push(oe); }
   for(const m of men) if(m.alive&&!m.intrench) ents.push({z:m.z,d:()=>{const [sx,sy,s]=P(m.x,m.z,m.state==="cheer"?0:0);drawMan(sx,sy,s,m.dir,m.phase,m.stumble>0?"crouch":(m.state==="wait"||m.state==="gather"||m.state==="rally"||m.state==="cut"||m.state==="hold")?"crouch":m.state==="cheer"?"cheer":(m.arriving?"run":m.state),manCols(m),{vet:m.vet,v:m.v});
      if(m.state==="cheer"){ /* rifle raised */ }}});
-  for(const e of enemies) if(e.alive) ents.push({z:e.z,d:()=>{const fight=battle&&battle.melee&&!battle.over; const [sx,sy,s]=P(e.x,e.z,0); cx.save(); if(!fight){cx.beginPath();cx.rect(sx-120*s,0,240*s,sy+1*s);cx.clip();} drawMan(sx,sy+(fight?0:TR_D*0.85)*s,s,-1,e.phase,fight?"melee":"aim",pal.en,{enemy:true,flash:e.flash>0}); cx.restore();}});
+  for(const e of enemies) if(e.alive) ents.push({z:e.z,d:()=>{const fight=battle&&battle.melee&&!battle.over; const [sx,sy,s]=P(e.x,e.z,0); drawMan(sx,sy+(fight?0:TR_D*0.85)*s,s,-1,e.phase,fight?"melee":"aim",pal.en,{enemy:true,flash:e.flash>0,clipY:fight?undefined:sy+1*s});}});
   if(battle&&battle.tanks&&(mode==="charge"||mode==="melee")) for(const tk of battle.tanks) ents.push({z:tk.z,d:()=>drawTank(tk)});
   pushSetEnts(ents); ents.sort((a,b)=>a.z-b.z); drawParts(false); for(const e of ents)e.d(); drawParts(true);
   drawTracers(rdt); drawShells(); if(battle&&(mode==="charge"||mode==="melee"))drawAimMarks(); drawUnitMarks();
