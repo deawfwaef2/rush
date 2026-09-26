@@ -701,27 +701,86 @@ function drawGround(){
 }
 
 /* trench drawing (own/enemy) at world x, spanning depth */
-function drawTrench(x,side,level){ // side: 1 ours (faces right), -1 enemy
-  const zs=[0.05,1.02];
-  // trench cut as dark band
-  const pts=[];for(let i=0;i<=20;i++){const z=zs[0]+(zs[1]-zs[0])*i/20;pts.push([P(x+Math.sin(i*1.3+x)*14,z),z]);}
-  cx.fillStyle="rgba(20,14,8,0.85)";cx.beginPath();
-  pts.forEach(([p],i)=>{const w=26*p[2];i?cx.lineTo(p[0]-w,p[1]):cx.moveTo(p[0]-w,p[1]);});
-  for(let i=pts.length-1;i>=0;i--){const p=pts[i][0];const w=26*p[2];cx.lineTo(p[0]+w,p[1]);}
-  cx.fill();
-  cx.strokeStyle="rgba(90,66,40,0.55)";
-  for(let i=0;i<pts.length;i++){const p=pts[i][0];const w=26*p[2];cx.lineWidth=Math.max(1,2*p[2]);cx.beginPath();cx.moveTo(p[0]-w*0.9,p[1]);cx.lineTo(p[0]-w*0.9,p[1]-12*p[2]);cx.stroke();cx.beginPath();cx.moveTo(p[0]-w*0.2,p[1]+1);cx.lineTo(p[0]+w*0.5,p[1]+1);cx.stroke();}
-  // sandbag parapet on the facing side
-  const px=x+side*30;
-  for(let i=0;i<=26;i++){const z=zs[0]+(zs[1]-zs[0])*i/26; const [sx,sy,s]=P(px+Math.sin(i*2.1+x)*10,z);
-    for(let r=0;r<3;r++){cx.fillStyle=r%2?"#8a7a58":"#a08e66";const bw=18*s,bh=7*s;cx.beginPath();cx.ellipse(sx+(r%2)*bw*0.4,sy-bh*r*0.9-bh*0.5,bw*0.6,bh*0.55,0,0,7);cx.fill();
-      cx.fillStyle="rgba(0,0,0,0.25)";cx.fillRect(sx-bw*0.6+(r%2)*bw*0.4,sy-bh*r*0.9-bh*0.1,bw*1.2,bh*0.18);}
-  }
-  // posts & wire in front
-  if(side===-1&&level!=null){
-    for(let i=0;i<9;i++){const z=0.1+i*0.11;const [sx,sy,s]=P(x-120+Math.sin(i*3)*20,z);
-      cx.strokeStyle="#2a2016";cx.lineWidth=2*s;cx.beginPath();cx.moveTo(sx,sy);cx.lineTo(sx,sy-26*s);cx.stroke();
-      cx.lineWidth=0.8*s;cx.strokeStyle="rgba(40,30,20,0.8)";cx.beginPath();for(let j=0;j<6;j++){cx.lineTo(sx+j*6*s,sy-(10+Math.sin(j*2+i)*8)*s);}cx.stroke();}
+/* TRENCH — detailed: zig-zag fire bays, plank revetment, firing step, duckboards, sandbag parapet + parados,
+   dugout doors, ladders, periscope, crates, iron sheets, lantern posts, wire pickets in front. Drawn per depth zone. */
+function drawTrench(x,side,level){
+  const seed=Math.round(x)%9973, D=26, Wd=24;
+  const zones=[[0.03,0.49,20],[0.555,1.06,16]];
+  const off=z=>{const bay=Math.floor(z*14+seed);return (bay%2?10:-10)+Math.sin(z*9+seed)*4;};
+  for(const [z0,z1,n] of zones){
+    const S_=[];for(let i=0;i<=n;i++){const z=z0+(z1-z0)*i/n;S_.push({z,x:x+off(z)});}
+    const Q=(o,z,h)=>P(o,z,h);
+    // 1) hole
+    cx.fillStyle="#140e08";cx.beginPath();
+    S_.forEach((q,i)=>{const p=Q(q.x-Wd,q.z,0);i?cx.lineTo(p[0],p[1]):cx.moveTo(p[0],p[1]);});
+    for(let i=S_.length-1;i>=0;i--){const q=S_[i],p=Q(q.x+Wd,q.z,0);cx.lineTo(p[0],p[1]);}cx.fill();
+    // 2) floor + duckboards
+    for(let i=0;i<n;i++){const A=S_[i],B=S_[i+1];
+      const a1=Q(A.x-Wd*0.8,A.z,-D),a2=Q(A.x+Wd*0.8,A.z,-D),b1=Q(B.x-Wd*0.8,B.z,-D),b2=Q(B.x+Wd*0.8,B.z,-D);
+      cx.fillStyle="#2a1f14";cx.beginPath();cx.moveTo(a1[0],a1[1]);cx.lineTo(b1[0],b1[1]);cx.lineTo(b2[0],b2[1]);cx.lineTo(a2[0],a2[1]);cx.fill();
+      cx.strokeStyle="rgba(120,92,58,0.8)";cx.lineWidth=Math.max(1,2.2*a1[2]);
+      for(let k=0;k<3;k++){const t=k/3;const u1=[a1[0]+(b1[0]-a1[0])*t,a1[1]+(b1[1]-a1[1])*t],u2=[a2[0]+(b2[0]-a2[0])*t,a2[1]+(b2[1]-a2[1])*t];
+        cx.beginPath();cx.moveTo(u1[0]+(u2[0]-u1[0])*0.25,u1[1]);cx.lineTo(u1[0]+(u2[0]-u1[0])*0.75,u2[1]);cx.stroke();}
+    }
+    // 3) revetment face (wall under the parapet side) with posts and boards
+    const wx=q=>q.x+side*Wd;
+    for(let i=0;i<n;i++){const A=S_[i],B=S_[i+1];
+      const t1=Q(wx(A),A.z,0),t2=Q(wx(B),B.z,0),b1=Q(wx(A),A.z,-D),b2=Q(wx(B),B.z,-D);
+      const g=cx.createLinearGradient(0,t1[1],0,b1[1]);g.addColorStop(0,"#6e5234");g.addColorStop(1,"#3a2a18");cx.fillStyle=g;
+      cx.beginPath();cx.moveTo(t1[0],t1[1]);cx.lineTo(t2[0],t2[1]);cx.lineTo(b2[0],b2[1]);cx.lineTo(b1[0],b1[1]);cx.fill();
+      cx.strokeStyle="rgba(30,20,10,0.7)";cx.lineWidth=Math.max(0.7,1.1*t1[2]);
+      for(let k=1;k<5;k++){const f=k/5;cx.beginPath();cx.moveTo(t1[0]+(b1[0]-t1[0])*f,t1[1]+(b1[1]-t1[1])*f);cx.lineTo(t2[0]+(b2[0]-t2[0])*f,t2[1]+(b2[1]-t2[1])*f);cx.stroke();}
+      cx.fillStyle="#2a1c0e";cx.fillRect(t1[0]-1.8*t1[2],t1[1]-4*t1[2],3.6*t1[2],b1[1]-t1[1]+4*t1[2]);
+      // firing step
+      const f1=Q(wx(A)-side*7,A.z,-D*0.55),f2=Q(wx(B)-side*7,B.z,-D*0.55);cx.strokeStyle="#5a4028";cx.lineWidth=Math.max(1,3*t1[2]);cx.beginPath();cx.moveTo(f1[0],f1[1]);cx.lineTo(f2[0],f2[1]);cx.stroke();
+      // props on the wall
+      const r=hash(seed*31+i*7+(z0>0.5?100:0));
+      if(r>0.72){ // dugout door
+        const m=Q(wx(A)+(wx(B)-wx(A))*0.5,(A.z+B.z)/2,-D*0.1);const w=12*m[2],h=18*m[2];
+        cx.fillStyle="#0a0604";cx.fillRect(m[0]-w/2,m[1],w,h);cx.fillStyle="#4a3420";cx.fillRect(m[0]-w/2-2*m[2],m[1]-2*m[2],w+4*m[2],2.5*m[2]);cx.fillRect(m[0]-w/2-2*m[2],m[1],2*m[2],h);cx.fillRect(m[0]+w/2,m[1],2*m[2],h);
+        if(r>0.86){cx.fillStyle="rgba(255,190,90,0.5)";cx.beginPath();cx.arc(m[0],m[1]+h*0.6,3*m[2],0,7);cx.fill();}
+      } else if(r<-0.8){ // corrugated iron sheet
+        cx.fillStyle="#5a5650";cx.beginPath();cx.moveTo(t1[0],t1[1]);cx.lineTo(t2[0],t2[1]);cx.lineTo(t2[0],t2[1]+(b2[1]-t2[1])*0.7);cx.lineTo(t1[0],t1[1]+(b1[1]-t1[1])*0.7);cx.fill();
+        cx.strokeStyle="rgba(0,0,0,0.3)";for(let k=0;k<6;k++){const f=k/6;cx.beginPath();cx.moveTo(t1[0]+(t2[0]-t1[0])*f,t1[1]+(t2[1]-t1[1])*f);cx.lineTo(t1[0]+(t2[0]-t1[0])*f,t1[1]+(t2[1]-t1[1])*f+(b1[1]-t1[1])*0.7);cx.stroke();}
+      }
+    }
+    // 4) parados (rear low bank) + parapet (sandbags, 4 rows, tied ends)
+    for(const [sd,rows,col] of [[-side,2,["#7a6a4c","#8c7b58"]],[side,4,["#9a8862","#b09c72"]]]){
+      for(let i=0;i<=n*2;i++){ const z=z0+(z1-z0)*i/(n*2); const q={x:x+off(z)};
+        const [sx,sy,sc]=P(q.x+sd*(Wd+8),z,0);
+        for(let r=0;r<rows;r++){ const bw=17*sc,bh=6.5*sc, ox=(r%2)*bw*0.45, oy=-bh*r*0.85-bh*0.4;
+          const g=cx.createLinearGradient(0,sy+oy-bh*0.6,0,sy+oy+bh*0.6);g.addColorStop(0,col[1]);g.addColorStop(1,col[0]);cx.fillStyle=g;
+          cx.beginPath();cx.ellipse(sx+ox,sy+oy,bw*0.62,bh*0.6,0,0,7);cx.fill();
+          cx.fillStyle="rgba(40,30,18,0.35)";cx.beginPath();cx.ellipse(sx+ox+bw*0.5,sy+oy,bw*0.08,bh*0.4,0,0,7);cx.fill();
+          cx.fillStyle="rgba(0,0,0,0.22)";cx.fillRect(sx+ox-bw*0.6,sy+oy+bh*0.35,bw*1.2,bh*0.2);
+        }
+      }
+    }
+    // 5) props above ground: ladders, periscope, crates, lantern posts
+    for(let i=0;i<n;i+=1){ const r=hash(seed*13+i*5+(z0>0.5?50:0)); const z=z0+(z1-z0)*(i+0.5)/n; const q=x+off(z);
+      const [sx,sy,sc]=P(q+side*(Wd-2),z,0);
+      if(side===1&&r>0.45){ // scaling ladder
+        cx.strokeStyle="#3a2814";cx.lineWidth=Math.max(1,2*sc);const lx=sx-6*sc,ly=sy+D*sc*0.9;
+        cx.beginPath();cx.moveTo(lx,ly);cx.lineTo(lx+10*sc,sy-14*sc);cx.moveTo(lx+7*sc,ly);cx.lineTo(lx+17*sc,sy-14*sc);cx.stroke();
+        for(let k=1;k<6;k++){const f=k/6;cx.beginPath();cx.moveTo(lx+10*sc*f,ly+(sy-14*sc-ly)*f);cx.lineTo(lx+7*sc+10*sc*f,ly+(sy-14*sc-ly)*f);cx.stroke();}
+      } else if(r<-0.7){ // periscope
+        cx.fillStyle="#2a2016";cx.fillRect(sx-1.5*sc,sy-30*sc,3*sc,26*sc);cx.fillRect(sx-1.5*sc,sy-30*sc,side*6*sc,3*sc);
+        cx.fillStyle="rgba(200,220,255,0.6)";cx.fillRect(sx+side*4*sc,sy-29.5*sc,1.2*sc,2*sc);
+      } else if(r>0.3&&r<0.4){ // crates
+        const [cx2,cy2,c2]=P(q-side*(Wd+18),z,0);cx.fillStyle="#6a5030";cx.fillRect(cx2-8*c2,cy2-12*c2,16*c2,12*c2);cx.fillStyle="#5a4024";cx.fillRect(cx2-2*c2,cy2-20*c2,13*c2,8*c2);
+        cx.strokeStyle="rgba(0,0,0,0.35)";cx.lineWidth=1;cx.strokeRect(cx2-8*c2,cy2-12*c2,16*c2,12*c2);
+      } else if(r>-0.2&&r<-0.12){ // lantern post
+        const [lx,ly,lc]=P(q-side*(Wd+10),z,0);cx.fillStyle="#2a2016";cx.fillRect(lx,ly-40*lc,2.4*lc,40*lc);cx.fillRect(lx,ly-40*lc,8*lc,2*lc);
+        const gl=cx.createRadialGradient(lx+8*lc,ly-34*lc,0,lx+8*lc,ly-34*lc,14*lc);gl.addColorStop(0,"rgba(255,200,110,0.55)");gl.addColorStop(1,"rgba(255,200,110,0)");cx.fillStyle=gl;cx.beginPath();cx.arc(lx+8*lc,ly-34*lc,14*lc,0,7);cx.fill();
+        cx.fillStyle="#e8b060";cx.fillRect(lx+6.5*lc,ly-37*lc,3*lc,4*lc);
+      }
+    }
+    // 6) wire belt in front (both sides get some; enemy's is thick)
+    const wireN = side===-1 ? n : Math.floor(n/2);
+    for(let i=0;i<wireN;i++){ const z=z0+(z1-z0)*(i+0.3)/wireN; const [sx,sy,sc]=P(x-side*(-90)+(side===-1?-40:30)+Math.sin(i*3+seed)*18,z,0);
+      cx.strokeStyle="#241a10";cx.lineWidth=Math.max(1,1.8*sc);cx.beginPath();cx.moveTo(sx,sy);cx.lineTo(sx+2*sc,sy-24*sc);cx.moveTo(sx+18*sc,sy);cx.lineTo(sx+16*sc,sy-22*sc);cx.stroke();
+      cx.strokeStyle="rgba(40,30,20,0.75)";cx.lineWidth=Math.max(0.6,0.8*sc);cx.beginPath();
+      for(let j=0;j<=24;j++){const a=j*0.8;cx.lineTo(sx-6*sc+j*1.3*sc+Math.cos(a)*5*sc,sy-12*sc+Math.sin(a)*8*sc);}cx.stroke();}
   }
 }
 
