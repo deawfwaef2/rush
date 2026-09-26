@@ -295,3 +295,6 @@ COMBAT / PERF
 ## v1.3d chapter sub-areas
 - PAL2 {1: Flanders lowlands, 3: ruined town, 4: open country morning}: chapterPal() returns it for levels 5-8 (idx%8>=4) of those chapters → whole palette/sky/ground changes. Chapters 0 and 2 keep one area (feature unique to some chapters).
 - subAreaCut(ch): first time entering level 5 of such a chapter → full black screen "Weeks later / <sector name> / A new sector of the front", fades out after 2.6s (S.seenSub<ch>). Triggered at the start of toPlan so the new scene is revealed from black.
+
+## v1.3e near foreground
+- drawForeground rewritten: uneven dark earth lip (noise edge, snow line in winter) + varied debris silhouettes with rim light at parallax 1.6: grass clumps, splintered stumps, wire pickets+coil, sandbag heaps, rifle grave with helmet, broken cart wheel, mound with reeds (seeded per level).
