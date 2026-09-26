@@ -227,6 +227,8 @@ NEW wishes:
 ## v1.2b TAKE COVER
 - From lvl idx 1: battle.cover = 3 (+S.buy.cov). Some rifle hits become telegraphed aimed shots (m.aim 1.25s, max 3 at once, 70% when charges left): gold→red corner-bracket box + timer bar (drawAimMarks). Click/tap the box (tryCover, canvas pointerdown in charge/melee) → man dives (stumble .7) + immune 1.2s, charge used. Unclicked → killed. First time: slowmo + toast. Counter shown in #tools (.covc). Merit "Quick reflexes" if ≥2 used.
 - Men drift to their depth lane faster (dt*0.16) to reduce clumping.
+## v1.2c SUPPLY DEPOT + unit types
+- Reinforcement points S.rp (new save 2): win +2 (+3 fortress) +1 per tactical merit; loss +1. #depotB button in left plan panel → openDepot() card: SHOP items (unlock by lvl): rum (+15 morale), extra cover, Bombers x4 (melee weight 1.7, 55% clear a defender on entering trench), stretcher bearers (50% of pinned return to reserve), Lewis gun team x2 (enemy fire −12% each alive), extra shell, sapper pair (+2 eng), smoke. Max 3 each, refundable before charge. S.buy consumed by applyLoadout() at startCharge (b.loadout). Unit types via m.type ("bomb"/"lewis"), small kit marks drawUnitMarks(). Report shows RP earned + stretcher recoveries.
 
 ---
 ## Feedback round 11 (2026-09-26) → v1.3  (user's words, summarised; keep for future agents)

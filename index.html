@@ -251,6 +251,13 @@ body.cgon #hud,body.cgon #menu,body.cgon #top,body.cgon #advisor,body.cgon #adba
 .timeRow{display:flex;gap:10px;justify-content:center;margin:8px 0 4px}.timeRow>div{background:#0005;border:1px solid #f0c87033;border-radius:6px;padding:4px 12px;min-width:110px;text-align:center}
 .timeRow span{display:block;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}.timeRow b{font:22px Impact,sans-serif;color:#f0c870;font-variant-numeric:tabular-nums}.timeRow i{display:block;font-size:10px;color:#9fd07a;font-style:normal}
 .covc{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:4px 10px;background:#1c160ecc;border:1px solid #f0c87055;border-radius:6px;color:#f0c870}.covc b{font:20px Impact,sans-serif}.covc small{font-size:9px;letter-spacing:.12em}
+.depotB{display:flex;align-items:center;gap:8px;width:100%;margin-top:8px;padding:7px 10px;background:linear-gradient(#3a2e1c,#231a10);border:1px solid #f0c87066;border-radius:6px;color:#efe4cc;cursor:pointer;font:12px Georgia;letter-spacing:.12em}
+.depotB b{margin-left:auto;font:18px Impact,sans-serif;color:#f0c870;letter-spacing:.04em}.depotB i{font-size:10px;color:#9fd07a;font-style:normal}
+.card.depot{max-width:640px}.shop{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;text-align:left}
+.shop .it{background:#0000000f;border:1px solid #0003;border-radius:6px;padding:7px 9px}.shop .it.on{border-color:#a8321f;background:#a8321f14}
+.shop .nm{font-weight:bold;font-size:14px}.shop .nm em{float:right;font-style:normal;color:#7a5a1a}.shop .ds{font-size:11px;opacity:.8;min-height:28px}
+.shop .qq{display:flex;align-items:center;gap:8px;justify-content:flex-end}.shop .qq button{width:28px;height:26px;border-radius:4px;border:1px solid #0004;background:#fff6;font-size:16px;cursor:pointer}.shop .qq b{min-width:16px;text-align:center}
+@media (max-width:700px){.shop{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -289,6 +296,7 @@ body.cgon #hud,body.cgon #menu,body.cgon #top,body.cgon #advisor,body.cgon #adba
       <div id="delayRow"></div>
       <div id="warn"></div>
       <div id="sendInfo"></div>
+      <button class="depotB" id="depotB"></button>
       <div class="pdesc" id="sendD"></div>
     </div>
     <div class="panel" id="right">
@@ -440,7 +448,7 @@ function levelDef(i){
 /* ---------------- Save ---------------- */
 const SAVE_KEY="charge_save_v3";
 let S;
-function newSave(){return {lvl:0,reserve:START_TROOPS,vets:0,income:START_INCOME,lastPay:Date.now(),day:1,adDay:0,
+function newSave(){return {rp:2,lvl:0,reserve:START_TROOPS,vets:0,income:START_INCOME,lastPay:Date.now(),day:1,adDay:0,
   supDay:0,sup:{art:0,snp:0,smk:0,tnk:0},hist:[],lost:0,start:Date.now(),playMs:0,lang:"en",
   snd:1,mus:1,done:false,lvlDay:1,lvlLost:0,morale:60,moraleT:Date.now(),tut:0,dev:0,lastGain:0}}
 function load(){try{S=JSON.parse(localStorage.getItem(SAVE_KEY))}catch(e){} if(!S||typeof S.lvl!=="number")S=newSave(); S=Object.assign(newSave(),S);}
@@ -1300,7 +1308,7 @@ function applyTexts(){
   document.documentElement.lang=S.lang;
 }
 function fmtT(ms){ms=Math.max(0,ms);const h=Math.floor(ms/3600000),m=Math.floor(ms/60000)%60,s=Math.floor(ms/1000)%60;return `${h}:${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;}
-function updTop(){ updStrip(); updClock();
+function updTop(){ updStrip(); updClock(); updDepotB();
   const t=L_(), zh=S.lang==="zh"; moraleTick();
   const left=S.lastPay+DAY_MS-Date.now();
   $("cTroops").innerHTML=`<div class="ic">${IC.man}</div><div class="vv"><span class="lb">${t.lblRes}</span><b>${S.reserve}${S.vets?` <small>${VETI}${S.vets}</small>`:""}</b></div>`;
@@ -1585,6 +1593,7 @@ function startCharge(){
   men.forEach(m=>{ const w=waves[m.wave||0]; m.hold2=!!(w&&w.h&&hasTool("flare")); });
   men.forEach((m,i)=>{m.arriving=false;m.x=m.tx;m.state="crouch";const wf=waves[m.wave||0]; m.form=wf?wf.f:1; m.delay=0.9+wStart[m.wave||0]+Math.random()*(m.form===0?1.6:m.form===1?0.8:0.45);m.mor=55+S.morale*0.4+(m.vet?30:0)+Math.random()*25;m.speed=(135+Math.random()*35)*(lvl.ch===2?0.87:1)*(0.85+0.15*mf()/1.0);});
   battle={cover:COVER_BASE()+(S.buy&&S.buy.cov||0),t:0,sent:sendN,dead:0,reached:0,nodes:[0.3,0.6,0.86].map(f=>({x:bx+SEGL()*f,done:false})),mgT:0,rfT:0,shT:0,gasZones:[],smoke:used.smk?4+used.smk*4:0,snipers:used.snp,tank:null,melee:false,e:Math.max(0,Math.round(cur.gr)),e0:Math.max(0,Math.round(cur.gr)),mel:[],mT:0.3,supp:0,front:0,pinned:0,eKilled:0,meleeDead:0,sniperDone:false,over:false};
+  applyLoadout();
   // gas zones
   for(let i=0;i<Math.round(cur.gs);i++)battle.gasZones.push({x:bx+SEGL()*(0.25+0.5*Math.random()),w:120+Math.random()*80});
   if(used.smk){for(let i=0;i<30+used.smk*20;i++)puff(bx+SEGL()*(0.3+Math.random()*0.5),0.1+Math.random()*0.9,0,1,"smokeW",20,9,90,2);}
@@ -1649,7 +1658,7 @@ function stepBattle(dt){
   stepOfficer(dt);
   for(const m of men){ if(m.immune>0)m.immune-=dt; if(m.aim>0){ m.aim-=dt; if(!m.alive||m.state!=="run"&&m.state!=="cut"){m.aim=0;} else if(m.aim<=0){ m.aim=0; killMan(m,"rf"); } } }
   // hazards: continuous fire on running men
-  const supp=1-(b.supp||0); const smokeF = (b.smoke>0 ? 0.45 : 1)*supp; if(b.smoke>0)b.smoke-=dt;
+  const lewN=men.filter(m=>m.alive&&m.type==="lewis"&&(m.state==="run"||m.state==="gather")).length; const supp=(1-(b.supp||0))*Math.max(0.55,1-0.12*lewN); const smokeF = (b.smoke>0 ? 0.45 : 1)*supp; if(b.smoke>0)b.smoke-=dt;
   const tankF = b.tanks ? Math.max(0.5,1-0.2*b.tanks.length) : 1;
   if(running.length){
     // machine guns
@@ -1696,7 +1705,7 @@ function trenchLines(i){ return i<0?1:Math.min(4,1+Math.floor((i+1)/4)); }
 function hitK(m,bx){ const p=Math.max(0,Math.min(1,(m.x-bx)/SEGL())); if(hasDead()&&Math.abs(m.x-deadX())<45) return 0.25*FORM[m.form||1].fire; return (0.45+1.45*Math.pow(p,1.6))*FORM[m.form||1].fire*(m.vet?0.62:1); }
 function pinMan(m){ if(!m.alive)return; m.alive=false; m.pinned=true; m.state="prone"; battle.pinned++; if(Math.random()<0.3)say(m,pick(S.lang==="zh"?["我不行了…","趴下！","妈妈…"]:["I can't…","Get down!","Mother…"]),1.4); }
 function shockNear(x,z){ for(const o of men){ if(o.alive&&o.state==="run"&&Math.abs(o.x-x)<70&&Math.abs(o.z-z)<0.16){ o.mor-= (o.vet?2:5.5)*(0.6+Math.random()*0.8)*(FORM[o.form||1].melee>1?0.8:1); } } }
-function joinMelee(m){ const b=battle; b.mel.push(m); m.phase=Math.random()*6; if(!b.melee){ b.melee=true; big(L_().melee,"",1100); AU.cheer(); cam.shake=6; slowmo=0.55; setTimeout(()=>slowmo=1,900); } if(Math.random()<0.12)say(m,pick(S.lang==="zh"?["刺刀！","杀！","冲进去！"]:["Bayonets!","At them!","Into the trench!"]),1.1); }
+function joinMelee(m){ const b=battle; b.mel.push(m); if(m.type==="bomb"&&!m.thrown&&b.e>0){ m.thrown=1; if(Math.random()<0.55){ b.e=Math.max(0,b.e-1); b.eKilled++; const en=enemies.find(e=>e.alive); if(en){ en.alive=false; makeRagdoll(en.x,en.z,-1,pal.en,false,[5,7],true); } explosion(trenchX(S.lvl+1)-10,m.z,0.5); } } m.phase=Math.random()*6; if(!b.melee){ b.melee=true; big(L_().melee,"",1100); AU.cheer(); cam.shake=6; slowmo=0.55; setTimeout(()=>slowmo=1,900); } if(Math.random()<0.12)say(m,pick(S.lang==="zh"?["刺刀！","杀！","冲进去！"]:["Bayonets!","At them!","Into the trench!"]),1.1); }
 /* ============ OFFICER (strategic resource, 1 per charge, unlock lvl 17) ============
    Press O (or button) during the advance: an officer appears with the rearmost running group.
    WASD/arrows move him; nearby runners follow and keep behind him. SPACE = halt & rally (men go prone around him,
@@ -1749,10 +1758,43 @@ const COVER_BASE=()=>S.lvl>=1?3:0;
 function tryCover(px,py){ const b=battle; if(!b||!(b.cover>0))return false; let best=null,bd=1e9; const r=cv.getBoundingClientRect(); const x=(px-r.left)*(W/r.width), y=(py-r.top)*(H/r.height);
   for(const m of men){ if(!(m.aim>0))continue; const [sx,sy,s]=P(m.x,m.z,0); const d=Math.hypot(sx-x,(sy-40*s)-y); if(d<Math.max(46,60*s)&&d<bd){bd=d;best=m;} }
   if(!best)return false; best.aim=0; best.immune=1.2; best.stumble=0.7; b.cover--; b.covUsed=(b.covUsed||0)+1; SFX.play("mud",0.5,{gap:0.05,dur:0.5}); AU.ric&&AU.ric(); say(best,S.lang==="zh"?"趴下！":"Down!",0.9); updTools(); return true; }
+function drawUnitMarks(){ if(!(mode==="plan"||mode==="charge"||mode==="melee"))return; for(const m of men){ if(!m.alive||!m.type||m.intrench&&mode!=="plan")continue; const [sx,sy,s]=P(m.x,m.z,0); const y=sy-58*s, x=sx-6*s*m.dir;
+  if(m.type==="bomb"){ cx.fillStyle="#2a2a22"; for(let k=0;k<3;k++){ cx.beginPath(); cx.arc(x+(k-1)*3.2*s,y+12*s,2.2*s,0,7); cx.fill(); } }
+  else if(m.type==="lewis"){ cx.fillStyle="#1e1c18"; cx.beginPath(); cx.ellipse(sx+10*s*m.dir,sy-50*s,5*s,2*s,0,0,7); cx.fill(); cx.fillRect(sx+2*s*m.dir,sy-49*s,16*s*m.dir,2.4*s); } } }
 function drawAimMarks(){ for(const m of men){ if(!(m.aim>0)||!m.alive)continue; const [sx,sy,s]=P(m.x,m.z,0); const hh=78*s, ww=40*s, cy=sy-hh/2, k=Math.max(0,m.aim/1.25);
   const c=`rgba(${220},${Math.round(60+160*k)},${60},0.95)`; cx.strokeStyle=c; cx.lineWidth=2; const L=10*s+4;
   for(const [dx,dy] of [[-1,-1],[1,-1],[-1,1],[1,1]]){ const x0=sx+dx*ww/2, y0=cy+dy*hh/2; cx.beginPath(); cx.moveTo(x0,y0-dy*L); cx.lineTo(x0,y0); cx.lineTo(x0-dx*L,y0); cx.stroke(); }
   cx.fillStyle=c; cx.fillRect(sx-ww/2,cy-hh/2-8,ww*k,3); } }
+/* ============ SUPPLY DEPOT: reinforcement points (RP) buy the NEXT charge's loadout ============ */
+const SHOP=[
+ {k:"rum",  c:1, at:0,  n:["Rum ration","朗姆酒配给"], d:["+15 morale for everyone this charge.","本次冲锋全员士气+15。"]},
+ {k:"cov",  c:1, at:1,  n:["Extra cover","额外掩护"], d:["+2 take-cover charges (click the aimed-shot box).","+2次掩护（点击被瞄准的方框）。"]},
+ {k:"bomb", c:2, at:2,  n:["Bombers ×4","投弹手 ×4"], d:["4 recruits carry Mills bombs: each may clear a defender on reaching the trench; strong in melee.","4名新兵携带手榴弹：冲进战壕时可能直接炸死守军；白刃战更强。"]},
+ {k:"strb", c:2, at:3,  n:["Stretcher bearers","担架队"], d:["Half of the men who went to ground are brought back to the reserve.","趴下不起的士兵一半被抬回预备队。"]},
+ {k:"lewis",c:3, at:5,  n:["Lewis gun team ×2","刘易斯机枪组 ×2"], d:["2 gunners fire on the move: enemy fire −12% each while they live.","2名机枪手边走边打：每人存活时敌火力−12%。"]},
+ {k:"art",  c:2, at:4,  n:["Extra shell","额外炮弹"], d:["+1 artillery shot this charge.","本次冲锋+1发炮击。"]},
+ {k:"eng",  c:1, at:10, n:["Sapper pair","工兵组"], d:["+2 engineers added to wave 1.","第1波+2名工兵。"]},
+ {k:"smk",  c:2, at:9,  n:["Smoke canisters","烟幕罐"], d:["+1 smoke screen.","+1次烟幕。"]}];
+function shopItems(){ return SHOP.filter(it=>S.lvl>=it.at); }
+function buyCost(){ let c=0; for(const it of SHOP) c+=(S.buy&&S.buy[it.k]||0)*it.c; return c; }
+function updDepotB(){ const b=$("depotB"); if(!b)return; const zh=S.lang==="zh"; const n=Object.values(S.buy||{}).reduce((a,v)=>a+v,0);
+  b.innerHTML=`<span>${zh?"补给站":"SUPPLY DEPOT"}</span><b>${S.rp||0} RP</b>${n?`<i>${zh?"已配置":"loaded"} ${n}</i>`:""}`; b.onclick=openDepot; }
+function openDepot(){ AU.click&&AU.click(); const ov=$("ov"); ov.classList.remove("hide"); const zh=S.lang==="zh"; S.buy=S.buy||{};
+  const draw=()=>{ const left=(S.rp||0); ov.innerHTML=`<div class="card depot"><div class="date">${zh?"补给站 · 为下一次冲锋配置":"SUPPLY DEPOT · loadout for the next charge"}</div><h2 class="stencil">${left} RP</h2>
+   <p style="font-size:12px;opacity:.75;margin:0 0 8px">${zh?"胜利获得增援点（战术评价越多越多），失败也有1点。":"Win to earn reinforcement points (more for tactical merits); a failed attack still gives 1."}</p>
+   <div class="shop">${shopItems().map(it=>{ const q=S.buy[it.k]||0; return `<div class="it${q?" on":""}"><div class="nm">${it.n[zh?1:0]} <em>${it.c} RP</em></div><div class="ds">${it.d[zh?1:0]}</div><div class="qq"><button data-k="${it.k}" data-a="-1">−</button><b>${q}</b><button data-k="${it.k}" data-a="1">+</button></div></div>`; }).join("")}</div>
+   <button class="btn" id="depOk">${zh?"完成":"Done"}</button></div>`;
+   ov.querySelectorAll(".qq button").forEach(bt=>bt.onclick=()=>{ const it=SHOP.find(x=>x.k===bt.dataset.k), a=+bt.dataset.a, q=S.buy[it.k]||0;
+     if(a>0&&(S.rp||0)>=it.c&&q<3){ S.buy[it.k]=q+1; S.rp-=it.c; } else if(a<0&&q>0){ S.buy[it.k]=q-1; S.rp+=it.c; } save(); AU.click&&AU.click(); draw(); });
+   $("depOk").onclick=()=>{ ov.classList.add("hide"); updDepotB(); }; };
+  draw(); }
+function applyLoadout(){ const B=S.buy||{}; const b=battle; if(!b)return; const rec=men.filter(m=>m.sent&&!m.vet&&!m.eng);
+  let i=0; const take=(n,type)=>{ for(let k=0;k<n&&i<rec.length;k++,i++) rec[i].type=type; };
+  take(4*(B.bomb||0),"bomb"); take(2*(B.lewis||0),"lewis");
+  if(B.eng){ let n=2*B.eng; for(const m of men){ if(n<=0)break; if(m.sent&&!m.vet&&!m.eng&&!m.type&&(m.wave||0)===0){ m.eng=true; n--; } } }
+  if(B.rum) men.forEach(m=>{ if(m.sent)m.mor+=15*B.rum; });
+  b.strb=B.strb||0; b.cover+=0; if(B.art){ used.art+=B.art; } if(B.smk){ b.smoke+=4*B.smk; for(let k=0;k<30;k++)puff(trenchX(S.lvl)+SEGL()*(0.3+Math.random()*0.5),0.1+Math.random()*0.9,0,1,"smokeW",20,9,90,2); }
+  b.loadout=Object.assign({},B); S.buy={}; save(); }
 function fireFlare(auto){ const b=battle; if(!b||b.flared)return; b.flared=true; const x=deadX(); vfx=vfx||{t:0,x,flares:[]}; vfx.flares.push({x:x+60,z:0.5,h:0,vh:700,t:0,c:"255,90,70"}); vfx.t=0; SFX.play("rifle_rev",0.4,{lp:1500}); AU.whistle();
   big(S.lang==="zh"?"信号弹！":"FLARE!",S.lang==="zh"?(auto?"时间到——全体起身":"全体起身，一起冲！"):(auto?"Time's up — everyone up":"Everyone up — go together!"),1300); updTools(); }
 function updTools(){ updOffPad(); const el=$("tools"); if(!el)return; const b=battle; const zh=S.lang==="zh"; if(!b||!(mode==="charge"||mode==="melee")){el.classList.add("hide");return;}
@@ -1762,7 +1804,7 @@ function updTools(){ updOffPad(); const el=$("tools"); if(!el)return; const b=ba
 addEventListener("keydown",e=>{ const k=e.key.toLowerCase(); if(k==="f"&&battle&&(mode==="charge"||mode==="melee")&&men.some(m=>m.alive&&m.hold2))fireFlare(false); if(k==="o"&&window.startOfficer&&battle&&mode==="charge")startOfficer(); });
 function meleeTick(){
   const b=battle, ex=trenchX(S.lvl+1); const al=b.mel.filter(m=>m.alive); if(!al.length)return;
-  let A=0,coh=0; for(const m of al){A+=m.vet?1.55:1; coh+=FORM[m.form||1].melee;} coh/=al.length; A*=coh*mf()*(b.shock?1.3:1);
+  let A=0,coh=0; for(const m of al){A+=(m.vet?1.55:1)*(m.type==="bomb"?1.7:1); coh+=FORM[m.form||1].melee;} coh/=al.length; A*=coh*mf()*(b.shock?1.3:1);
   const E=b.e*(lvl.fort?1.25:1)*(1+0.08*Math.min(3,lvl.ch));
   const ratio=A/Math.max(0.5,E); // Lanchester: numbers compound
   const kOur=0.13*A*Math.min(2.4,Math.sqrt(ratio)), kEn=0.13*E*Math.min(2.4,Math.sqrt(1/ratio));
@@ -1842,17 +1884,19 @@ function reportHTML(b,surv,vetGain,hold,rear,fail){
   return `<div class="rep"><table>${row(zh?"派出":"Sent",`${b.sent} <small>(${lw.map((w,i)=>`W${i+1}:${w.r}${w.v?"+"+VETI+w.v:""} ${fl[w.f]}`).join(" · ")})</small>`)}
    ${row(zh?"阵亡":"Killed",b.dead,"red")}${row(zh?"趴下不起 (计为损失)":"Went to ground (lost)",b.pinned,"red")}
    ${row(zh?"击毙守军":"Enemy killed",b.eKilled)}
-   ${fail?"":row(zh?"幸存":"Survived",surv)+row(zh?"留守新阵地":"Hold the new trench",hold)+row(zh?"调往后方":"Transferred to the rear",rear, rear>b.e0?"red":"")+row(zh?"晋升老兵 返回":"Return as veterans",vetGain,"gold")+(b.merits&&b.merits.length?row(zh?"战术评价 (+5%老兵/项)":"Tactical merit (+5% vets each)",b.merits.join(" · "),"gold"):"")}
+   ${fail?"":row(zh?"幸存":"Survived",surv)+row(zh?"留守新阵地":"Hold the new trench",hold)+row(zh?"调往后方":"Transferred to the rear",rear, rear>b.e0?"red":"")+row(zh?"晋升老兵 返回":"Return as veterans",vetGain,"gold")+(b.recovered?row(zh?"担架队救回":"Carried back by stretcher bearers",b.recovered,"gold"):"")+(b.rpGain?row(zh?"获得增援点":"Reinforcement points earned","+"+b.rpGain+" RP","gold"):"")+(b.merits&&b.merits.length?row(zh?"战术评价 (+5%老兵/项)":"Tactical merit (+5% vets each)",b.merits.join(" · "),"gold"):"")}
    </table><div class="rem">${rem}</div></div>`;
 }
 function result(win){ $("tools")&&$("tools").classList.add("hide");
   mode="result"; CG.gameplayStop(); slowmo=1;
   const b=battle; const t=L_(); const surv=men.filter(m=>m.alive).length;
+  if(b.strb&&b.pinned){ const rec=Math.floor(b.pinned*0.5*Math.min(1,b.strb)); S.reserve+=rec; b.recovered=rec; }
+  S.rp=(S.rp||0)+(win?2+(lvl.fort?3:0):1);
   S.lost+=b.dead; S.lastMoraleD = win ? (lvl.fort?30:18) : -20; if(!win&&b.dead>b.sent*0.8)S.lastMoraleD-=5; S.morale=Math.max(0,Math.min(100,S.morale+S.lastMoraleD)); S.moraleT=Date.now();
   if(win){
     CG.happy();
     const zhM=S.lang==="zh"; const merits=[]; if(b.shock)merits.push(zhM?"集中突击":"Massed assault"); if(b.flared&&b.holdMsg)merits.push(zhM?"信号弹协同":"Flare timing"); if(b.offUsed&&!b.offDied)merits.push(zhM?"军官指挥":"Officer's lead"); if(b.sent&&b.dead/b.sent<0.35)merits.push(zhM?"低伤亡":"Low losses"); if(!b.pinned)merits.push(zhM?"无人溃散":"Nobody broke"); if((b.covUsed||0)>=2)merits.push(zhM?"眼疾手快":"Quick reflexes");
-    b.merits=merits; const vetGain=surv>0?Math.min(surv,Math.max(1,Math.floor(surv*(0.25+0.05*merits.length)))):0; const need=Math.max(1,Math.ceil(b.e0*0.6)); const hold=Math.min(surv-vetGain,need); const rear=surv-vetGain-hold;
+    b.merits=merits; S.rp+=merits.length; b.rpGain=2+(lvl.fort?3:0)+merits.length; const vetGain=surv>0?Math.min(surv,Math.max(1,Math.floor(surv*(0.25+0.05*merits.length)))):0; const need=Math.max(1,Math.ceil(b.e0*0.6)); const hold=Math.min(surv-vetGain,need); const rear=surv-vetGain-hold;
     S.vets+=vetGain; S.reserve+=vetGain;
     S.hist.push({lvl:S.lvl,day:S.day,lost:b.dead,sent:b.sent});
     S.income+=lvl.reward;
@@ -2140,7 +2184,7 @@ function frame(now){
   for(const e of enemies) if(e.alive) ents.push({z:e.z,d:()=>{const fight=battle&&battle.melee&&!battle.over; const [sx,sy,s]=P(e.x,e.z,0); cx.save(); if(!fight){cx.beginPath();cx.rect(sx-120*s,0,240*s,sy+1*s);cx.clip();} drawMan(sx,sy+(fight?0:TR_D*0.85)*s,s,-1,e.phase,fight?"melee":"aim",pal.en,{enemy:true,flash:e.flash>0}); cx.restore();}});
   if(battle&&battle.tanks&&(mode==="charge"||mode==="melee")) for(const tk of battle.tanks) ents.push({z:tk.z,d:()=>drawTank(tk)});
   pushSetEnts(ents); ents.sort((a,b)=>a.z-b.z); drawParts(false); for(const e of ents)e.d(); drawParts(true);
-  drawTracers(rdt); drawShells(); if(battle&&(mode==="charge"||mode==="melee"))drawAimMarks();
+  drawTracers(rdt); drawShells(); if(battle&&(mode==="charge"||mode==="melee"))drawAimMarks(); drawUnitMarks();
   // flag raise
   if(flagRaise){flagRaise.t+=rdt; const [sx,sy,s]=P(flagRaise.x,0.5); drawFlag(sx,sy,s*1.6,130,time,Math.min(1,flagRaise.t/2.2)); if(flagRaise.t>8)flagRaise=null;}
   // foreground layer: big dark near silhouettes (depth!)
