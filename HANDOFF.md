@@ -298,3 +298,7 @@ COMBAT / PERF
 
 ## v1.3e near foreground
 - drawForeground rewritten: uneven dark earth lip (noise edge, snow line in winter) + varied debris silhouettes with rim light at parallax 1.6: grass clumps, splintered stumps, wire pickets+coil, sandbag heaps, rifle grave with helmet, broken cart wheel, mound with reeds (seeded per level).
+## v1.3b-3 perf: corpses, particles, HUD (2026-09-26)
+- Resting ragdolls are baked into a tight sprite (bakeCorpse, max 14 bakes/frame) and blitted; live ragdolls still simulate/draw as paths.
+- Particles: cached soft radial sprites (softSpr) + globalAlpha instead of arc paths + per-particle rgba strings; puff() caps parts (900 soft / 1400 hard).
+- #hud innerHTML only written when its text changes.

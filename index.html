@@ -1277,7 +1277,18 @@ function stepRagdolls(dt){
     if(r.life>3.5||(r.life>1&&moving<0.3))r.rest=true;
   }
 }
+/* v1.3 PERF: a ragdoll that has come to rest is baked into a small sprite (was ~21 path fills per corpse per frame, x600 corpses) */
+let bakeFrame=0;
+function bakeCorpse(r,s){ const hx=r.pts[2].x; let u0=1e9,u1=-1e9,v0=1e9,v1=-1e9; for(const p of r.pts){ const u=p.x-hx; if(u<u0)u0=u; if(u>u1)u1=u; if(p.h<v0)v0=p.h; if(p.h>v1)v1=p.h; }
+  u0-=8; u1+=8; v0-=8; v1+=8; const R=Math.max(0.8,Math.min(2,s*DPR*1.1)); const c=document.createElement("canvas"); c.width=Math.max(2,Math.ceil((u1-u0)*R)); c.height=Math.max(2,Math.ceil((v1-v0)*R));
+  const g=c.getContext("2d"), keep=cx; cx=g; g.fillStyle=r.cols[1];
+  try{ const q=r.pts.map(p=>[(p.x-hx-u0)*R,(v1-p.h)*R]); const L=(a,b,w)=>limb(q[a][0],q[a][1],q[b][0],q[b][1],w*R);
+    L(2,7,7);L(7,8,6);L(2,9,7);L(9,10,6);L(1,2,12);L(1,3,5);L(3,4,4.5);L(1,5,5);L(5,6,4.5);L(0,1,5); g.beginPath(); g.arc(q[0][0],q[0][1],5*R,0,7); g.fill(); } finally { cx=keep; }
+  r.spr={c,u0,v1,w:u1-u0,h:v1-v0}; }
 function drawRagdoll(r){
+  if(r.rest){ const hx=r.pts[2].x, [bx,by,s]=P(hx,r.z); if(bx<-150*s||bx>W+150*s)return;
+    if(!r.spr&&bakeFrame<14){ bakeFrame++; bakeCorpse(r,s); }
+    if(r.spr){ const o=r.spr; cx.drawImage(o.c,bx+o.u0*s,by-o.v1*s,o.w*s,o.h*s); return; } }
   const [bx,by,s]=P(r.pts[2].x,r.z);
   const q=r.pts.map(p=>{const pp=P(p.x,r.z,p.h);return pp;});
   cx.fillStyle=r.cols[1];
@@ -1289,7 +1300,7 @@ function drawRagdoll(r){
 
 /* particles */
 const parts=[];
-function puff(x,z,h,n,col,spd,life,size,grav=-20){for(let i=0;i<n;i++)parts.push({x,z:z+(Math.random()-0.5)*0.02,h,vx:(Math.random()-0.5)*spd,vh:Math.random()*spd*0.8,life:life*(0.6+Math.random()*0.6),t:0,col,size:size*(0.6+Math.random()*0.8),grav});}
+function puff(x,z,h,n,col,spd,life,size,grav=-20){ if(parts.length>900)n=Math.min(n,2); if(parts.length>1400)return; for(let i=0;i<n;i++)parts.push({x,z:z+(Math.random()-0.5)*0.02,h,vx:(Math.random()-0.5)*spd,vh:Math.random()*spd*0.8,life:life*(0.6+Math.random()*0.6),t:0,col,size:size*(0.6+Math.random()*0.8),grav});}
 const shells=[];
 function shell(x,z,big=1,cb,enemy=false){ const dur=1.1+Math.random()*0.4; shells.push({x0:x+(enemy?1:-1)*(700+Math.random()*300),x,z,t:0,dur,big,cb,enemy}); AU.incoming&&AU.incoming(dur); }
 function stepShells(dt){ for(let i=shells.length-1;i>=0;i--){ const sh=shells[i]; sh.t+=dt; if(sh.t>=sh.dur){ shells.splice(i,1); explosion(sh.x,sh.z,sh.big); if(sh.cb)sh.cb(); } } }
@@ -1305,16 +1316,22 @@ function explosion(x,z,big=1){
   AU.boom(0.6*big);
 }
 function stepParts(dt){for(let i=parts.length-1;i>=0;i--){const p=parts[i];p.t+=dt;if(p.t>p.life){parts.splice(i,1);continue;}p.x+=p.vx*dt;p.h+=p.vh*dt;p.vh+=p.grav*dt;if(p.h<0&&p.col==="dirt"){p.h=0;p.vx*=0.5;p.vh=0;} if(p.col==="smoke"){p.vx*=0.98;p.x+=wind*dt;}}}
+/* v1.3: particles use cached soft sprites (radial falloff baked once) — cheaper than arc paths + per-particle rgba strings, and much softer */
+const PSPR={};
+function softSpr(key,r,g,b,core){ if(PSPR[key])return PSPR[key]; const c=document.createElement("canvas"); c.width=c.height=64; const g2=c.getContext("2d"); const gr=g2.createRadialGradient(32,32,0,32,32,32);
+  gr.addColorStop(0,`rgba(${r},${g},${b},1)`); gr.addColorStop(core,`rgba(${r},${g},${b},0.72)`); gr.addColorStop(0.72,`rgba(${r},${g},${b},0.22)`); gr.addColorStop(1,`rgba(${r},${g},${b},0)`); g2.fillStyle=gr; g2.fillRect(0,0,64,64); return PSPR[key]=c; }
 function drawParts(front){
-  for(const p of parts){ if((p.z>0.6)!==front)continue; const [sx,sy,s]=P(p.x,p.z,p.h); const k=p.t/p.life;
-    if(p.col==="fire"){cx.fillStyle=`rgba(255,${200-k*150|0},${80-k*80|0},${1-k})`;cx.beginPath();cx.arc(sx,sy,p.size*s*(1+k),0,7);cx.fill();}
-    else if(p.col==="smoke"){cx.fillStyle=`rgba(60,55,48,${0.45*(1-k)})`;cx.beginPath();cx.arc(sx,sy,p.size*s*(0.6+k*1.6),0,7);cx.fill();}
-    else if(p.col==="smokeW"){cx.fillStyle=`rgba(225,220,205,${0.55*(1-k*k)})`;cx.beginPath();cx.arc(sx,sy,p.size*s*(0.6+k*1.2),0,7);cx.fill();}
-    else if(p.col==="gas"){cx.fillStyle=`rgba(170,190,70,${0.32*(1-k*k)})`;cx.beginPath();cx.arc(sx,sy,p.size*s*(0.7+k),0,7);cx.fill();}
-    else if(p.col==="spark"){cx.fillStyle=`rgba(255,230,160,${1-k})`;cx.fillRect(sx,sy,3*s,1.5*s);}
-    else if(p.col==="blood"){cx.fillStyle=`rgba(90,10,6,${1-k})`;cx.fillRect(sx,sy,2*s,2*s);}
-    else {cx.fillStyle=`rgba(50,38,24,${1-k*0.5})`;cx.fillRect(sx-p.size*s/2,sy-p.size*s/2,p.size*s,p.size*s);}
+  const SM=softSpr("sm",58,53,46,0.3), SW=softSpr("sw",226,221,206,0.3), GS=softSpr("gs",170,190,70,0.3), F1=softSpr("f1",255,238,176,0.22), F2=softSpr("f2",250,130,46,0.3);
+  for(const p of parts){ if((p.z>0.6)!==front)continue; const [sx,sy,s]=P(p.x,p.z,p.h); if(sx<-260||sx>W+260)continue; const k=p.t/p.life;
+    if(p.col==="fire"){ const r=p.size*s*(1+k)*1.5; cx.globalAlpha=Math.max(0,1-k); cx.drawImage(k<0.35?F1:F2,sx-r,sy-r,2*r,2*r); }
+    else if(p.col==="smoke"){ const r=p.size*s*(0.6+k*1.6)*1.45; cx.globalAlpha=Math.max(0,0.55*(1-k)); cx.drawImage(SM,sx-r,sy-r,2*r,2*r); }
+    else if(p.col==="smokeW"){ const r=p.size*s*(0.6+k*1.2)*1.45; cx.globalAlpha=Math.max(0,0.62*(1-k*k)); cx.drawImage(SW,sx-r,sy-r,2*r,2*r); }
+    else if(p.col==="gas"){ const r=p.size*s*(0.7+k)*1.45; cx.globalAlpha=Math.max(0,0.38*(1-k*k)); cx.drawImage(GS,sx-r,sy-r,2*r,2*r); }
+    else if(p.col==="spark"){ cx.globalAlpha=Math.max(0,1-k); cx.fillStyle="#ffe6a0"; cx.fillRect(sx,sy,3*s,1.5*s); }
+    else if(p.col==="blood"){ cx.globalAlpha=Math.max(0,1-k); cx.fillStyle="#5a0a06"; cx.fillRect(sx,sy,2*s,2*s); }
+    else { cx.globalAlpha=Math.max(0,1-k*0.5); cx.fillStyle="#322618"; cx.fillRect(sx-p.size*s/2,sy-p.size*s/2,p.size*s,p.size*s); }
   }
+  cx.globalAlpha=1;
 }
 let tracers=[];
 function tracer(x1,z1,h1,x2,z2,h2){tracers.push({x1,z1,h1,x2,z2,h2,t:0});}
@@ -1783,7 +1800,7 @@ function stepBattle(dt){
   if(b.mel.length&&(!running.length||b.mel.length>running.length*0.6)){cam.tx=ex-80+b.front; cam.tz=1.15;} else if(running.length){ const avg=running.reduce((s,m)=>s+m.x,0)/running.length; cam.tx=Math.min(ex-200,Math.max(bx+100,avg+160)); }
   if(b.off&&b.off.alive&&!b.off.gone){ cam.tx=b.off.x+60; cam.tz=1.15; lookOff*=0.9; }
   // HUD
-  $("hud").innerHTML=`<span>${IC.man.replace('<svg','<svg width=22 height=22 style="vertical-align:-3px"')} ${alive.length}</span><span style="color:#c8432f">${IC.skull.replace('<svg','<svg width=22 height=22 style="vertical-align:-3px"')} ${b.dead}</span><span>${IC.gr.replace('<svg','<svg width=22 height=22 style="vertical-align:-3px"')} ${Math.max(0,Math.round(b.e))}</span>${b.pinned?`<span style="color:#d8b060">⬇ ${b.pinned}</span>`:""}`;
+  { const hh=`<span>${IC.man.replace('<svg','<svg width=22 height=22 style="vertical-align:-3px"')} ${alive.length}</span><span style="color:#c8432f">${IC.skull.replace('<svg','<svg width=22 height=22 style="vertical-align:-3px"')} ${b.dead}</span><span>${IC.gr.replace('<svg','<svg width=22 height=22 style="vertical-align:-3px"')} ${Math.max(0,Math.round(b.e))}</span>${b.pinned?`<span style="color:#d8b060">⬇ ${b.pinned}</span>`:""}`; if(hh!==stepBattle.hud){ stepBattle.hud=hh; $("hud").innerHTML=hh; } }
 }
 
 function trenchLines(i){ return i<0?1:Math.min(4,1+Math.floor((i+1)/4)); }
@@ -2271,7 +2288,7 @@ function frame(now){
     if(m.state==="melee"){m.phase+=rdt*4;}
     if((mode==="menu"||mode==="plan")&&!m.arriving&&Math.random()<rdt*0.004&&bubbles.length<2)say(m,pick(L_().chatter),2.4);
   }
-  sprFrame=0; if(montage){ stepSpriteWarm(26); montage.t+=rdt; if(montage.t>montage.dur){const oe=montage.onEnd;montage=null;if(oe)oe();$("hud").style.opacity=1;BGM.play("charge");} }
+  sprFrame=0; bakeFrame=0; if(montage){ stepSpriteWarm(26); montage.t+=rdt; if(montage.t>montage.dur){const oe=montage.onEnd;montage=null;if(oe)oe();$("hud").style.opacity=1;BGM.play("charge");} }
   if(mode==="charge"||mode==="melee")stepBattle(dt);
   { const vis=(mode==="plan"||mode==="menu")&&!chCGon(); if(vis!==frame.stripVis){ frame.stripVis=vis; const ts=$("topStrip"); if(ts) ts.style.visibility=vis?"":"hidden"; } }
   stepRagdolls(dt); stepParts(dt); stepShells(dt); stepWeather(rdt); BGM.step(rdt);
