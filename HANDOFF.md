@@ -171,3 +171,8 @@ NEW wishes:
 ## v1.1d
 - belts[] barbed-wire belts (count=cur.wr, at 0.52/0.66/0.40 SEGL) drawn by drawBelt (screw pickets, 3 strands, coils; gaps when cut). Men slow hard in uncut wire (0.18-0.34), 0.85 when cut.
 - Engineers (unlock lvl 10): wave.e (<=8, from recruits), #engRow stepper. m.eng men stop at an uncut belt (state "cut"), cut progress dt/3.6 each; exposed to fire; white armband.
+
+## v1.1e
+- SIGNAL FLARE (lvl 12): wave.h hold order (#holdRow Go/Hold). Dead ground fold at deadX()=0.42 SEGL (drawn, labelled in plan; fire x0.25 there). Holding men stop there (state "hold", light rifle exposure). #tools HUD button FLARE (key F) → fireFlare(): red flare, all rise together; auto after 30s.
+- SHOCK ASSAULT skill reward: if assault mass >=70% of those still coming and >= enemy garrison → b.shock, melee +30%.
+- #tools also hosts OFFICER button (key O) → window.startOfficer (next stage).
