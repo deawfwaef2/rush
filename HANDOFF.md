@@ -129,3 +129,11 @@ TODO next: plan camera should frame own trench better; unit types; enemy outpost
 - Melee has many TELEPORT bugs (men jump positions) → fix smooth movement.
 - Chapter CG quality too low → improve; CG needs an explicit SKIP button (only the button skips, not tapping anywhere).
 - Overall: wants master-level quality.
+
+## v1.0a
+- Victory: no banner/cheer/bugle/FX/count-up; flag raise only. BGM calm.mp3 = "Oppressive Gloom" (tense, not tearjerking).
+- Artillery unlocks at lvl index 4 (I-5, tagged new); supports granted once on unlock (S.supU). Tutorial skips #supWrap step if none.
+- Chapter strip moved to #topStrip (absolute, top centre between panels); removed from right panel.
+- Emoji removed: SVI svg icons (cg/fort/new/warn); ▶ uses text variation selector.
+- Veteran bug: holdBtnF auto-repeat never stopped because buildWaves destroyed the button → global HOLDS stop on window pointerup; vetRow built once (buildVetRow) w/ pips; waves clamped to available men.
+- Chapter CG: only the SKIP button (#cgSkip) skips.

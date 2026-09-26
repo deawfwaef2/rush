@@ -67,6 +67,10 @@ b{font-weight:700}
 .rep{margin:10px 0 6px;text-align:left;font-size:13px}.rep table{width:100%;border-collapse:collapse}.rep td{padding:3px 6px;border-bottom:1px solid #ffffff14}.rep td:last-child{text-align:right;font-family:Impact,sans-serif;font-size:17px}.rep td small{font-family:Georgia;font-size:10px;opacity:.7}.rep .red{color:#e87a5a}.rep .gold{color:#f0c870}.rep .rem{margin-top:8px;padding:7px 9px;background:#0005;border-left:3px solid var(--brass);font-style:italic;line-height:1.4}
 .fails{grid-column:1/-1;width:100%;margin-top:8px;font-size:11px;border-top:1px solid #ffffff18;padding-top:6px}.fails .ft{color:#e87a5a;letter-spacing:.15em;margin-bottom:3px}.fails .fr{padding:2px 0;color:var(--ink)}.fails .fr i{color:var(--dim);margin:0 3px 0 1px}.fails .fr span{color:#e8a080;margin-left:4px}
 .ov .card{max-height:96vh;overflow:auto}
+#topStrip{position:absolute;left:50%;top:92px;transform:translateX(-50%);display:flex;justify-content:center;pointer-events:none}
+#topStrip .strip{display:flex;align-items:center;gap:14px;margin:0;padding:6px 14px;background:linear-gradient(#1c160fdd,#0e0b08dd);border:1px solid #c9a86a55;border-radius:8px;box-shadow:0 2px 10px #0008;max-width:560px}
+#topStrip .strip .sh{margin:0;white-space:nowrap;font-size:12px;letter-spacing:.06em;text-align:center;line-height:1.25}#topStrip .strip .sh b{display:block;font-size:20px}
+#topStrip .strip .nodes{gap:9px}#topStrip .strip .lg{display:none}
 .strip{margin:2px 0 6px;padding:6px 6px 4px;background:#0004;border:1px solid #ffffff14;border-radius:6px;font-size:11px;letter-spacing:0}
 .strip .sh{color:var(--dim);margin-bottom:4px}.strip .sh b{color:#f0c870;font-family:Impact,sans-serif;font-size:15px;letter-spacing:.05em}
 .strip .nodes{display:flex;justify-content:space-between;align-items:flex-end;position:relative}
@@ -92,7 +96,8 @@ b{font-weight:700}
 #vetRow .lb,#formRow .lb,#delayRow .lb{flex:0 0 74px;color:var(--dim);font-size:11px;letter-spacing:.08em;text-transform:uppercase;line-height:1.1}
 .sm1{width:34px;height:34px;border-radius:50%;border:1px solid var(--brass);background:radial-gradient(circle at 40% 30%,#6a5a3a,#2a2217);color:#f3e2b8;font-size:20px;line-height:1;cursor:pointer}
 .sm1:active{transform:translateY(2px)}
-#vetRow b,#delayRow b{flex:1;text-align:center;font-family:Impact,sans-serif;font-size:22px;color:#f0c870}
+#vetRow .vbox{flex:1;text-align:center}#vetRow .vn{font-family:Impact,sans-serif;font-size:22px;color:#f0c870;display:block;line-height:1}#vetRow .vpips{display:flex;flex-wrap:wrap;justify-content:center;gap:2px;margin-top:3px}#vetRow .vpips i{width:5px;height:5px;border-radius:1px;background:#ffffff22}#vetRow .vpips i.on{background:#f0c870}#vetRow .vs{color:#f0c870}#vetRow button:disabled{opacity:.35}
+#delayRow b{flex:1;text-align:center;font-family:Impact,sans-serif;font-size:22px;color:#f0c870}
 #formRow button{flex:1;height:40px;border-radius:5px;border:1px solid var(--line);background:linear-gradient(#3a3226,#1f1a13);color:var(--ink);cursor:pointer;font-size:10px;font-family:Georgia;padding:2px}
 #formRow button svg{display:block;margin:0 auto 1px}
 #formRow button.on{border-color:var(--brass);background:linear-gradient(#6a5634,#2a2215)}
@@ -226,6 +231,9 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
  #cDay{display:none}#hud{top:60px}
 }
 body.cgon #hud,body.cgon #menu,body.cgon #top,body.cgon #advisor,body.cgon #adbanner,body.cgon #plan{display:none!important}
+.ti{width:1em;height:1em;vertical-align:-0.12em;display:inline-block}
+#cgSkip{display:none;position:fixed;right:22px;bottom:calc(12vh + 14px);z-index:60;padding:9px 22px;font-size:16px;letter-spacing:.2em;color:#efe4cc;background:#0009;border:1px solid #efe4cc88;border-radius:4px;cursor:pointer}
+#cgSkip:hover{background:#efe4cc22}body.cgon #cgSkip{display:block}
 </style>
 </head>
 <body>
@@ -236,7 +244,7 @@ body.cgon #hud,body.cgon #menu,body.cgon #top,body.cgon #advisor,body.cgon #adba
     <div class="chip" id="cTimer"></div>
     <div class="chip" id="cMorale"></div>
     <div class="chip" id="cDay"></div>
-    <div class="grow"></div>
+    <div class="grow"></div><div id="topStrip"></div>
     <div class="ibtn hide" id="bDev">DEV +1d</div>
     <div id="bAdW"><div class="ic" id="bAd"></div><div class="lb2" id="adLbl"></div></div>
     <div class="ibtn" id="bSound"></div>
@@ -244,7 +252,7 @@ body.cgon #hud,body.cgon #menu,body.cgon #top,body.cgon #advisor,body.cgon #adba
   </div>
   <div id="menu">
     <div id="logo"><h1 class="stencil" id="title">CHARGE</h1><div id="subtitle">1914</div></div>
-    <button class="btn red stencil" id="play">▶</button>
+    <button class="btn red stencil" id="play">▶︎</button>
     <div id="frontinfo"></div>
     <div id="menuHint"></div>
   </div>
@@ -266,7 +274,7 @@ body.cgon #hud,body.cgon #menu,body.cgon #top,body.cgon #advisor,body.cgon #adba
     </div>
     <div class="panel" id="right">
       <div class="ph"><span id="lblEnemy">ENEMY</span><span id="lvlName"></span></div>
-      <div id="strip"></div><div id="hzList"></div>
+<div id="hzList"></div>
       <div id="reward"></div>
       <div id="fort" class="hide"></div>
     </div>
@@ -281,6 +289,7 @@ body.cgon #hud,body.cgon #menu,body.cgon #top,body.cgon #advisor,body.cgon #adba
   <div id="tut" class="hide"><div id="tutHole"></div><div id="tutBox"></div></div>
   <div id="adbanner"></div><div class="edgeL" id="edL"></div><div class="edgeR" id="edR"></div>
 </div>
+<button id="cgSkip" class="stencil">SKIP ▸</button>
 <div id="rot"><svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#efe4cc" stroke-width="1.5"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M2 12a10 10 0 0 0 10 10M22 12A10 10 0 0 0 12 2"/></svg><span>↻</span></div>
 
 <!-- CrazyGames SDK v3 (AD INTEGRATION — see ADS.md). Fails silently offline. -->
@@ -418,7 +427,7 @@ function load(){try{S=JSON.parse(localStorage.getItem(SAVE_KEY))}catch(e){} if(!
 function save(){try{localStorage.setItem(SAVE_KEY,JSON.stringify(S))}catch(e){}}
 load();
 const L_ = ()=>T[S.lang];
-function supMax(){const ch=Math.floor(S.lvl/8);return {art: 3+Math.min(4,ch), snp: S.lvl>=3?2+Math.floor(ch/2):0, smk: S.lvl>=9?2+Math.floor(ch/3):0, tnk: S.lvl>=32?2:0};}
+function supMax(){const ch=Math.floor(S.lvl/8);return {art: S.lvl>=4?3+Math.min(4,ch):0, snp: S.lvl>=3?2+Math.floor(ch/2):0, smk: S.lvl>=9?2+Math.floor(ch/3):0, tnk: S.lvl>=32?2:0};}
 /* MORALE: 0..100. Wins raise it, defeats drop it, and it always drifts back toward 50 over (real) time.
    mf = 0.75..1.25 multiplies speed, melee and survival. At 0 the men refuse to charge. */
 function moraleTick(){ const now=Date.now(); const hrs=(now-S.moraleT)/3600000; if(hrs>0){ S.morale=50+(S.morale-50)*Math.pow(0.5,hrs/6); S.moraleT=now; } }
@@ -1154,7 +1163,7 @@ function applyTexts(){
   document.documentElement.lang=S.lang;
 }
 function fmtT(ms){ms=Math.max(0,ms);const h=Math.floor(ms/3600000),m=Math.floor(ms/60000)%60,s=Math.floor(ms/1000)%60;return `${h}:${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;}
-function updTop(){
+function updTop(){ updStrip();
   const t=L_(), zh=S.lang==="zh"; moraleTick();
   const left=S.lastPay+DAY_MS-Date.now();
   $("cTroops").innerHTML=`<div class="ic">${IC.man}</div><div class="vv"><span class="lb">${t.lblRes}</span><b>${S.reserve}${S.vets?` <small>★${S.vets}</small>`:""}</b></div>`;
@@ -1167,18 +1176,24 @@ function updTop(){
   const ch=$("charge"); if(ch){ ch.classList.toggle("refuse",S.morale<=2); }
 }
 function failsHTML(){ const F=(S.fails||{})[S.lvl]; if(!F||!F.length)return ""; const zh=S.lang==="zh"; const fl=zh?["散","横","密"]:["L","Ln","D"];
-  return `<div class="fails"><div class="ft">✝ ${zh?"此阵地失败的冲锋":"FAILED ATTACKS HERE"}</div>`+F.map((f,i)=>`<div class="fr"><b>#${i+1}</b> ${zh?"第":"D"}${f.day}${zh?"天":""} · ${f.w.map((w,j)=>`W${j+1} ${w.r}${w.v?"+★"+w.v:""}<i>${fl[w.f]}</i>`).join(" ")} <span>✝${f.dead} ⬇${f.pin} · ${zh?"残敌":"left"} ${f.e}</span></div>`).join("")+`</div>`; }
+  return `<div class="fails"><div class="ft">✝︎ ${zh?"此阵地失败的冲锋":"FAILED ATTACKS HERE"}</div>`+F.map((f,i)=>`<div class="fr"><b>#${i+1}</b> ${zh?"第":"D"}${f.day}${zh?"天":""} · ${f.w.map((w,j)=>`W${j+1} ${w.r}${w.v?"+★"+w.v:""}<i>${fl[w.f]}</i>`).join(" ")} <span>✝︎${f.dead} ⬇${f.pin} · ${zh?"残敌":"left"} ${f.e}</span></div>`).join("")+`</div>`; }
 const ROM=["I","II","III","IV","V","VI"];
 function lvlCode(i){ return ROM[Math.floor(i/8)]+"-"+(i%8+1); }
 function lvlTags(i){ const t=[]; const k=i%8; if(k===2)t.push("cg"); if(k===7)t.push("fort");
-  if([2,3,8,9,24,32].includes(i))t.push("new");
+  if([3,4,8,9,24,32].includes(i))t.push("new");
   return t; }
-const TAGI={cg:"🎬",fort:"🏰",new:"✦"};
-function stripHTML(){ const ch=Math.floor(S.lvl/8), zh=S.lang==="zh"; let h=`<div class="strip"><div class="sh">${CHAPTERS[Math.min(4,ch)][S.lang]} · <b>${lvlCode(S.lvl)}</b></div><div class="nodes">`;
+const SVI={cg:'<svg class="ti" viewBox="0 0 12 12"><rect x="1" y="3" width="10" height="7" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M1 3l2-2h2l-2 2m2 0l2-2h2l-2 2" stroke="currentColor" stroke-width="1" fill="none"/></svg>',
+ fort:'<svg class="ti" viewBox="0 0 12 12"><path d="M1 11V4h2v2h2V4h2v2h2V4h2v7z" fill="currentColor"/></svg>',
+ new:'<svg class="ti" viewBox="0 0 12 12"><path d="M6 1l1.6 3.4L11 6 7.6 7.6 6 11 4.4 7.6 1 6l3.4-1.6z" fill="currentColor"/></svg>',
+ warn:'<svg class="ti" viewBox="0 0 12 12"><path d="M6 1l5.5 10H.5z" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M6 4.5v3.2M6 8.8v1" stroke="currentColor" stroke-width="1.3"/></svg>',
+ play:'<svg viewBox="0 0 12 12" width="1em" height="1em"><path d="M3 1.5v9l7.5-4.5z" fill="currentColor"/></svg>'};
+const TAGI={cg:SVI.cg,fort:SVI.fort,new:SVI.new};
+function updStrip(){ const el=$("topStrip"); if(el) el.innerHTML=S.done?"":stripHTML(); }
+function stripHTML(){ const ch=Math.floor(S.lvl/8), zh=S.lang==="zh"; let h=`<div class="strip"><div class="sh">${CHAPTERS[Math.min(4,ch)][S.lang]}<b>${lvlCode(S.lvl)}</b></div><div class="nodes">`;
   for(let k=0;k<8;k++){ const i=ch*8+k; if(i>=NLV)break; const tg=lvlTags(i); const st=i<S.lvl?"done":i===S.lvl?"cur":"";
     h+=`<div class="nd ${st} ${tg.join(" ")}" title="${LV[i][0]}"><i>${tg.map(x=>TAGI[x]).join("")}</i><span>${k+1}</span></div>`; }
   const tg=lvlTags(S.lvl); const nm={cg:zh?"章节影片":"chapter film",fort:zh?"要塞":"fortress",new:zh?"新机制":"new mechanic"};
-  return h+`</div><div class="lg">${tg.length?tg.map(x=>TAGI[x]+" "+nm[x]).join(" · "):""}<span>🎬 ${nm.cg} · 🏰 ${nm.fort} · ✦ ${nm.new}</span></div></div>`; }
+  return h+`</div><div class="lg">${tg.length?tg.map(x=>TAGI[x]+" "+nm[x]).join(" · "):""}<span>${SVI.cg} ${nm.cg} · ${SVI.fort} ${nm.fort} · ${SVI.new} ${nm.new}</span></div></div>`; }
 function hazRows(){
   const t=L_(), rows=[];
   const add=(k,v,max)=>{ if(lvl[k]>0||v>0) rows.push(`<div class="hz" id="hz_${k}" data-k="${k}">${ico(k)}<span class="nm">${t.hz[k]}</span><span class="val">${k==="gr"||k==="mn"?Math.round(v):Math.round(v*10)/10}</span><div class="bar"><i style="width:${Math.min(100,v/max*100)}%"></i></div><div class="ds">${t.hzD[k]} <span class="inf">ⓘ</span></div></div>`); };
@@ -1186,15 +1201,17 @@ function hazRows(){
   $("hzList").innerHTML=rows.join(""); document.querySelectorAll(".hz").forEach(el=>el.onclick=()=>mechCard(el.dataset.k,false));
   $("reward").innerHTML=`${ico("truck","b")}<div><div class="t">${t.rewardT}</div><div class="v">+${lvl.reward} ${S.lang==="zh"?"人 / 天":"men / day"}</div><div class="t">${S.income} → ${S.income+lvl.reward}</div></div>`+failsHTML();
   $("sendD").textContent=t.spent;
-  const f=$("fort"); f.classList.toggle("hide",!lvl.fort); f.textContent=`⚠ ${t.fortress} · ${t.fortTip}`;
-  $("lvlName").textContent=`${lvlCode(S.lvl)} · ${LV[S.lvl][0]}`; $("strip").innerHTML=stripHTML();
+  const f=$("fort"); f.classList.toggle("hide",!lvl.fort); f.innerHTML=`${SVI.warn} ${t.fortress} · ${t.fortTip}`;
+  $("lvlName").textContent=LV[S.lvl][0]; updStrip();
 }
 function buildSupports(){
   const t=L_(),el=$("supports");el.innerHTML="";
+  S.supU=S.supU||{}; for(const k in supMax()){ if(supMax()[k]>0&&!S.supU[k]){ S.supU[k]=1; S.sup[k]=Math.max(S.sup[k]||0,supMax()[k]); save(); } }
   for(const k of ["art","snp","smk","tnk"]){ const mx=supMax()[k]; if(!mx)continue;
     const d=document.createElement("div");d.className="sup"+(S.sup[k]+used[k]<=0?" off":"")+(used[k]?" on":"");
     d.innerHTML=`<button class="sm0" data-a="-">−</button>${ico(k,"g")}<div class="tx"><b>${t.sup[k]}</b><i>${t.supD[k]}</i><div class="pips">${Array.from({length:S.sup[k]+used[k]},(_,i)=>`<em class="${i<used[k]?"u":""}"></em>`).join("")}</div></div><span class="n">${used[k]}</span><button class="sm0" data-a="+">+</button><span class="q">i</span>`;
     d.onclick=(e)=>{ const a=e.target.dataset&&e.target.dataset.a; if(e.target.classList.contains("q")){mechCard(k,true);return;} if(a==="-"){unuseSupport(k);return;} useSupport(k);};el.appendChild(d);}
+  $("supWrap").style.visibility=el.children.length?"":"hidden";
 }
 /* ---------- WAVES (冲击波帧): each wave = recruits + veterans + formation + delay ---------- */
 let waves=[{r:0,v:0,f:1,d:0}], wSel=0;
@@ -1207,6 +1224,7 @@ function totV(ex){return waves.reduce((a,w,i)=>a+(i===ex?0:w.v),0);}
 function formIcon(f){const pts=f===0?[[3,4],[13,3],[23,5],[7,12],[19,13],[4,19],[15,20],[24,18]]:f===1?[[3,6],[9,6],[15,6],[21,6],[3,16],[9,16],[15,16],[21,16]]:[[7,6],[11,6],[15,6],[19,6],[7,11],[11,11],[15,11],[19,11],[7,16],[11,16],[15,16],[19,16]];
   return `<svg width="26" height="20" viewBox="0 0 26 22">${pts.map(p=>`<circle cx="${p[0]}" cy="${p[1]}" r="2.2" fill="#e8d6a8"/>`).join("")}</svg>`;}
 function buildWaves(){
+  { let vl=S.vets, rl=recAvail(); waves.forEach(w=>{ w.v=Math.max(0,Math.min(w.v,vl)); vl-=w.v; w.r=Math.max(0,Math.min(w.r,rl)); rl-=w.r; }); }
   const zh=S.lang==="zh"; const W0=waves[wSel];
   $("waveTabs").innerHTML=waves.map((w,i)=>`<button class="${i===wSel?"on":""}" data-i="${i}">W${i+1}<small>${w.r}${w.v?"+★"+w.v:""}</small>${i>0?`<span class="x" data-x="${i}">×</span>`:""}</button>`).join("")+(waves.length<MAXW()?`<button class="add" data-add="1" title="${zh?"新增波次":"add wave"}">+</button>`:"");
   $("waveTabs").querySelectorAll("button").forEach(b=>b.onclick=(e)=>{AU.init();AU.click(); if(e.target.dataset.x){waves.splice(+e.target.dataset.x,1);wSel=Math.min(wSel,waves.length-1);syncMen();buildWaves();return;}
@@ -1214,8 +1232,7 @@ function buildWaves(){
   $("lblRec").textContent=(zh?"新兵":"RECRUITS")+` · W${wSel+1}`;
   $("sendN").innerHTML=`${W0.r}<small>${zh?"新兵":"RECRUITS"}</small>`;
   const rmax=W0.r+Math.max(0,recAvail()-totR()); const r=$("sendR"); r.max=rmax; r.value=W0.r; r.style.setProperty("--p",(rmax?W0.r/rmax*100:0)+"%");
-  $("vetRow").innerHTML=`<span class="lb">★ ${zh?"老兵":"Veterans"}<br><small>${S.vets-totV()} ${zh?"可用":"free"}</small></span><button class="sm1" data-v="-1">−</button><b>★${W0.v}</b><button class="sm1" data-v="1">+</button>`;
-  $("vetRow").querySelectorAll("button").forEach(b=>holdBtnF(b,()=>{setWave(wSel,null,W0.v+(+b.dataset.v));}));
+  buildVetRow(zh);
   const fl=zh?["散兵线","横队","密集"]:["Loose","Line","Dense"];
   $("formRow").innerHTML=`<span class="lb">${zh?"队形":"Formation"}</span>`+[0,1,2].map(f=>`<button data-f="${f}" class="${W0.f===f?"on":""}">${formIcon(f)}${fl[f]}</button>`).join("");
   $("formRow").querySelectorAll("button").forEach(b=>b.onclick=()=>{AU.init();AU.click();W0.f=+b.dataset.f;syncMen(true);buildWaves();});
@@ -1229,11 +1246,23 @@ function buildWaves(){
     if(i>0&&w.d>=12) warn.push(zh?`W${i+1} 间隔太久：前一波会孤军奋战。`:`W${i+1} waits too long: the previous wave fights alone.`); });
   if(waves.length>1&&waves.some(w=>!wTot(w))) warn.push(zh?"有空的波次。":"A wave is empty.");
   if(!warn.length&&sendN>0) warn.push("OK");
-  $("warn").innerHTML=warn.map(w=>w==="OK"?`<div class="ok">${zh?"队形合理。":"Formation sound."}</div>`:`<div>⚠ ${w}</div>`).join("");
+  $("warn").innerHTML=warn.map(w=>w==="OK"?`<div class="ok">${zh?"队形合理。":"Formation sound."}</div>`:`<div>${SVI.warn} ${w}</div>`).join("");
   const t=L_();
   $("sendInfo").innerHTML=`<div><span>${zh?"总计派出":"Total going over"}</span><b>${sendN}</b></div><div><span>${zh?"其中老兵":"of which veterans"}</span><b>★ ${totV()}</b></div><div><span>${t.sendInfoB}</span><b>${S.reserve-sendN}</b></div>`;
   $("lblVet").textContent=`${recAvail()-totR()} + ★${S.vets-totV()} / ${S.reserve}`;
 }
+const STAR='<svg class="ti" viewBox="0 0 12 12"><path d="M6 .8l1.5 3.4 3.7.3-2.8 2.4.9 3.6L6 8.6 2.7 10.5l.9-3.6L.8 4.5l3.7-.3z" fill="currentColor"/></svg>';
+function buildVetRow(zh){ const el=$("vetRow"); const W0=waves[wSel]; const free=S.vets-totV();
+  el.style.display=S.vets>0||W0.v>0?"":"none";
+  if(!el.dataset.built){ el.dataset.built=1;
+    el.innerHTML=`<span class="lb"><span class="vs">${STAR}</span> <span class="vt"></span><br><small class="vf"></small></span><button class="sm1" data-v="-1">−</button><div class="vbox"><b class="vn"></b><div class="vpips"></div></div><button class="sm1" data-v="1">+</button>`;
+    el.querySelectorAll("button").forEach(b=>holdBtnF(b,()=>{ const w=waves[wSel]; if(w) setWave(wSel,null,w.v+(+b.dataset.v)); })); }
+  el.querySelector(".vt").textContent=zh?"老兵":"Veterans";
+  el.querySelector(".vf").textContent=`${free} ${zh?"待命":"in reserve"}`;
+  el.querySelector(".vn").textContent=W0.v;
+  const tot=W0.v+free, shown=Math.min(tot,24);
+  el.querySelector(".vpips").innerHTML=Array.from({length:shown},(_,i)=>`<i class="${i<Math.round(W0.v/Math.max(1,tot)*shown)?"on":""}"></i>`).join("");
+  el.querySelectorAll("button")[0].disabled=W0.v<=0; el.querySelectorAll("button")[1].disabled=free<=0; }
 function setWave(i,r,v){ const w=waves[i]; if(!w)return;
   if(r!=null) w.r=Math.max(0,Math.min(r, recAvail()-totR(i)));
   if(v!=null) w.v=Math.max(0,Math.min(v, S.vets-totV(i)));
@@ -1273,7 +1302,8 @@ function pushOne(){
   const m=mkMan(x,zz,q.vet); m.sent=true; m.arriving=false; m.wave=q.w; m.tx=x; m.intrench=true; m.state="idle"; m.pop=0;
   men.push(m); sortMen(); if(Math.random()<0.3)AU.thud();
 }
-function holdBtnF(el,fn){ let iv=null,to=null; const go=()=>{AU.init();fn();AU.click();}; const stop=()=>{clearTimeout(to);clearInterval(iv);};
+const HOLDS=new Set(); const holdStopAll=()=>{HOLDS.forEach(f=>f());HOLDS.clear();}; addEventListener("pointerup",holdStopAll); addEventListener("pointercancel",holdStopAll); addEventListener("blur",holdStopAll);
+function holdBtnF(el,fn){ let iv=null,to=null; const go=()=>{AU.init();fn();AU.click();}; const stop=()=>{clearTimeout(to);clearInterval(iv);}; HOLDS.add(stop);
   el.onpointerdown=(e)=>{e.preventDefault();go();to=setTimeout(()=>{iv=setInterval(go,70);},380);}; el.onpointerup=el.onpointerleave=stop; }
 
 /* ---------- Advisor: Monte-Carlo estimate, words only ---------- */
@@ -1346,7 +1376,7 @@ function toMenu(){
   setupFront(); worldVisibleIdle();
   cam.tx=trenchX(S.lvl)-250; cam.tz=1.25; cam.tt=0.15;
   const ch=CHAPTERS[Math.min(4,Math.floor(S.lvl/8))];
-  $("menuHint").textContent=S.lang==="zh"?"← 拖动画面查看攻克的阵地":"← drag to look back at captured lines"; $("frontinfo").innerHTML= S.done? L_().endT : `${ch[S.lang]} · ${lvlCode(S.lvl)} ${LV[S.lvl][0]}`+`<div style='max-width:420px;margin:8px auto 0'>${stripHTML()}</div>`;
+  $("menuHint").textContent=S.lang==="zh"?"← 拖动画面查看攻克的阵地":"← drag to look back at captured lines"; $("frontinfo").innerHTML= S.done? L_().endT : `${ch[S.lang]} · ${lvlCode(S.lvl)} ${LV[S.lvl][0]}`;updStrip();
   $("subtitle").textContent=ch.year;
 }
 function toPlan(){
@@ -1357,7 +1387,7 @@ function toPlan(){
   setupFront(); men=[]; pushQueue=0; pushList=[]; waves=[{r:0,v:0,f:1,d:0}]; wSel=0;
   cam.tx=trenchX(S.lvl)+SEGL()*0.2; cam.tz=0.9; cam.tt=0.45;
   setTimeout(()=>{ if(mode!=="pan")return; mode="plan"; $("plan").classList.remove("hide"); hazRows(); buildSupports(); buildPresets(); setSend(Math.min(S.reserve, Math.max(0, Math.ceil(lvl.gr*2)))); CG.gameplayStart(); updTop();
-    if(lvl.fort) big(`⚠ ${L_().fortress}`,L_().fortTip,2200); if(S.reserve<Math.max(5,lvl.gr)) setTimeout(adOffer,900);
+    if(lvl.fort) big(`${L_().fortress}`,L_().fortTip,2200); if(S.reserve<Math.max(5,lvl.gr)) setTimeout(adOffer,900);
     const ch=Math.floor(S.lvl/8); if(S.lvl%8===2 && !S["seenCG"+ch]){S["seenCG"+ch]=1;save();playChapterCG(ch,()=>{});} else if(S.lvl%8===0 && !S["seenCh"+ch]){S["seenCh"+ch]=1;save();chapterCard(ch);} else if(!S.tut) setTimeout(startTut,400); },1300);
 }
 function chapterCard(ch){
@@ -1368,7 +1398,7 @@ function chapterCard(ch){
    {en:"Winter. Snow hides the dead and shows every footprint.",zh:"冬天。雪掩盖了死者，却暴露了每一个脚印。"},
    {en:"A new weapon drifts across the wire. It smells like cut grass.",zh:"一种新武器飘过铁丝网。闻起来像割过的青草。"},
    {en:"The line is breaking. Theirs, for once. One last push.",zh:"战线正在崩溃。这一次，是他们的。最后一次冲锋。"}][ch];
-  ov.innerHTML=`<div class="card"><div class="date">${c.year}</div><h2 class="stencil">${c[S.lang]}</h2><p>${intro[S.lang]}</p><button class="btn" id="okc">▶</button></div>`;
+  ov.innerHTML=`<div class="card"><div class="date">${c.year}</div><h2 class="stencil">${c[S.lang]}</h2><p>${intro[S.lang]}</p><button class="btn" id="okc">▶︎</button></div>`;
   $("okc").onclick=()=>{ov.classList.add("hide");AU.click(); if(!S.tut&&mode==="plan")setTimeout(startTut,300);};
 }
 
@@ -1572,7 +1602,7 @@ function reportHTML(b,surv,vetGain,hold,rear,fail){
    ${row(zh?"阵亡":"Killed",b.dead,"red")}${row(zh?"趴下不起 (计为损失)":"Went to ground (lost)",b.pinned,"red")}
    ${row(zh?"击毙守军":"Enemy killed",b.eKilled)}
    ${fail?"":row(zh?"幸存":"Survived",surv)+row(zh?"留守新阵地":"Hold the new trench",hold)+row(zh?"调往后方":"Transferred to the rear",rear, rear>b.e0?"red":"")+row(zh?"晋升老兵 返回":"Return as veterans",vetGain,"gold")}
-   </table><div class="rem">📝 ${rem}</div></div>`;
+   </table><div class="rem">${rem}</div></div>`;
 }
 function result(win){
   mode="result"; CG.gameplayStop(); slowmo=1;
@@ -1588,13 +1618,9 @@ function result(win){
     S.lvl++; if(S.lvl>=NLV){S.done=true;S.lvl=NLV-1;S.endMs=Date.now()-S.start;}
     save();
     // cinematic: flag + cheer + slowmo + camera rise
-    AU.cheer(); setTimeout(()=>SFX.play("bugle",0.45,{fixed:1,dur:6}),900);
-    men.forEach(m=>{if(m.alive){m.state=Math.random()<0.3?"cheer":"idle";m.jump=0;}});
+    men.forEach(m=>{if(m.alive){m.state="idle";m.jump=0;}});
     flagRaise={x:trenchX(done+1),t:0};
-    victoryBanner(t.win,t.winS,LV[done][0]);
-    startVictoryFX(trenchX(done+1), surv);
-    cam.tt=0.9; cam.tz=0.75;
-    for(let i=0;i<Math.min(5,surv);i++)setTimeout(()=>{const m=pick(men.filter(x=>x.alive));if(m)say(m,pick(t.winCries));},300+i*500);
+    // v1.0: no banner, no bursts, no cheering — the line is simply taken.
     setTimeout(()=>{
       const ov=$("ov");ov.classList.remove("hide");
       const L=LV[done];
@@ -1607,8 +1633,8 @@ function result(win){
           <div class="tile dark"><b class="cu" data-v="${b.dead}">0</b><span>${t.winLost}</span></div></div>
         ${reportHTML(b,surv,vetGain,hold,rear)}
         <div style="font-size:13px;opacity:.7">${S.done?"":t.nextObj+": <b>"+LV[S.lvl][0]+"</b>"}</div>
-        <button class="btn" id="okr">▶</button></div>`;
-      countUp(); ov.querySelector(".card").classList.add("vcard"); CG.banner(true); // [AD SPOT C]
+        <button class="btn" id="okr">▶︎</button></div>`;
+      ov.querySelectorAll(".cu").forEach(e=>e.textContent=((+e.dataset.v>0&&e.dataset.p)||"")+e.dataset.v); CG.banner(true); // [AD SPOT C]
       $("okr").onclick=()=>{AU.click();CG.banner(false);CG.midgame(()=>{ if(S.done)showEnd(); else advanceCamp(); });}; // [AD SPOT B]
     },3200);
   } else {
@@ -1618,7 +1644,7 @@ function result(win){
     setTimeout(()=>{
       const ov=$("ov");ov.classList.remove("hide");
       ov.innerHTML=`<div class="card"><h2 class="stencil">${t.fail}</h2><div style="font-size:16px;line-height:1.9">${IC.skull.replace('<svg','<svg width=18 height=18 style="vertical-align:-3px"')} <b>${b.dead}</b> ${t.winLost} · ${IC.gr.replace('<svg','<svg width=18 height=18 style="vertical-align:-3px"')} <b>${Math.round(cur.gr)}</b> ${t.hz.gr}</div>${reportHTML(b,0,0,0,0,true)}
-        <p>${S.lang==="zh"?"战壕里又空出了几个位置。":"More empty places in the trench tonight."}</p><div style="font-size:15px">${IC.morale.replace('<svg','<svg width=18 height=18 style="vertical-align:-3px"')} <b>${S.lastMoraleD}</b> ${t.morale} (${Math.round(S.morale)} · ${moraleWord()})</div><button class="btn" id="okr">▶</button></div>`;
+        <p>${S.lang==="zh"?"战壕里又空出了几个位置。":"More empty places in the trench tonight."}</p><div style="font-size:15px">${IC.morale.replace('<svg','<svg width=18 height=18 style="vertical-align:-3px"')} <b>${S.lastMoraleD}</b> ${t.morale} (${Math.round(S.morale)} · ${moraleWord()})</div><button class="btn" id="okr">▶︎</button></div>`;
       CG.banner(true);
       $("okr").onclick=()=>{AU.click();CG.banner(false);CG.midgame(()=>advanceCamp());};
     },2600);
@@ -1761,17 +1787,17 @@ const TUT={en:[
  ["#charge","冲锋！","准备好了，就吹响哨子。"]]};
 let tutI=-1;
 function startTut(){ tutI=0; $("tut").classList.remove("hide"); showTut(); }
-function showTut(){ const steps=TUT[S.lang]; if(tutI>=steps.length){ $("tut").classList.add("hide"); S.tut=1; save(); return; }
+function showTut(){ const steps=TUT[S.lang].filter(x=>x[0]!=="#supWrap"||supMax().art>0); if(tutI>=steps.length){ $("tut").classList.add("hide"); S.tut=1; save(); return; }
   const [sel,h,txt]=steps[tutI]; const el=document.querySelector(sel); if(!el){tutI++;showTut();return;}
   const r0=el.getBoundingClientRect(), hole=$("tutHole"), box=$("tutBox"); const zz=(r0.width&&el.offsetWidth)?r0.width/el.offsetWidth/1:1; const k=1/UIZ*(Math.abs(zz-UIZ)<0.02?1:zz); const r={left:r0.left*k,top:r0.top*k,width:r0.width*k,height:r0.height*k,right:r0.right*k,bottom:r0.bottom*k}; const W=innerWidth/UIZ,H=innerHeight/UIZ;
   Object.assign(hole.style,{left:r.left-6+"px",top:r.top-6+"px",width:r.width+12+"px",height:r.height+12+"px"});
-  box.innerHTML=`<h3 class="stencil">${h}</h3>${txt}<div class="nx"><span>${tutI+1} / ${steps.length}</span><button class="btn sm">${tutI===steps.length-1?"OK":"▶"}</button></div>`;
+  box.innerHTML=`<h3 class="stencil">${h}</h3>${txt}<div class="nx"><span>${tutI+1} / ${steps.length}</span><button class="btn sm">${tutI===steps.length-1?"OK":"▶︎"}</button></div>`;
   const bw=Math.min(340,W-20); let bx=r.left+r.width/2-bw/2, by=r.bottom+14; if(by+170>H)by=r.top-14-170; if(r.width>W*0.3&&r.left>W/2){bx=r.left-bw-16;by=Math.max(10,r.top);} if(r.right<W*0.3){bx=r.right+16;by=Math.max(10,r.top);}
   bx=Math.max(10,Math.min(W-bw-10,bx)); by=Math.max(10,Math.min(H-180,by)); Object.assign(box.style,{left:bx+"px",top:by+"px",width:bw+"px"});
   box.querySelector("button").onclick=()=>{AU.init();AU.click();tutI++;showTut();}; }
 // drag to look back at captured strongholds (menu)
 let drag=null;
-cv.addEventListener("pointerdown",e=>{ if(chCG){endChapterCG();return;} if(mode==="menu"){drag={x:e.clientX,cx:cam.tx};} else {drag={x:e.clientX,lo:lookOff,look:1};} });
+cv.addEventListener("pointerdown",e=>{ if(chCG)return; if(mode==="menu"){drag={x:e.clientX,cx:cam.tx};} else {drag={x:e.clientX,lo:lookOff,look:1};} });
 addEventListener("pointermove",e=>{ if(drag&&drag.look){ lookOff=Math.max(-SEGL()*0.7,Math.min(SEGL()*0.7,drag.lo-(e.clientX-drag.x)/scaleZ(0.6))); return; } if(drag){ const s=scaleZ(0.6); cam.tx=Math.min(trenchX(S.lvl)+400,Math.max(-300,drag.cx-(e.clientX-drag.x)/s)); } });
 addEventListener("pointerup",()=>{drag=null;});
 cv.addEventListener("wheel",e=>{ if(mode==="menu"){cam.tx=Math.min(trenchX(S.lvl)+400,Math.max(-300,cam.tx+e.deltaY+e.deltaX));} },{passive:true});
@@ -1830,11 +1856,11 @@ function frame(now){
     
     drawFlag(sx,sy,s*0.8,100,time+h.lvl);
     if(mode==="menu"&&h.lvl<S.lvl-0){ cx.fillStyle="rgba(20,16,12,0.75)";const tx=sx-40,ty=sy-130*s;cx.fillRect(tx,ty-22,110,36);
-      cx.fillStyle="#efe4cc";cx.font="12px Georgia";cx.fillText(LV[h.lvl][0],tx+6,ty-8);cx.font="12px Georgia";cx.fillText(`☼${h.day}   ✝${h.lost}`,tx+6,ty+8);} }
+      cx.fillStyle="#efe4cc";cx.font="12px Georgia";cx.fillText(LV[h.lvl][0],tx+6,ty-8);cx.font="12px Georgia";cx.fillText(`☼${h.day}   ✝︎${h.lost}`,tx+6,ty+8);} }
   // mines (hidden: only faint)
   for(const mn of mines){ if(!mn.live)continue; const [sx,sy,s]=P(mn.x,mn.z); cx.fillStyle="rgba(30,24,16,0.35)";cx.beginPath();cx.ellipse(sx,sy,6*s,2*s,0,0,7);cx.fill(); }
   // failed-attempt markers at the enemy wire
-  { const F=(S.fails||{})[S.lvl]; if(F&&mode!=="menu") F.forEach((f,i)=>{ const [sx,sy,s]=P(trenchX(S.lvl+1)-110-i*26,0.62+(i%3)*0.1); cx.fillStyle="#2a1e12"; cx.fillRect(sx-1.5*s,sy-34*s,3*s,34*s); cx.fillRect(sx-9*s,sy-26*s,18*s,3*s); cx.fillStyle="rgba(240,225,190,.9)"; cx.font=`${Math.max(9,11*s)}px Georgia`; cx.fillText("#"+(i+1)+" ✝"+f.dead,sx-12*s,sy-38*s); }); }
+  { const F=(S.fails||{})[S.lvl]; if(F&&mode!=="menu") F.forEach((f,i)=>{ const [sx,sy,s]=P(trenchX(S.lvl+1)-110-i*26,0.62+(i%3)*0.1); cx.fillStyle="#2a1e12"; cx.fillRect(sx-1.5*s,sy-34*s,3*s,34*s); cx.fillRect(sx-9*s,sy-26*s,18*s,3*s); cx.fillStyle="rgba(240,225,190,.9)"; cx.font=`${Math.max(9,11*s)}px Georgia`; cx.fillText("#"+(i+1)+" ✝︎"+f.dead,sx-12*s,sy-38*s); }); }
   // corpses (baked)
   for(const r of corpses) if(Math.abs(r.pts[2].x-cam.x)<W*1.5) drawRagdoll(r);
   // depth-sorted entities
@@ -2088,6 +2114,7 @@ const CGTXT={en:[["August 1914.","They said it would be over by Christmas.","By 
  ["1917年。","连空气都成了武器。","一只面具，一口喘息，你学会了用呼吸来数时间。"],
  ["1918年8月。","战线终于动了。","一百天。坦克、飞机，还有向东走去的疲惫士兵。"]]};
 function playChapterCG(ch,done){ chCG={ch,t:0,dur:13.5,done}; document.body.classList.add("cgon"); BGM.play("calm"); $("plan").classList.add("hide"); SFX.play("booms_far",0.5,{fixed:1,dur:12}); if(ch===1)SFX.play("rain",0.5,{fixed:1,dur:13}); if(ch===2)SFX.play("wind",0.6,{fixed:1,dur:13}); if(ch===3)SFX.play("heart",0.6,{fixed:1,dur:8}); }
+$("cgSkip")&&0; addEventListener("load",()=>{const b=document.getElementById("cgSkip"); if(b)b.onclick=()=>{AU.click&&AU.click();endChapterCG();};});
 function endChapterCG(){ if(!chCG)return; const d=chCG.done; chCG=null; document.body.classList.remove("cgon"); $("plan").classList.remove("hide"); if(d)d(); }
 function drawChapterCG(dt){ const c=chCG; c.t+=dt; if(c.t>c.dur){endChapterCG();return;} const t=c.t, ch=c.ch, bar=H*0.12, ih=H-2*bar, S_=ih/200;
   const sc=t<4.5?0:t<9?1:2, lt=(t-[0,4.5,9][sc])/4.5; const P0=PAL[CHAPTERS[ch].pal];
@@ -2127,7 +2154,7 @@ function drawChapterCG(dt){ const c=chCG; c.t+=dt; if(c.t>c.dur){endChapterCG();
   const L=CGTXT[S.lang][ch]; const line=L[sc]; const nch=Math.floor(Math.min(1,lt*1.6)*line.length);
   cx.fillStyle="rgba(239,228,204,0.95)"; cx.textAlign="center"; cx.font=`${Math.max(16,H*0.032)}px Georgia`; cx.fillText(line.slice(0,nch),W/2,H-bar/2+6);
   if(sc===0){ cx.font=`${Math.max(22,H*0.06)}px Impact, sans-serif`; cx.fillStyle=`rgba(239,228,204,${Math.min(1,lt*3)*0.9})`; cx.fillText(CHAPTERS[ch][S.lang],W/2,bar*0.7); }
-  cx.font="12px Georgia"; cx.fillStyle="rgba(239,228,204,0.5)"; cx.fillText(S.lang==="zh"?"点击跳过":"tap to skip",W-60,H-12); cx.textAlign="left";
+  cx.textAlign="left";
 }
 function drawMontage(){
   $("hud").style.opacity=0;
