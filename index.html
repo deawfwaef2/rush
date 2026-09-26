@@ -1251,7 +1251,7 @@ function drawManRaw(sx,sy,s,dir,phase,state,cols,opts={}){
   const v=opts.v; if(v){ cx.save(); cx.translate(sx,sy); cx.scale(v.w*0.5+0.5,v.h); cx.translate(-sx,-sy); drawMan0(sx,sy,s,dir,phase,state,cols,opts); cx.restore(); } else drawMan0(sx,sy,s,dir,phase,state,cols,opts); }
 function drawMan0(sx,sy,s,dir,phase,state,cols,opts){
   const V=opts.v||{stride:1,lean:0,pack:true,cap:false,hold:0,w:1};
-  const cheer=state==="cheer"; if(cheer)state="idle";
+  const cheer=state==="cheer"; if(cheer)state="idle"; const surr=state==="surr"; if(surr)state="idle";
   const run=state==="run", crouch=state==="crouch"?9:0, melee=state==="melee";
   const lean=(run?0.3:melee?0.22:crouch?0.18:0.02)+V.lean;
   const bob=run?Math.abs(Math.sin(phase))*3:0;
@@ -1265,7 +1265,7 @@ function drawMan0(sx,sy,s,dir,phase,state,cols,opts){
   let rA=cheer?-1.1+Math.sin(phase*2)*0.2:run?-0.16+V.hold+Math.sin(phase*2)*0.05:melee?-0.05+Math.sin(phase*3)*0.3:(state==="idle"&&!opts.enemy&&!opts.aim)?-1.25:-0.03;
   let handX=shX+dir*15*s, handY=shY+9*s+(run?Math.sin(phase)*1.5*s:0);
   if(melee)handX+=dir*Math.max(0,Math.sin(phase*3))*10*s;
-  if(cheer){handX=shX+dir*4*s;handY=shY-12*s+Math.sin(phase*2)*3*s;} else if(rA<-1){handX=shX+dir*6*s;handY=shY+14*s;}
+  if(cheer){handX=shX+dir*4*s;handY=shY-12*s+Math.sin(phase*2)*3*s;} else if(surr){handX=shX+dir*3*s;handY=shY-21*s;} else if(rA<-1){handX=shX+dir*6*s;handY=shY+14*s;}
   const ca=Math.cos(rA),sa=Math.sin(rA);
   const rbx=handX-dir*ca*16*s, rby=handY+sa*16*s;
   const ex=rbx+dir*ca*46*s, ey=rby-sa*-1*46*s*-1;
@@ -1299,6 +1299,7 @@ function drawMan0(sx,sy,s,dir,phase,state,cols,opts){
   if(opts.vet){cx.fillStyle="#a8321f";seg(shX-dir*2*s,shY+1*s,shX-dir*11*s,shY+4*s+Math.sin(phase*2)*2.5*s,3.4*s,1.6*s);}
   if(s>0.9){cx.fillStyle="rgba(200,160,120,0.25)";cx.beginPath();cx.ellipse(hx+dir*2*s,hy+1*s,2*s,3*s,0,0,7);cx.fill();}
   // rifle
+  if(surr){ cx.fillStyle="rgba(0,0,0,0.18)";cx.beginPath();cx.ellipse(sx+6*s,sy+1*s,14*s,2.6*s,0,0,7);cx.fill(); return; }
   const rx2=rbx+dir*ca*46*s, ry2=rby+sa*46*s;
   cx.strokeStyle="#1c140c";cx.lineCap="round";cx.lineWidth=3*s;cx.beginPath();cx.moveTo(rbx,rby);cx.lineTo(rbx+dir*ca*14*s,rby+sa*14*s);cx.stroke();
   cx.lineWidth=1.8*s;cx.beginPath();cx.moveTo(rbx+dir*ca*14*s,rby+sa*14*s);cx.lineTo(rx2,ry2);cx.stroke();
@@ -1777,7 +1778,7 @@ function pick(a){return a[Math.floor(Math.random()*a.length)];}
 function say(m,txt,dur=1.8){ if(bubbles.length>=3)return;bubbles.push({x:m.x,z:m.z,h:80,text:txt,t:0,dur,follow:m});}
 
 function stepBattle(dt){
-  const b=battle; if(!b||b.over)return; b.t+=dt;
+  const b=battle; if(!b)return; if(b.over){ meleeAfter(dt); return; } b.t+=dt;
   const alive=men.filter(m=>m.alive); const bx=trenchX(S.lvl), ex=trenchX(S.lvl+1);
   const running=alive.filter(m=>m.state==="run"||m.state==="cut");
   // advance soldiers
@@ -1806,7 +1807,7 @@ function stepBattle(dt){
       for(const g of b.gasZones){ if(Math.abs(m.x-g.x)<g.w&&Math.random()<0.012*dt*60*0.12)killMan(m,"gas"); }
     }
   }
-  for(const m of alive){ if(m.state==="melee"&&m.mx!=null){ const d=m.mx-m.x; if(Math.abs(d)>1){ m.x+=Math.sign(d)*Math.min(Math.abs(d),dt*150); m.phase+=dt*9; } } }
+  if(b.melee)meleeStep(dt);
   for(const en of enemies){ if(en.alive&&en.tx!=null){ const d=en.tx-en.x; if(Math.abs(d)>1){ en.x+=Math.sign(d)*Math.min(Math.abs(d),dt*90); en.phase=(en.phase||0)+dt*8; } } }
   { const gat=alive.filter(m=>m.state==="gather"); const rr=cur.rf*0.0065*0.4*(1500/SEGL())/mf(); for(const m of gat){ if(Math.random()<rr*dt*1.8*(m.vet?0.62:1)) killMan(m,"rf"); } }
   b.toolT=(b.toolT||0)-dt; if(b.toolT<=0){b.toolT=1; updTools();}
@@ -1830,7 +1831,7 @@ function stepBattle(dt){
     for(const m of running){ if(!m.alive)continue; m.dens=dens(m); const df=Math.max(0.55,Math.min(2.4,0.55+0.13*(m.dens-1))); if(Math.random()<mgRate*dt*hitK(m,bx)*df) killMan(m,"mg"); }
     // rifles
     const rfRate=cur.rf*0.0065*smokeF*(1500/SEGL())/mf()*(1-((battle.ev&&battle.ev.supp)||0));
-    b.rfT-=dt; if(cur.rf>0.05&&b.rfT<=0){b.rfT=0.5/Math.max(0.3,cur.rf)*2; AU.shot(0.15); const e=pick(enemies.filter(e=>e.alive))||null; if(e){e.flash=0.08;const tgt=pick(running);tracer(e.x,e.z,48,tgt.x,tgt.z,40);}}
+    b.rfT-=dt; if(cur.rf>0.05&&b.rfT<=0){b.rfT=0.5/Math.max(0.3,cur.rf)*2; AU.shot(0.15); const e=pick(enemies.filter(e=>e.alive&&!e.st))||null; const tgt=pick(running); if(e&&tgt){e.flash=0.08;tracer(e.x,e.z,48,tgt.x,tgt.z,40);}}
     for(const m of running){ if(m.alive&&!m.aim&&!(m.immune>0)&&Math.random()<rfRate*dt*hitK(m,bx)){ if((b.cover||0)>0&&men.filter(o=>o.aim>0).length<3&&Math.random()<0.7){ m.aim=1.25; if(!b.aimTip){ b.aimTip=1; slowmo=0.35; setTimeout(()=>slowmo=1,900); toast(S.lang==="zh"?"狙击手瞄准了一名士兵——点击方框让他卧倒！":"A sniper has a man in his sights — click the box to make him dive!"); } } else killMan(m,"rf"); } }
     // enemy shelling
     if(cur.sh>0.05){ b.shT-=dt; if(b.shT<=0){ b.shT=(3.2/cur.sh)*(0.6+Math.random()*0.8); const tg=pick(running); const sx=tg.x+(Math.random()-0.5)*120, sz=Math.max(0.05,Math.min(1,tg.z+(Math.random()-0.5)*0.2));
@@ -1857,7 +1858,7 @@ function stepBattle(dt){
   else if(men.filter(m=>m.alive).length===0&&!b.over){ b.over=true; setTimeout(()=>result(false),1600); }
   else if(stillMoving===0&&inMelee===0&&b.e>0&&!b.over){ b.over=true; setTimeout(()=>result(false),1600); }
   // camera follows the mass
-  if(b.mel.length&&(!running.length||b.mel.length>running.length*0.6)){cam.tx=ex-80+b.front; cam.tz=1.15;} else if(running.length){ const avg=running.reduce((s,m)=>s+m.x,0)/running.length; cam.tx=Math.min(ex-200,Math.max(bx+100,avg+160)); }
+  if(b.mel.length&&(!running.length||b.mel.length>running.length*0.6)){cam.tx=ex-80+b.front; cam.tz=0.97;} else if(running.length){ const avg=running.reduce((s,m)=>s+m.x,0)/running.length; cam.tx=Math.min(ex-200,Math.max(bx+100,avg+160)); }
   if(b.off&&b.off.alive&&!b.off.gone){ cam.tx=b.off.x+60; cam.tz=1.15; lookOff*=0.9; }
   // HUD
   { const hh=`<span>${IC.man.replace('<svg','<svg width=22 height=22 style="vertical-align:-3px"')} ${alive.length}</span><span style="color:#c8432f">${IC.skull.replace('<svg','<svg width=22 height=22 style="vertical-align:-3px"')} ${b.dead}</span><span>${IC.gr.replace('<svg','<svg width=22 height=22 style="vertical-align:-3px"')} ${Math.max(0,Math.round(b.e))}</span>${b.pinned?`<span style="color:#d8b060">⬇ ${b.pinned}</span>`:""}`; if(hh!==stepBattle.hud){ stepBattle.hud=hh; $("hud").innerHTML=hh; } }
@@ -1867,7 +1868,7 @@ function trenchLines(i){ return i<0?1:Math.min(4,1+Math.floor((i+1)/4)); }
 function hitK(m,bx){ const p=Math.max(0,Math.min(1,(m.x-bx)/SEGL())); if(hasDead()&&Math.abs(m.x-deadX())<45) return 0.25*FORM[m.form||1].fire; return (0.45+1.45*Math.pow(p,1.6))*FORM[m.form||1].fire*(m.vet?0.62:1); }
 function pinMan(m){ if(!m.alive)return; m.alive=false; m.pinned=true; m.state="prone"; battle.pinned++; if(Math.random()<0.3)say(m,pick(S.lang==="zh"?["我不行了…","趴下！","妈妈…"]:["I can't…","Get down!","Mother…"]),1.4); }
 function shockNear(x,z){ const nb=[]; for(const o of men){ if(o.alive&&o.state==="run"){ const d=Math.abs(o.x-x)+Math.abs(o.z-z)*400; if(d<70) nb.push([d,o]); } } nb.sort((p,q)=>p[0]-q[0]); for(let i=0;i<Math.min(5,nb.length);i++){ const o=nb[i][1]; o.mor-=(o.vet?1.5:4)*(0.6+Math.random()*0.8)*(FORM[o.form||1].melee>1?0.85:1); } }
-function joinMelee(m){ const b=battle; b.mel.push(m); if(m.type==="bomb"&&!m.thrown&&b.e>0){ m.thrown=1; if(Math.random()<0.55){ b.e=Math.max(0,b.e-1); b.eKilled++; const en=enemies.find(e=>e.alive); if(en){ en.alive=false; makeRagdoll(en.x,en.z,-1,pal.en,false,[5,7],true); } explosion(trenchX(S.lvl+1)-10,m.z,0.5); } } m.phase=Math.random()*6; if(!b.melee){ b.melee=true; big(L_().melee,"",1100); AU.cheer(); cam.shake=6; slowmo=0.55; setTimeout(()=>slowmo=1,900); } if(Math.random()<0.12)say(m,pick(S.lang==="zh"?["刺刀！","杀！","冲进去！"]:["Bayonets!","At them!","Into the trench!"]),1.1); }
+function joinMelee(m){ const b=battle; if(!b.mel.includes(m))b.mel.push(m); m.lz=m.z; m.foe=null; m.sup=null; if(m.type==="bomb"&&!m.thrown&&b.e>0){ m.thrown=1; if(Math.random()<0.55){ b.e=Math.max(0,b.e-1); b.eKilled++; const en=enemies.find(e=>e.alive); if(en){ en.alive=false; makeRagdoll(en.x,en.z,-1,pal.en,false,[5,7],true); } explosion(trenchX(S.lvl+1)-10,m.z,0.5); } } m.phase=Math.random()*6; if(!b.melee){ b.melee=true; meleeRiseAll(); big(L_().melee,"",1100); AU.cheer(); cam.shake=6; slowmo=0.55; setTimeout(()=>slowmo=1,900); } if(Math.random()<0.12)say(m,pick(S.lang==="zh"?["刺刀！","杀！","冲进去！"]:["Bayonets!","At them!","Into the trench!"]),1.1); }
 /* ============ OFFICER (strategic resource, 1 per charge, unlock lvl 17) ============
    Press O (or button) during the advance: an officer appears with the rearmost running group.
    WASD/arrows move him; nearby runners follow and keep behind him. SPACE = halt & rally (men go prone around him,
@@ -1982,8 +1983,8 @@ function flameTick(al){ const b=battle, n=cur.fl||0; if(!n||!al.length)return; b
 function startCounter(){ const b=battle, n=Math.max(2,Math.round(b.e0*0.18*(cur.ca||1))); b.caPending=1;
   big(S.lang==="zh"?"敌军反扑！":"COUNTER-ATTACK!",S.lang==="zh"?`${n} 名敌军援兵冲来`:`${n} fresh enemies coming`,1500); AU.whistle&&AU.whistle(); cam.shake=4;
   const ex=trenchX(S.lvl+1); setTimeout(()=>{ if(battle!==b)return; b.e+=n; b.e0c=n; cur.gr=b.e; b.caPending=0; b.melee=true;
-    for(let i=0;i<Math.min(n,18);i++){ enemies.push({x:ex+b.front+260+Math.random()*120,tx:ex+b.front+Math.random()*40,z:laneZ(Math.random()),phase:0,alive:true,flash:0}); }
-    men.forEach(m=>{ if(m.alive&&(m.state==="wait"||m.state==="gather"||m.state==="cheer")){ m.state="melee"; m.mx=ex-40+Math.random()*50+b.front; if(!b.mel.includes(m))b.mel.push(m); } }); },1400); }
+    for(let i=0;i<Math.min(n,18);i++){ const z=0.03+Math.random()*0.97; const off=cam.x+(W/2)/Math.max(0.2,scaleZ(z))+60+i*22; enemies.push({x:Math.max(ex+300,off),z,phase:Math.random()*6,alive:true,flash:0,st:"run"}); }
+    men.forEach(m=>{ if(m.alive&&(m.state==="wait"||m.state==="gather"||m.state==="cheer")){ m.state="melee"; if(!b.mel.includes(m))b.mel.push(m); m.lz=m.z; m.foe=null; m.sup=null; } }); },1400); }
 /* ===== v1.3f CHARGE EVENTS (agent A) =====
    Small incidents all the time (trip, duck under a burst, crater fire, help a mate, freeze, sergeant, hero, grenade, mud, lost nerve, lucky helmet);
    one "fortune of war" d6 roll per charge (two on long sectors) -> rare BIG event (rout / stall / short shells / gunners find range / MG jam / smoke / surge / enemy panic).
@@ -1997,7 +1998,7 @@ function dieSVG(n){ n=Math.max(1,Math.min(6,n)); const P={1:[[11,11]],2:[[6.5,6.
 function evFeed(txt,good,die){ const el=$("evFeed"); if(!el)return; const d=document.createElement("div"); d.className="ef"+(die?" big":"")+(good>0?" g":good<0?" b":""); d.innerHTML=(die?dieSVG(die):"")+`<span>${txt}</span>`; el.appendChild(d); while(el.children.length>4)el.removeChild(el.firstChild); setTimeout(()=>{ d.classList.add("out"); setTimeout(()=>d.remove(),700); },die?7500:4500); }
 function evNear(m,r,rz,max){ const out=[]; for(const o of men){ if(o!==m&&o.alive&&o.state==="run"&&Math.abs(o.x-m.x)<r&&Math.abs(o.z-m.z)<rz){ out.push(o); if(out.length>=max)break; } } return out; }
 function evMorNear(m,d){ for(const o of evNear(m,95,0.12,14)) o.mor=Math.max(0,Math.min(118,(o.mor||60)+d*(0.6+Math.random()*0.5))); m.mor=Math.max(0,Math.min(118,(m.mor||60)+d)); }
-function evEnemyDown(){ const b=battle; if(!b||b.e<=1)return false; b.e=Math.max(0,b.e-1); b.eKilled++; const ve=enemies.filter(e=>e.alive); if(ve.length){ const en=ve[Math.floor(Math.random()*ve.length)]; en.alive=false; makeRagdoll(en.x,en.z,-1,pal.en,false,[5+Math.random()*5,5+Math.random()*5],true); } return true; }
+function evEnemyDown(){ const b=battle; if(!b||b.e<=1)return false; b.e=Math.max(0,b.e-1); b.eKilled++; let ve=enemies.filter(e=>e.alive&&(!e.st||e.st==="down")); if(!ve.length&&!b.melee)ve=enemies.filter(e=>e.alive&&e.st!=="surr"); if(ve.length){ const en=ve[Math.floor(Math.random()*ve.length)]; en.alive=false; en.st="dead"; makeRagdoll(en.x,en.z,-1,pal.en,false,[5+Math.random()*5,5+Math.random()*5],true); } return true; }
 function evFire(){ const E=battle&&battle.ev; if(!E)return 1; return (E.mgT>0?E.mgK:1)*(1-E.supp); }
 function evOn(m){ const q=P(m.x,m.z,0); return q[0]>60&&q[0]<W-60; }
 function stepEvents(dt,running,bx,ex){
@@ -2103,26 +2104,109 @@ function updTools(){ updOffPad(); const el=$("tools"); if(!el)return; const b=ba
   el.classList.toggle("hide",!needF&&!canO&&!(COVER_BASE()>0)); el.innerHTML=(COVER_BASE()>0?`<div class="covc"><b>${covN}</b><small>${zh?"掩护":"COVER"}</small></div>`:"")+(needF?`<button id="bFlare">${IC.flare}<b>${zh?"信号弹":"FLARE"}</b><small>F</small></button>`:"")+(canO?`<button id="bOff">${IC.off}<b>${zh?"军官":"OFFICER"}</b><small>O</small></button>`:"");
   const f=$("bFlare"); if(f)f.onclick=()=>fireFlare(false); const o=$("bOff"); if(o)o.onclick=()=>{ if(window.startOfficer)startOfficer(); }; }
 addEventListener("keydown",e=>{ const k=e.key.toLowerCase(); if(k==="f"&&battle&&(mode==="charge"||mode==="melee")&&men.some(m=>m.alive&&m.hold2))fireFlare(false); if(k==="o"&&window.startOfficer&&battle&&mode==="charge")startOfficer(); });
-function meleeTick(){
-  const b=battle, ex=trenchX(S.lvl+1); const al=b.mel.filter(m=>m.alive); if(!al.length)return;
-  let A=0,coh=0; for(const m of al){A+=(m.vet?1.55:1)*(m.type==="bomb"?1.7:1); coh+=FORM[m.form||1].melee;} coh/=al.length; A*=coh*mf()*(b.shock?1.3:1);
-  flameTick(al);
-  const E=b.e*(lvl.fort?1.25:1)*(1+0.08*Math.min(3,lvl.ch));
-  const ratio=A/Math.max(0.5,E); // Lanchester: numbers compound
-  const kOur=0.13*A*Math.min(2.4,Math.sqrt(ratio)), kEn=0.13*E*Math.min(2.4,Math.sqrt(1/ratio));
-  const rnd=x=>Math.floor(x)+(Math.random()<x-Math.floor(x)?1:0);
-  let k=Math.min(b.e,rnd(kOur*(0.7+Math.random()*0.6))), kk=Math.min(al.length,rnd(kEn*(0.7+Math.random()*0.6)));
-  b.e-=k; b.eKilled+=k; cur.gr=b.e; b.supp=Math.min(0.9,A/(A+E)*1.15);
-  const FD=(trenchLines(S.lvl)-1)*85+40; b.front=Math.min(FD,(1-b.e/Math.max(1,b.e0))*FD); // fight moves deeper into the trench system
-  let ve=enemies.filter(x=>x.alive); for(let i=0;i<Math.min(k,ve.length);i++){ const en=ve[Math.floor(Math.random()*ve.length)]; if(en.alive){en.alive=false;makeRagdoll(en.x,en.z,-1,pal.en,false,[8+Math.random()*6,6+Math.random()*6],true);puff(en.x,en.z,40,4,"blood",60,0.5,2,-400);} }
-  ve=enemies.filter(x=>x.alive); while(ve.length<Math.min(b.e,24)){const n={x:ex+b.front+90+Math.random()*60,tx:ex+b.front+Math.random()*50,z:laneZ(Math.random()),phase:0,alive:true,flash:0};enemies.push(n);ve.push(n);}
-  enemies.forEach(en=>{if(en.alive&&en.x<ex+b.front-10)en.tx=ex+b.front-10+Math.random()*20;});
-  al.sort(()=>Math.random()-0.5); for(let i=0;i<kk;i++){ const m=al[i]; m.alive=false; b.dead++; b.meleeDead++; makeRagdoll(m.x,m.z,1,manCols(m),m.vet,[-6-Math.random()*6,6+Math.random()*6],false); }
-  al.forEach(m=>{ if(m.alive){ m.mx=Math.max(m.mx||m.x, ex-40+b.front+Math.random()*30); } });
-  for(let i=0;i<Math.min(6,2+k);i++)setTimeout(()=>AU.clang(),i*70); if(Math.random()<0.6)AU.shot(0.25);
-  for(let i=0;i<Math.min(8,k+kk);i++){const x=ex+b.front-20+Math.random()*60;puff(x,laneZ(Math.random()),45,3,"spark",80,0.25,2,-200);}
-  cam.shake=Math.max(cam.shake,2+Math.min(8,k)); if(k>=5&&Math.random()<0.5){slowmo=0.5;setTimeout(()=>slowmo=1,350);}
-  if(ratio>2.5&&Math.random()<0.2)toast(S.lang==="zh"?"敌军被压倒！":"The enemy is overwhelmed!");
+/* ===== v1.4b MELEE v2 (agent A) - real duels along the WHOLE trench, nothing ever teleports =====
+   - Defenders CLIMB out of their trench (staggered) to meet the assault on the parapet; replacements for the hidden garrison climb out where
+     attackers are free; counter-attack reserves RUN in from off-screen. Nobody pops into view.
+   - Every visible defender fights one attacker from his own lane (+ up to 2 supporters each side). A duel lasts ~1-2.4 s of real contact,
+     then ONE loser falls (defender back into his trench, attacker backwards). Win chance = A^2/(A^2+E^2) (keeps the old square-law balance).
+   - Attackers only shift within +-0.15 of their own lane -> the fight stays spread along the trench; waiting men fire into the trench.
+   - Outnumbered defenders at the end surrender (hands up) and walk to our rear as prisoners (b.captured). */
+const MVIS=36; const clashFX=[], nadeFX=[];
+function clash(x,z,h){ if(clashFX.length<40)clashFX.push({x,z,h,t:0,r:Math.random()*6}); }
+function drawClash(dt){ if(!clashFX.length&&!nadeFX.length)return; cx.save();
+  for(let i=nadeFX.length-1;i>=0;i--){ const g=nadeFX[i]; g.t+=dt; const k=Math.min(1,g.t/g.T); const x=g.x0+(g.x1-g.x0)*k, z=g.z0+(g.z1-g.z0)*k, h=34+(0-34)*k+Math.sin(Math.PI*k)*70; const [sx,sy,s]=P(x,z,h);
+    cx.fillStyle="#1a1a14"; cx.beginPath(); cx.arc(sx,sy,Math.max(1,2.2*s),0,7); cx.fill(); if(k>=1){ nadeFX.splice(i,1); g.done&&g.done(); } }
+  cx.globalCompositeOperation="lighter"; cx.lineCap="round";
+  for(let i=clashFX.length-1;i>=0;i--){ const c=clashFX[i]; c.t+=dt; const k=c.t/0.16; if(k>=1){clashFX.splice(i,1);continue;}
+    const [sx,sy,s]=P(c.x,c.z,c.h); const a=1-k, L=(4+10*k)*s; cx.strokeStyle="rgba(255,236,170,"+(a*0.9).toFixed(2)+")"; cx.lineWidth=Math.max(0.6,1.3*s*a);
+    cx.beginPath(); for(let j=0;j<4;j++){ const an=c.r+j*Math.PI/2+(j%2)*0.35; cx.moveTo(sx+Math.cos(an)*L*0.25,sy+Math.sin(an)*L*0.25); cx.lineTo(sx+Math.cos(an)*L,sy+Math.sin(an)*L); } cx.stroke();
+    cx.fillStyle="rgba(255,250,225,"+a.toFixed(2)+")"; cx.fillRect(sx-1.2*s,sy-1.2*s,2.4*s,2.4*s); }
+  cx.restore(); }
+function lipX(z){ const ex=trenchX(S.lvl+1); return ex+trenchOff(ex,z)-TR_W*0.55; }
+function meleeA(m){ const b=battle; return (m.vet?1.55:1)*(m.type==="bomb"?1.7:1)*FORM[m.form||1].melee*mf()*(b.shock?1.3:1); }
+function meleeE(){ return (lvl.fort?1.25:1)*(1+0.08*Math.min(3,lvl.ch)); }
+function mvTo(o,tx,tz,dt,vx,vz){ const dx=tx-o.x, dz=tz-o.z; const mx=Math.sign(dx)*Math.min(Math.abs(dx),vx*dt), mz=Math.sign(dz)*Math.min(Math.abs(dz),vz*dt); o.x+=mx; o.z+=mz; return Math.abs(dx)>6||Math.abs(dz)>0.012; }
+function meleeRiseAll(){ const b=battle; const vis=enemies.filter(en=>en.alive&&!en.st&&en.rd==null); const keep=Math.max(0,Math.round(b.e)); vis.sort(()=>Math.random()-0.5);
+  vis.forEach((en,i)=>{ if(i<keep) en.rd=0.05+Math.random()*1.0; else en.st="down"; }); } // extra figures (garrison thinned by artillery) stay down in the trench and surrender at the end
+function spawnRiser(z){ const ex=trenchX(S.lvl+1); const en={x:ex+trenchOff(ex,z)+4,z,phase:Math.random()*6,alive:true,flash:0,st:"rise",rise:0}; enemies.push(en); return en; }
+function enemyFall(en,m){ const b=battle; en.alive=false; en.st="dead"; b.e=Math.max(0,b.e-1); b.eKilled++; if(cur)cur.gr=b.e;
+  makeRagdoll(en.x,en.z,-1,pal.en,false,[5+Math.random()*5,5+Math.random()*5],true); puff(en.x,en.z,44,3,"blood",50,0.45,2,-400); if(Math.random()<0.3)AU.fall&&AU.fall(); }
+function ourFall(m){ const b=battle; if(!m.alive)return; m.alive=false; b.dead++; b.meleeDead=(b.meleeDead||0)+1; if(Math.random()<0.25)AU.scream&&AU.scream(); if(Math.random()<0.35)AU.fall&&AU.fall();
+  makeRagdoll(m.x,m.z,1,manCols(m),m.vet,[-5-Math.random()*5,5+Math.random()*5],false); shockNear(m.x,m.z); }
+function meleeAssign(){ const b=battle; const fighters=b.mel.filter(m=>m.alive&&m.state==="melee"); const foes=enemies.filter(e=>e.alive&&e.st==="fight");
+  for(const m of fighters){ if(m.foe&&(!m.foe.alive||m.foe.st!=="fight"))m.foe=null; if(m.sup&&(!m.sup.alive||m.sup.st!=="fight"||!m.sup.foe))m.sup=null; }
+  for(const e of foes){ if(e.foe&&(!e.foe.alive||e.foe.foe!==e))e.foe=null; if(e.supOf&&(!e.supOf.alive||!e.supOf.foe))e.supOf=null; }
+  // 1) every free defender gets a primary attacker from (near) his lane
+  for(const e of foes){ if(e.foe)continue; let best=null,bd=1e9; for(const m of fighters){ if(m.foe)continue; const dz=Math.abs(m.z-e.z), lz=Math.abs(e.z-(m.lz??m.z)); if(lz>0.17+0.12*(m.idleT||0))continue; const d=dz*900+Math.abs(m.x-e.x)*0.4+(m.sup?40:0); if(d<bd){bd=d;best=m;} }
+    if(best){ best.sup=null; best.foe=e; e.foe=best; e.supOf=null; e.dt=1.5+Math.random()*1.4; e.cT=0; } }
+  // 2) spare attackers support a duel in reach (max 2 each)
+  const cnt=new Map(); for(const m of fighters){ if(m.sup)cnt.set(m.sup,(cnt.get(m.sup)||0)+1); }
+  for(const m of fighters){ if(m.foe||m.sup)continue; let best=null,bd=1e9; for(const e of foes){ if(!e.foe||(cnt.get(e)||0)>=2)continue; const lz=Math.abs(e.z-(m.lz??m.z)); if(lz>0.15)continue; const d=Math.abs(m.z-e.z)*900+Math.abs(m.x-e.x)*0.3; if(d<bd){bd=d;best=e;} }
+    if(best){ m.sup=best; m.sk=(cnt.get(best)||0); cnt.set(best,m.sk+1); } }
+  // 3) spare defenders gang up on a nearby attacker
+  const ce=new Map(); for(const e of foes){ if(e.supOf)ce.set(e.supOf,(ce.get(e.supOf)||0)+1); }
+  for(const e of foes){ if(e.foe||e.supOf)continue; let best=null,bd=1e9; for(const m of fighters){ if(!m.foe||(ce.get(m)||0)>=2)continue; const d=Math.abs(m.z-e.z)*900; if(d<bd&&Math.abs(m.z-e.z)<0.14){bd=d;best=m;} } if(best){ e.supOf=best; e.sk=(ce.get(best)||0); ce.set(best,e.sk+1); } }
+}
+function meleeStep(dt){ const b=battle; if(!b)return; const ex=trenchX(S.lvl+1);
+  // enemies: rise out of the trench / run in / fight / surrender
+  let active=0;
+  for(const en of enemies){ if(!en.alive)continue;
+    if(!en.st){ if(en.rd!=null){ en.rd-=dt; if(en.rd<=0){ en.st="rise"; en.rise=0; } } else continue; }
+    if(en.st==="rise"){ active++; en.rise=Math.min(1,en.rise+dt/0.65); en.phase=(en.phase||0)+dt*6; const px=lipX(en.z); en.x+=(px-en.x)*Math.min(1,dt*4); if(en.rise>=1){ en.st="fight"; en.x=Math.min(en.x,px+2); } }
+    else if(en.st==="run"){ active++; en.phase=(en.phase||0)+dt*9; en.mv=mvTo(en,lipX(en.z),en.z,dt,125,0.05); if(!en.mv){ en.st="fight"; } }
+    else if(en.st==="fight"){ active++; const m=en.foe||en.supOf; let tx=lipX(en.z), tz=en.z;
+      if(en.supOf){ tx=Math.max(en.supOf.x+40,tx-30); tz=en.supOf.z+(en.sk?0.03:-0.03); }
+      if(!m){ en.idleT=(en.idleT||0)+dt; if(en.idleT>1.5){ let nz=null,bd=9; for(const o of b.mel){ if(o.alive&&o.state==="melee"){ const d=Math.abs(o.z-en.z); if(d<bd){bd=d;nz=o.z;} } } if(nz!=null)tz=nz; } } else en.idleT=0;
+      en.mv=mvTo(en,tx,tz,dt,70,0.06); en.phase=(en.phase||0)+dt*(en.mv?7:(m?2.7:0.9)); if(en.flash>0)en.flash-=dt; }
+    else if(en.st==="surr"){ en.phase=(en.phase||0)+dt*3.2; en.x-=34*dt; en.sT=(en.sT||0)+dt; const q=P(en.x,en.z,0); if(q[0]<-60||en.sT>14){ en.alive=false; en.gone=true; } }
+  }
+  // hidden garrison: replacements climb out where attackers are free (never pop in)
+  b.rsT=(b.rsT||0)-dt; if(b.e>active&&active<MVIS&&b.rsT<=0){ b.rsT=0.18+Math.random()*0.25; const free=b.mel.filter(m=>m.alive&&m.state==="melee"&&!m.foe&&!m.sup); const src=free.length?pick(free):pick(b.mel.filter(m=>m.alive))||null; const z=src?Math.max(0.03,Math.min(1,(src.lz??src.z)+(Math.random()-0.5)*0.06)):0.03+Math.random()*0.97; spawnRiser(z); }
+  b.asT=(b.asT||0)-dt; if(b.asT<=0){ b.asT=0.2; meleeAssign(); }
+  b.gnT=(b.gnT==null?1.2:b.gnT)-dt; if(b.gnT<=0){ b.gnT=0.9+Math.random()*1.1; if(b.e>active+1){ const idle=b.mel.filter(m=>m.alive&&m.state==="melee"&&!m.foe&&!m.sup); const t=pick(idle); if(t){ const x1=lipX(t.z)+TR_W*0.55+(Math.random()-0.5)*14, z1=t.z; t.flash=0; t.fT=1.6; if(Math.random()<0.3)say(t,pick(S.lang==="zh"?["手榴弹！","接着！"]:["Bomb!","Have this!"]),0.9);
+      nadeFX.push({x0:t.x+8,z0:t.z,x1,z1,t:0,T:0.75,done:()=>{ if(battle!==b||b.over)return; explosion(x1,z1,0.45); if(Math.random()<0.6&&b.e>1){ b.e=Math.max(0,b.e-1); b.eKilled++; if(cur)cur.gr=b.e; } }}); } } }
+  // our fighters
+  const eBase=meleeE(); b.clT=(b.clT||0)-dt;
+  b.cmT=(b.cmT||0)-dt; if(b.cmT<=0){ b.cmT=1; b.mel=b.mel.filter(m=>m.alive); }
+  const supAc=new Map(), supEc=new Map(); for(const o of b.mel){ if(o.alive&&o.sup)supAc.set(o.sup,(supAc.get(o.sup)||0)+1); } for(const o of enemies){ if(o.alive&&o.supOf)supEc.set(o.supOf,(supEc.get(o.supOf)||0)+1); }
+  for(const m of b.mel){ if(!m.alive||m.state!=="melee")continue; if(m.lz==null)m.lz=m.z; m.dir=1;
+    let tx,tz,duel=false;
+    if(m.foe){ tx=m.foe.x-34-((m.z*977)%1)*4; tz=m.foe.z; duel=true; }
+    else if(m.sup){ tx=m.sup.x-42-(m.sk?8:0); tz=m.sup.z+(m.sk?0.03:-0.03); }
+    else { tx=lipX(m.lz)-70-((m.z*531)%1)*45; tz=m.lz; }
+    if(m.foe||m.sup)m.idleT=0; else m.idleT=(m.idleT||0)+dt;
+    const moving=mvTo(m,tx,tz,dt,m.foe||m.sup?140:90,0.1);
+    if(moving&&Math.abs(tx-m.x)>12){ m.pose="run"; m.phase+=dt*9; }
+    else if(m.foe||m.sup){ m.pose="melee"; m.phase+=dt*2.7; }
+    else { m.pose=(m.lz*1000|0)%3===0?"crouch":"aim"; m.fT=(m.fT||Math.random()*2)-dt; if(m.fT<=0){ m.fT=1.2+Math.random()*2.2; m.flash=0.07; if(Math.random()<0.35)AU.shot(0.05); } if(m.flash>0)m.flash-=dt; }
+    // duel contact + resolution
+    if(duel&&!moving){ const e=m.foe; const supA=supAc.get(e)||0, supE=supEc.get(m)||0;
+      e.dt-=dt*(1+0.3*(supA+supE)); if(!e.cT){ e.cT=1; puff((m.x+e.x)/2,m.z,2,2,"smoke",26,0.9,9,12); if(b.clT<=0){ b.clT=0.1; AU.clang&&AU.clang(); } }
+      m.cl=(m.cl||Math.random()*0.5)-dt; if(m.cl<=0){ m.cl=0.45+Math.random()*0.5; if(b.clT<=0){ b.clT=0.1; AU.clang&&AU.clang(); } clash((m.x+e.x)/2+4+(Math.random()-0.5)*6,m.z,46+Math.random()*10); if(Math.random()<0.05){ e.flash=0.06; AU.shot(0.12); } }
+      if(e.dt<=0){ let A=meleeA(m), E=eBase; for(const o of b.mel)if(o.sup===e&&o.alive)A+=0.6*meleeA(o); E+=0.6*eBase*supE; const pOur=A*A/(A*A+E*E);
+        if(Math.random()<pOur){ enemyFall(e,m); m.foe=null; for(const o of b.mel)if(o.sup===e)o.sup=null; if(Math.random()<0.1)say(m,pick(S.lang==="zh"?["下一个！","拿下！"]:["Next!","Got him!"]),0.9); }
+        else { e.foe=null; for(const o of enemies)if(o.supOf===m)o.supOf=null; ourFall(m); } } }
+  }
+  // surrender: overwhelmed defenders give up near the end
+  if(b.e>0&&b.e<=Math.max(2,Math.ceil(b.e0*0.15))){ const ours=b.mel.filter(m=>m.alive).length; if(ours>=3*b.e){ for(const en of enemies){ if(en.alive&&en.st==="fight"&&!en.foe&&Math.random()<dt*0.6&&b.e>0){ en.st="surr"; en.supOf=null; b.e=Math.max(0,b.e-1); b.captured=(b.captured||0)+1; if(cur)cur.gr=b.e; if(!b.surrMsg){ b.surrMsg=1; say(en,S.lang==="zh"?"投降！":"Kamerad!",1.4); } } } } }
+}
+function meleeAfter(dt){ const b=battle; if(!b||!b.melee)return; for(const en of enemies){ if(!en.alive)continue;
+    if(!en.st||en.st==="down"){ en.st="rise"; en.rise=0; en.give=1; }
+    if(en.st==="rise"){ en.rise=Math.min(1,en.rise+dt/0.8); en.phase=(en.phase||0)+dt*5; en.x+=(lipX(en.z)-en.x)*Math.min(1,dt*3); if(en.rise>=1){ en.st="surr"; } }
+    else if(en.st==="fight"||en.st==="run"){ en.st="surr"; en.foe=null; en.supOf=null; }
+    else if(en.st==="surr"){ en.phase=(en.phase||0)+dt*3.2; en.x-=34*dt; en.sT=(en.sT||0)+dt; if(en.sT>14){ en.alive=false; en.gone=true; } } } }
+function drawEnemy(e){ const [sx,sy,s]=P(e.x,e.z,0); const st=e.st;
+  if(st==="fight"){ drawMan(sx-(e.mv?0:Math.max(0,Math.sin((e.phase||0)*3+1.6))*6*s),sy,s,-1,e.phase||0,e.mv?"run":"melee",pal.en,{enemy:true,flash:e.flash>0}); return; }
+  if(st==="run"){ drawMan(sx,sy,s,-1,e.phase||0,"run",pal.en,{enemy:true}); return; }
+  if(st==="surr"){ drawMan(sx,sy,s,-1,e.phase||0,"surr",pal.en,{enemy:true}); return; }
+  const r=st==="rise"?e.rise:0; const low=(1-r)*TR_D*0.85*s;
+  drawMan(sx,sy+low,s,-1,e.phase||0,r>0.05?"melee":"aim",pal.en,{enemy:true,flash:e.flash>0,crop:r>=0.97?null:sy+1*s}); }
+function meleeTick(){ // v1.4b: casualties now come only from real duels (meleeStep); this keeps the periodic side effects
+  const b=battle; const al=b.mel.filter(m=>m.alive); if(!al.length)return;
+  let A=0; for(const m of al)A+=meleeA(m); flameTick(al);
+  const E=Math.max(0.5,b.e*meleeE()); b.supp=Math.min(0.9,A/(A+E)*1.15);
+  if(Math.random()<0.5)AU.shot(0.18);
+  if(A/E>2.5&&Math.random()<0.15&&!b.owMsg){ b.owMsg=1; evFeed(S.lang==="zh"?"敌军被压倒！":"The enemy is overwhelmed!",1); }
 }
 function nodeEvent(ni){
   const b=battle; const running=men.filter(m=>m.alive&&m.state==="run");
@@ -2197,7 +2281,7 @@ function reportHTML(b,surv,vetGain,hold,rear,fail){
   else if(eff<3&&b.dead<b.sent*0.5) rem = zh?"高效：兵力恰到好处。参谋部很满意。":"Efficient: just enough men. Staff is pleased.";
   else rem = zh?"合格：阵地拿下，损失可以接受。":"Sound: the line is taken at an acceptable cost.";
   const cell=(k,v,c="",wide)=>`<div class="${wide?"wide":""}"><span>${k}</span><b class="${c}">${v}</b></div>`;   // v1.3: compact 2-column report (card no longer overflows)
-  return `<div class="rep"><div class="rg">${cell(zh?"派出":"Sent",b.sent)}${cell(zh?"阵亡":"Killed",b.dead,"red")}${cell(zh?"趴下不起 (计为损失)":"Went to ground (lost)",b.pinned,"red")}${b.fled?cell(zh?"崩溃退回 (回到预备队)":"Broke & ran back (to reserve)",b.fled):""}${cell(zh?"击毙守军":"Enemy killed",b.eKilled)}
+  return `<div class="rep"><div class="rg">${cell(zh?"派出":"Sent",b.sent)}${cell(zh?"阵亡":"Killed",b.dead,"red")}${cell(zh?"趴下不起 (计为损失)":"Went to ground (lost)",b.pinned,"red")}${b.fled?cell(zh?"崩溃退回 (回到预备队)":"Broke & ran back (to reserve)",b.fled):""}${b.captured?cell(zh?"俘虏":"Prisoners taken",b.captured,"gold"):""}${cell(zh?"击毙守军":"Enemy killed",b.eKilled)}
    ${fail?"":cell(zh?"幸存":"Survived",surv)+cell(zh?"留守新阵地":"Hold the new trench",hold)+cell(zh?"调往后方 (多余)":"Rotated to the rear (surplus)",rear,rear>b.e0?"red":"")+cell(zh?"晋升老兵 返回":"Return as veterans",vetGain,"gold")+(b.recovered?cell(zh?"担架队救回":"Carried back by stretcher bearers",b.recovered,"gold"):"")+(b.rpGain?cell(zh?"获得增援点":"Reinforcement points earned","+"+b.rpGain+" RP","gold"):"")+(b.merits&&b.merits.length?cell(zh?"战术评价 (+5%老兵/项)":"Tactical merit (+5% vets each)",b.merits.join(" · "),"gold",1):"")}
    </div><div class="wv">${(b.ev&&b.ev.log.length)?b.ev.log.map(e=>(zh?"战场运气 ":"Fortune of war ")+e.d+(e.mod?(e.mod>0?"+":"")+e.mod:"")+": "+e.txt.replace(/<[^>]+>/g,"")).join(" · ")+"<br>":""}${lw.map((w,i)=>`W${i+1}: ${w.r}${w.v?" +"+VETI+w.v:""} ${fl[w.f]}`).join(" · ")}</div><div class="rem">${rem}</div></div>`;
 }
@@ -2501,11 +2585,11 @@ function frame(now){
   if(mode!=="menu"||true){ traverseEnts(ents,trenchX(S.lvl),1); traverseEnts(ents,trenchX(S.lvl+1),-1); }
   for(const m of men) if(m.alive&&m.intrench) ents.push({z:m.z,d:()=>drawManInTrench(m,m.state==="climb"?m.lift:0)});
   { const oe=drawOfficer(); if(oe)ents.push(oe); }
-  for(const m of men) if(m.alive&&!m.intrench) ents.push({z:m.z,d:()=>{const [sx,sy,s]=P(m.x,m.z,m.state==="cheer"?0:0); if(EVS[m.state]){drawEvMan(m,sx,sy,s);return;} drawMan(sx,sy,s,m.dir,m.phase,m.stumble>0?"crouch":(m.state==="wait"||m.state==="gather"||m.state==="rally"||m.state==="cut"||m.state==="hold")?"crouch":m.state==="cheer"?"cheer":(m.arriving?"run":m.state),manCols(m),{vet:m.vet,v:m.v});
+  for(const m of men) if(m.alive&&!m.intrench) ents.push({z:m.z,d:()=>{const [sx0,sy,s]=P(m.x,m.z,0); const sx=sx0+(m.state==="melee"&&m.pose==="melee"?Math.max(0,Math.sin(m.phase*3))*6*s:0); if(EVS[m.state]){drawEvMan(m,sx,sy,s);return;} drawMan(sx,sy,s,m.dir,m.phase,m.stumble>0?"crouch":(m.state==="wait"||m.state==="gather"||m.state==="rally"||m.state==="cut"||m.state==="hold")?"crouch":m.state==="cheer"?"cheer":(m.arriving?"run":m.state==="melee"?(m.pose||"melee"):m.state),manCols(m),{vet:m.vet,v:m.v,flash:m.state==="melee"&&m.flash>0});
      if(m.state==="cheer"){ /* rifle raised */ }}});
-  for(const e of enemies) if(e.alive) ents.push({z:e.z,d:()=>{const fight=battle&&battle.melee&&!battle.over; const [sx,sy,s]=P(e.x,e.z,0); drawMan(sx,sy+(fight?0:TR_D*0.85)*s,s,-1,e.phase,fight?"melee":"aim",pal.en,{enemy:true,flash:e.flash>0,crop:fight?null:sy+1*s});}});
+  for(const e of enemies) if(e.alive) ents.push({z:e.z,d:()=>drawEnemy(e)});
   if(battle&&battle.tanks&&(mode==="charge"||mode==="melee")) for(const tk of battle.tanks) ents.push({z:tk.z,d:()=>drawTank(tk)});
-  pushSetEnts(ents); ents.sort((a,b)=>a.z-b.z); drawParts(false); for(const e of ents)e.d(); drawParts(true);
+  pushSetEnts(ents); ents.sort((a,b)=>a.z-b.z); drawParts(false); for(const e of ents)e.d(); drawClash(rdt*(slowmo||1)); drawParts(true);
   drawTracers(rdt); drawShells(); drawGlints(); if(battle&&(mode==="charge"||mode==="melee"))drawAimMarks(); drawUnitMarks();
   // flag raise
   if(flagRaise){flagRaise.t+=rdt; const [sx,sy,s]=P(flagRaise.x,0.5); drawFlag(sx,sy,s*1.6,130,time,Math.min(1,flagRaise.t/2.2)); if(flagRaise.t>8)flagRaise=null;}

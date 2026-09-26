@@ -348,3 +348,14 @@ Standing rules from this round:
 - RP_ON=false (next to SHOP): depot button hidden, applyLoadout() no-op (clears S.buy), no S.rp gains, no "Reinforcement points earned" row. Merits still give +5% vets each.
 - Formation uses the WHOLE depth: slotZ/slotRank span z 0.03..1.0; climb-out keeps each man's lane (no squeeze); officer following no longer pulls men into his lane; defenders placed 0.03..1.0.
   Measured (lvl 6, 150 men, line): charge z-range 0.03..0.99 at 6/11/16 s (was 0.19..0.87); men in the bottom 20% of the screen doubled.
+## v1.4b MELEE v2 - real duels, no teleports (2026-09-27, agent A)
+Code: block "v1.4b MELEE v2" just before meleeTick(). Entry points: meleeRiseAll (on first joinMelee), meleeStep(dt) (every frame while b.melee),
+meleeAssign (every 0.2 s), meleeAfter(dt) (after b.over), drawEnemy(e), clash()/drawClash (spark stars + grenade arcs, drawn after ents).
+- Enemy states: (none)=in trench | "down" (extra figure beyond the real garrison, stays down, surrenders at the end) | "rise" (climbs out 0.65 s,
+  cropped at the lip) | "fight" (on the parapet at lipX(z)) | "run" (counter-attack reserve, spawns OFF-SCREEN right) | "surr" (hands up, walks to our rear).
+- Duels: each fighting defender gets one attacker from within +-0.17 of the man's own lane m.lz (limit relaxes with idle time so nothing deadlocks),
+  up to 2 supporters per side. Bout 1.5-2.9 s of contact (supporters speed it up 30% each). Winner by A^2/(A^2+E^2) -> only the loser falls.
+- Hidden garrison (b.e > visible): replacements climb out where attackers are free; waiting men lob grenades into the trench (visible arc, 60% kill).
+- meleeTick no longer kills anyone: it keeps flameTick, b.supp and ambience. Enemy rifle flashes only come from defenders still in the trench.
+- Camera zoom during melee 0.97 (was 1.15) so the whole trench depth stays visible. Report shows "Prisoners taken" (b.captured).
+- NEVER spawn figures in view or snap positions: use rise / run-in / walking (user requirement, round 13).
