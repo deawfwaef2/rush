@@ -97,3 +97,4 @@ TODO next: unit types (elite/flamethrower/engineer cuts wire) in waves, enemy ou
 - NO men walking on/off screen when changing counts. There is ONE front line only; more men = camera pulls back so the line LOOKS longer. Do not split into separate near/far zones.
 - Trench design was bad; men must WAIT INSIDE the trench (below parapet, helmets showing), then climb ladders over the top on the whistle.
 - Charge cinematic (montage/CG) too crude → make it much richer.
+- v0.8a: REAL SFX. `audio/sfx.js` = base64 CC0 recordings (works on file://, ~3.4MB). `SFX` object (init/play/loop/updLoops); AU.shot/mg/boom/whistle/bugle/cheer/clang/thud/incoming routed to recordings, synth only fallback. Ambience loops: amb_big, booms_far, wind, rain(ch1), rifle_far, amb_civil(battle). Raw files NOT in repo; to add a sound: download CC0 preview, trim with ffmpeg (pip imageio-ffmpeg), regenerate sfx.js, credit in CREDITS.md.

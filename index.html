@@ -271,6 +271,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 <div id="rot"><svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#efe4cc" stroke-width="1.5"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M2 12a10 10 0 0 0 10 10M22 12A10 10 0 0 0 12 2"/></svg><span>↻</span></div>
 
 <!-- CrazyGames SDK v3 (AD INTEGRATION — see ADS.md). Fails silently offline. -->
+<script src="audio/sfx.js"></script>
 <script src="https://sdk.crazygames.com/crazygames-sdk-v3.js" onerror="window.__noCG=1"></script>
 <script>
 "use strict";
@@ -437,7 +438,7 @@ const AU={ctx:null,master:null,music:null,
    const wet=this.ctx.createGain();wet.gain.value=0.32;this.master.connect(comp);this.master.connect(rv);rv.connect(wet);wet.connect(comp);
    this.music=this.ctx.createGain();this.music.gain.value=S.mus?0.35:0;this.music.connect(this.ctx.destination);
    const len=this.ctx.sampleRate*2;this.nb=this.ctx.createBuffer(1,len,this.ctx.sampleRate);const d=this.nb.getChannelData(0);for(let i=0;i<len;i++)d[i]=Math.random()*2-1;
-   this.startAmb(); BGM.init();}catch(e){} },
+   this.startAmb(); BGM.init(); SFX.init();}catch(e){} },
  set(){ BGM.setVol(); if(!this.ctx)return; this.master.gain.value=S.snd?0.8:0; this.music.gain.value=S.mus?0.35:0; },
  startAmb(){ // wind bed + distant guns
    const c=this.ctx;const s=c.createBufferSource();s.buffer=this.nb;s.loop=true;const f=c.createBiquadFilter();f.type="lowpass";f.frequency.value=380;const g=c.createGain();g.gain.value=0.05;s.connect(f);f.connect(g);g.connect(this.master);s.start();
@@ -445,7 +446,7 @@ const AU={ctx:null,master:null,music:null,
    // rain bed (chapter weather)
    const rs=c.createBufferSource();rs.buffer=this.nb;rs.loop=true;const rf=c.createBiquadFilter();rf.type="highpass";rf.frequency.value=2500;this.rainG=c.createGain();this.rainG.gain.value=0;rs.connect(rf);rf.connect(this.rainG);this.rainG.connect(this.master);rs.start();
    // BATTLEFIELD SOUNDSCAPE: distant drumfire, far MG bursts, rifle pops, shouts, crows, far whistles
-   const far=()=>{ const t=this.now(), busy=(mode==="charge"||mode==="melee"||mode==="barrage");
+   const far=()=>{ if(SFX.inited&&SFX.has("amb_big")){ SFX.updLoops(); if(mode==="menu"&&Math.random()<0.15)SFX.play("crows",0.35,{gap:20,dur:6}); if(Math.random()<0.25)SFX.play("boom_far",0.4,{lp:900,gap:3}); g.gain.value=0; setTimeout(far,1800+Math.random()*2500); return; } const t=this.now(), busy=(mode==="charge"||mode==="melee"||mode==="barrage");
      const r=Math.random();
      if(r<0.3){ const n=1+Math.floor(Math.random()*4); for(let i=0;i<n;i++){ this.noise(t+i*(0.25+Math.random()*0.5),2.6,48+Math.random()*30,0.5,0.28,"lowpass"); this.tone(t+i*0.4,40,1.2,0.12,"sine",null,25);} }
      else if(r<0.5){ const n=6+Math.floor(Math.random()*10),f=500+Math.random()*400; for(let i=0;i<n;i++)this.noise(t+i*0.085,0.07,f,1.2,0.04,"bandpass"); }
@@ -523,6 +524,42 @@ const BGM={el:{},cur:null,ok:false,paused:false,
  step(dt){ if(!this.inited||this.paused)return; for(const k in this.el){ const a=this.el[k]; const tv=k===this.cur?this.target(k):0; a.volume=Math.max(0,Math.min(1,a.volume+(tv-a.volume)*Math.min(1,dt*1.2))); if(tv===0&&a.volume<0.01&&!a.paused&&k!==this.cur)a.pause(); } },
  pauseAll(m){ this.paused=m; for(const k in this.el){ const a=this.el[k]; if(m)a.pause(); else if(k===this.cur)a.play().catch(()=>{}); } }
 };
+/* ============ REAL RECORDED SFX (CC0, freesound.org; audio/sfx.js) — replaces synth; synth kept only as fallback ============ */
+const SFX={buf:{},inited:false,loops:{},last:{},
+ init(){ if(this.inited||!AU.ctx||!window.SFX_DATA)return; this.inited=true;
+   for(const k in SFX_DATA){ const bin=atob(SFX_DATA[k]); const u=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);
+     AU.ctx.decodeAudioData(u.buffer).then(b=>{this.buf[k]=b; if(k==="amb_big"||k==="wind"||k==="rain"||k==="booms_far")this.updLoops();}).catch(()=>{}); } },
+ has(k){return !!this.buf[k];},
+ play(k,vol=1,o={}){ const b=this.buf[k]; if(!b||!AU.ctx)return false; const now=AU.now();
+   if(o.gap){ if(this.last[k]&&now-this.last[k]<o.gap)return true; this.last[k]=now; }
+   const src=AU.ctx.createBufferSource(); src.buffer=b; src.playbackRate.value=(o.rate||1)*(o.fixed?1:(0.93+Math.random()*0.14));
+   const g=AU.ctx.createGain(); g.gain.value=vol; let node=g;
+   if(AU.ctx.createStereoPanner){ const pn=AU.ctx.createStereoPanner(); pn.pan.value=o.pan!=null?o.pan:(Math.random()-0.5)*0.6; g.connect(pn); node=pn; }
+   if(o.lp){ const f=AU.ctx.createBiquadFilter(); f.type="lowpass"; f.frequency.value=o.lp; src.connect(f); f.connect(g);} else src.connect(g);
+   node.connect(AU.master); src.start(now+(o.delay||0), o.off||0); if(o.dur)src.stop(now+(o.delay||0)+o.dur); return true; },
+ loop(k,vol){ const b=this.buf[k]; if(!b||!AU.ctx)return; let L=this.loops[k];
+   if(!L){ const src=AU.ctx.createBufferSource(); src.buffer=b; src.loop=true; const g=AU.ctx.createGain(); g.gain.value=0; src.connect(g); g.connect(AU.master); src.start(0,Math.random()*b.duration*0.5); L=this.loops[k]={src,g}; }
+   L.g.gain.setTargetAtTime(vol,AU.now(),1.2); },
+ updLoops(){ if(!AU.ctx)return; const busy=(mode==="charge"||mode==="melee"||mode==="barrage"); const ch=lvl?lvl.ch:0;
+   this.loop("amb_big", busy?0.5:0.22); this.loop("booms_far", busy?0.15:0.35); this.loop("wind", ch===2?0.45:0.14); this.loop("rain", ch===1?0.5:0);
+   this.loop("rifle_far", busy?0.25:0.12); this.loop("amb_civil", busy?0.35:0); }
+};
+// route AU calls to real recordings (fallback to synth when not decoded yet)
+(function(){ const o={}; for(const k of ["shot","mg","boom","whistle","bugle","cheer","clang","thud","crash","fanfare","incoming"]) o[k]=AU[k];
+  AU.shot=function(v=0.35){ if(!SFX.play(v>=0.2?"rifle":"rifle_rev",Math.min(1.2,v*2.4),{gap:0.05,lp:v<0.2?1800:null}))o.shot.call(AU,v); };
+  AU.mg=function(n,v=0.25){ if(!SFX.play(Math.random()<0.6?"mg":"mg_far",Math.min(1,v*3),{gap:0.9}))o.mg.call(AU,n,v); };
+  AU.boom=function(v=0.9){ if(!SFX.play(Math.random()<0.5?"boom":"arty",Math.min(1.4,v*1.5),{gap:0.08,off:0}))o.boom.call(AU,v); };
+  AU.incoming=function(d){ if(!SFX.play(Math.random()<0.5?"inc1":"inc2",0.55,{gap:0.25}))o.incoming&&o.incoming.call(AU,d); };
+  AU.whistle=function(){ if(!SFX.play("whistle",0.9,{fixed:1,dur:2.2}))o.whistle.call(AU); };
+  AU.bugle=function(){ if(!SFX.play("bugle",0.7,{fixed:1,dur:6}))o.bugle.call(AU); };
+  AU.cheer=function(){ const k=(mode==="charge"||mode==="melee")?"charge":"cheer"; if(!SFX.play(k,0.8,{gap:2.5}))o.cheer.call(AU); };
+  AU.clang=function(){ if(!SFX.play(["clash1","clash2","punch"][Math.floor(Math.random()*3)],0.5,{gap:0.07,dur:1.2}))o.clang.call(AU); };
+  AU.thud=function(){ if(!SFX.play("mud",0.35,{gap:0.18,dur:0.6,off:Math.random()*2}))o.thud.call(AU); };
+  AU.crash=function(){ if(!SFX.play("arty",1.1))o.crash.call(AU); };
+  AU.fanfare=function(){ if(!SFX.play("cheer",0.9,{fixed:1}))o.fanfare.call(AU); SFX.play("bugle",0.5,{fixed:1,delay:0.6,dur:7}); };
+  AU.scream=function(){ SFX.play(Math.random()<0.5?"scream1":"scream2",0.35,{gap:0.8,lp:3000}); };
+  AU.fall=function(){ SFX.play("fall",0.35,{gap:0.12}); };
+})();
 function fakeAd(done){ const ov=$("ov"); ov.classList.remove("hide");
   ov.innerHTML=`<div class="card"><div class="date">— ${L_().loading} —</div><h2 class="stencil" id="fk">3</h2></div>`;
   let n=3; const iv=setInterval(()=>{n--; const e=document.getElementById("fk"); if(e)e.textContent=n; if(n<=0){clearInterval(iv);ov.classList.add("hide");done();}},700); }
@@ -1332,7 +1369,7 @@ function startCharge(){
   if(used.smk){for(let i=0;i<30+used.smk*20;i++)puff(bx+SEGL()*(0.3+Math.random()*0.5),0.1+Math.random()*0.9,0,1,"smokeW",20,9,90,2);}
   if(used.tnk){battle.tanks=[];for(let i=0;i<used.tnk;i++)battle.tanks.push({x:bx-60-i*140,z:[0.62,0.3,0.8][i%3],hp:1});battle.tank=battle.tanks[0];}
   // MONTAGE: close-up officer whistle, then bugle, then wide
-  montage={t:0,dur:3.6,seed:Math.random()*100}; AU.tone&&AU.ctx&&[0,0.9].forEach(d=>setTimeout(()=>AU.tone(AU.now(),1500,0.04,0.06,"square"),d*1000));
+  montage={t:0,dur:3.6,seed:Math.random()*100}; SFX.play("clock",0.6,{fixed:1,dur:3.5}); SFX.play("heart",0.8,{fixed:1,dur:3.8}); AU.tone&&AU.ctx&&[0,0.9].forEach(d=>setTimeout(()=>AU.tone(AU.now(),1500,0.04,0.06,"square"),d*1000));
   setTimeout(()=>AU.whistle(),1750); setTimeout(()=>AU.bugle(),2500); setTimeout(()=>AU.thud(),2900);
   cam.tx=bx+80; cam.tz=sendN>44?0.9:1.1; cam.tt=0.3;
   { const zh=S.lang==="zh", n=sendN; const cap= n<15?(zh?"一个班翻出战壕":"A section goes over"): n<40?(zh?"一个排翻出战壕":"A platoon goes over"): n<120?(zh?"整个连翻出战壕":"The whole company goes over"):(zh?"整个营翻出战壕":"The battalion goes over");
@@ -1343,7 +1380,7 @@ function startCharge(){
   $("hud").classList.remove("hide");
 }
 function killMan(m,cause){
-  if(!m.alive)return; if(battle)shockNear(m.x,m.z); m.alive=false; battle&&battle.dead++;
+  if(!m.alive)return; if(Math.random()<0.1)AU.scream&&AU.scream(); if(Math.random()<0.3)AU.fall&&AU.fall(); if(battle)shockNear(m.x,m.z); m.alive=false; battle&&battle.dead++;
   const rr=Math.random(); if(cause==="mg"||cause==="rf"){ const imp2 = rr<0.35?[1.5+Math.random()*2,1]: rr<0.7?[-4-Math.random()*5,3+Math.random()*5]:[-(1+Math.random()*2),7+Math.random()*4];
     makeRagdoll(m.x,m.z,m.dir,manCols(m),m.vet,imp2,false); puff(m.x,m.z,40,5,"blood",60,0.5,2,-400); if(Math.random()<0.06)say(m,pick(L_().deathcries)); return; }
   const imp = cause==="mine"?[ (Math.random()-0.3)*14, 22+Math.random()*10 ] : cause==="shell"?[(Math.random()-0.5)*16,18+Math.random()*8]: [ -3-Math.random()*4, 2+Math.random()*4 ];
