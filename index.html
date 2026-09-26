@@ -223,6 +223,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 @keyframes cardIn{0%{transform:translateY(40px) scale(.9);opacity:0}100%{transform:none;opacity:1}}
 .tiles{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:8px 0 6px}
 .tile{background:#00000014;border:1px solid #6b5a3e55;border-radius:4px;padding:6px 4px;display:flex;flex-direction:column;align-items:center;gap:2px}
+@media (max-height:760px){.tiles{margin:4px 0 3px}.tile{padding:3px 4px}.rep{margin:6px 0 4px}.rep .rg>div{padding:1px 3px}}
 .tile b{font-family:Impact,sans-serif;font-size:26px;line-height:1;color:#2a1c0c}
 .tile span{font-size:11px;line-height:1.2}
 .tile i{font-size:10px;opacity:.7}
@@ -1968,7 +1969,7 @@ function stepEvents(dt,running,bx,ex){
       if(m.alive&&m.evT<=0){ m.state="run"; const p=m.revive; if(p&&!p.alive&&p.pinned&&!p.fled){ p.alive=true; p.pinned=false; p.state="run"; p.stumble=0.3; p.mor=Math.max(p.mor||0,55); b.pinned=Math.max(0,b.pinned-1); evTag(p,zh?"重新站起":"back on his feet",1); evFeed(zh?"一名士兵把趴下的战友拉了起来":"A man hauls a pinned comrade back to his feet",1); } m.revive=null; } }
     else if(m.state==="freeze"){ m.evT-=dt; if(Math.random()<dt*0.16)killMan(m,"mg");
       if(m.alive&&m.evT<=0){ if(Math.random()<0.22+Math.max(0,55-(m.mor||60))/80){ pinMan(m); if(Math.random()<0.5)evFeed(zh?"一名吓呆的士兵趴下再也不肯起来":"A frozen man goes to ground and stays there",-1); } else { m.state="run"; m.mor=Math.min(118,(m.mor||60)+6); } } }
-    else if(m.state==="flee"){ m.x-=m.speed*0.95*dt; m.phase+=dt*m.speed*0.075; if(m.zt!=null){ const dz=m.zt-m.z; m.z+=Math.sign(dz)*Math.min(Math.abs(dz),dt*0.1); } if(Math.random()<dt*0.12)killMan(m,"rf");
+    else if(m.state==="flee"){ if(m.fd>0){ m.fd-=dt; m.x+=m.speed*0.3*dt; m.phase+=dt*m.speed*0.03; continue; } m.dir=-1; m.x-=m.speed*0.95*dt; m.phase+=dt*m.speed*0.075; if(m.zt!=null){ const dz=m.zt-m.z; m.z+=Math.sign(dz)*Math.min(Math.abs(dz),dt*0.1); } if(Math.random()<dt*0.12)killMan(m,"rf");
       if(m.alive&&m.x<=bx+trenchOff(bx,m.z)+4){ m.alive=false; m.fled=true; m.intrench=true; b.fled=(b.fled||0)+1; } }
   }
   if(running.length>=3){ E.t-=dt; if(E.t<=0){ E.t=(1.1+Math.random()*0.9)/Math.max(0.6,Math.min(2.0,Math.sqrt(running.length/18))); evSmall(running,bx,ex); } }
@@ -2003,7 +2004,7 @@ function evSmall(running,bx,ex){
   else if(k==="grenade"){ m.stumble=0.5; say(m,pick(zh?["手榴弹！","接着！"]:["Bomb!","Have this!"]),1.0); const gx=ex+trenchOff(ex,m.z)-6, gz=m.z;
     setTimeout(()=>{ if(battle!==b||b.over)return; explosion(gx,gz,0.5); if(Math.random()<0.6&&evEnemyDown()){ evTag(m,Z("手榴弹炸倒一名守军","grenade · a defender down"),1); evFeed(Z("一枚手榴弹落进敌壕 · 守军-1","A grenade lands in their trench · defender down"),1); } else if(Math.random()<0.5){ E.mgK=Math.min(E.mgK,0.5); E.mgT=Math.max(E.mgT,1.5); } },700); }
   else if(k==="nerve"){ m.state="flee"; m.dir=-1; say(m,pick(zh?["我受不了了！","不——！"]:["I can't!","No more!"]),1.2); evMorNear(m,-5); evTag(m,Z("崩溃往回跑 · 士气-","breaks and runs · morale −"),-1); evFeed(Z("一名士兵崩溃，往回跑","A man's nerve breaks — he runs back"),-1);
-    for(const o of evNear(m,70,0.1,4)){ if(!o.vet&&(o.mor||60)<40&&Math.random()<0.35){ o.state="flee"; o.dir=-1; } } }
+    for(const o of evNear(m,70,0.1,4)){ if(!o.vet&&(o.mor||60)<40&&Math.random()<0.35){ o.state="flee"; o.fd=0.4+Math.random()*0.9; } } }
   else if(k==="mud"){ m.hold=Math.max(m.hold||0,1.1+Math.random()*1.1); sayP(0.3,zh?["陷住了！","该死的泥！"]:["I'm stuck!","Bloody mud!"]); evTag(m,Z("陷进泥里 · 减速","stuck in the mud · slowed"),-1); }
 }
 function evBig(running,bx,ex){
@@ -2013,7 +2014,7 @@ function evBig(running,bx,ex){
   const surge=()=>{ for(const m of running){ if(m.state==="run"){ m.boostT=4; m.boostF=1.3; } m.mor=Math.min(120,(m.mor||60)+12); } AU.cheer(); const r2=running.filter(m=>m.state==="run"); for(let i=0;i<3&&r2.length;i++)say(pick(r2),pick(zh?["冲啊！","乌拉！"]:["Hurrah!","Come on!"]),1.2); return Z("士气高涨！全线加速冲锋 · 士气+12","SURGE! The whole line picks up pace · morale +12"); };
   if(r<=1){
     if(am<62&&running.length>=6){ const pool=running.filter(m=>m.state==="run"&&!m.vet).sort((p,q)=>(p.mor||60)-(q.mor||60)); const k=Math.min(pool.length,Math.max(2,Math.round(pool.length*(0.12+Math.random()*0.14))));
-      for(let i=0;i<k;i++){ const m=pool[i]; m.state="flee"; m.dir=-1; if(i<2)say(m,Z("快跑！","Run for it!"),1.2); } for(const m of running)m.mor=Math.max(0,(m.mor||60)-8); cam.shake=Math.max(cam.shake||0,3);
+      for(let i=0;i<k;i++){ const m=pool[i]; m.state="flee"; m.fd=Math.random()*1.4; if(i<2)say(m,Z("快跑！","Run for it!"),1.2); } for(const m of running)m.mor=Math.max(0,(m.mor||60)-8); cam.shake=Math.max(cam.shake||0,3);
       txt=Z(`溃逃！${k} 人掉头往回跑`,`ROUT! ${k} men turn and run back`); good=-1; }
     else { for(const m of running){ if(m.state==="run")m.stumble=Math.max(m.stumble||0,1.5+Math.random()*1.1); }
       setTimeout(()=>{ if(battle!==b||b.over)return; AU.whistle(); const r2=men.filter(m=>m.alive&&m.state==="run"); for(let i=0;i<3&&r2.length;i++)say(pick(r2),pick(zh?["起来！","继续前进！"]:["Up! Up!","On your feet!"]),1.1); },1600);
@@ -2041,7 +2042,7 @@ function drawEvMan(m,sx,sy,s){
     o.crop=sy+2*s; o.flash=m.flash>0; drawMan(sx,sy+30*s,s,1,m.phase,"aim",cols,o); return; }
   if(m.state==="help"){ drawMan(sx,sy,s,m.dir,m.phase,"crouch",cols,o); return; }
   if(m.state==="freeze"){ drawMan(sx,sy,s,m.dir,0,"idle",cols,o); return; }
-  drawMan(sx,sy,s,-1,m.phase,"run",cols,o);
+  drawMan(sx,sy,s,m.fd>0?1:-1,m.phase,"run",cols,o);
 }
 function drawEvTags(dt){ if(!EVT.tags.length)return; cx.save(); cx.textAlign="center"; const fs=Math.max(10,Math.min(13,W/100)); cx.font=`italic ${fs}px Georgia,serif`;
   const placed=[];
@@ -2154,7 +2155,7 @@ function reportHTML(b,surv,vetGain,hold,rear,fail){
   const cell=(k,v,c="",wide)=>`<div class="${wide?"wide":""}"><span>${k}</span><b class="${c}">${v}</b></div>`;   // v1.3: compact 2-column report (card no longer overflows)
   return `<div class="rep"><div class="rg">${cell(zh?"派出":"Sent",b.sent)}${cell(zh?"阵亡":"Killed",b.dead,"red")}${cell(zh?"趴下不起 (计为损失)":"Went to ground (lost)",b.pinned,"red")}${b.fled?cell(zh?"崩溃退回 (回到预备队)":"Broke & ran back (to reserve)",b.fled):""}${cell(zh?"击毙守军":"Enemy killed",b.eKilled)}
    ${fail?"":cell(zh?"幸存":"Survived",surv)+cell(zh?"留守新阵地":"Hold the new trench",hold)+cell(zh?"调往后方 (多余)":"Rotated to the rear (surplus)",rear,rear>b.e0?"red":"")+cell(zh?"晋升老兵 返回":"Return as veterans",vetGain,"gold")+(b.recovered?cell(zh?"担架队救回":"Carried back by stretcher bearers",b.recovered,"gold"):"")+(b.rpGain?cell(zh?"获得增援点":"Reinforcement points earned","+"+b.rpGain+" RP","gold"):"")+(b.merits&&b.merits.length?cell(zh?"战术评价 (+5%老兵/项)":"Tactical merit (+5% vets each)",b.merits.join(" · "),"gold",1):"")}
-   </div>${(b.ev&&b.ev.log.length)?`<div class="wv">${b.ev.log.map(e=>(zh?"战场运气 ":"Fortune of war ")+e.d+(e.mod?(e.mod>0?"+":"")+e.mod:"")+": "+e.txt.replace(/<[^>]+>/g,"")).join(" · ")}</div>`:""}<div class="wv">${lw.map((w,i)=>`W${i+1}: ${w.r}${w.v?" +"+VETI+w.v:""} ${fl[w.f]}`).join(" · ")}</div><div class="rem">${rem}</div></div>`;
+   </div><div class="wv">${(b.ev&&b.ev.log.length)?b.ev.log.map(e=>(zh?"战场运气 ":"Fortune of war ")+e.d+(e.mod?(e.mod>0?"+":"")+e.mod:"")+": "+e.txt.replace(/<[^>]+>/g,"")).join(" · ")+"<br>":""}${lw.map((w,i)=>`W${i+1}: ${w.r}${w.v?" +"+VETI+w.v:""} ${fl[w.f]}`).join(" · ")}</div><div class="rem">${rem}</div></div>`;
 }
 function result(win){ $("tools")&&$("tools").classList.add("hide");
   mode="result"; CG.gameplayStop(); slowmo=1;
