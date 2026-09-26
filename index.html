@@ -64,7 +64,26 @@ b{font-weight:700}
 .panel:before{content:"";position:absolute;inset:3px;border:1px dashed #ffffff10;border-radius:6px;pointer-events:none}
 .ph{font-size:12px;letter-spacing:.3em;color:var(--brass);margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;text-transform:uppercase}
 .ph span:last-child{letter-spacing:.05em;color:var(--dim);text-transform:none;font-size:12px}
-#left{left:12px;top:72px;width:250px}
+#left{left:12px;top:72px;width:270px;max-height:calc(100vh - 160px);overflow:auto}
+#waveTabs{display:flex;gap:4px;margin-bottom:6px;flex-wrap:wrap}
+#waveTabs button{flex:1;min-width:44px;height:38px;border-radius:5px;border:1px solid var(--line);background:linear-gradient(#3a3226,#1f1a13);color:var(--ink);font-family:Impact,sans-serif;font-size:15px;letter-spacing:.06em;cursor:pointer;line-height:1;position:relative}
+#waveTabs button small{display:block;font-family:Georgia;font-size:10px;color:var(--dim);margin-top:2px}
+#waveTabs button.on{border-color:var(--brass);background:linear-gradient(#6a5634,#2a2215);box-shadow:0 0 0 1px #c9a45a66,inset 0 1px 0 #fff3}
+#waveTabs button.add{flex:0 0 40px;font-size:22px;color:var(--brass)}
+#waveTabs button .x{position:absolute;right:-5px;top:-6px;width:17px;height:17px;border-radius:50%;background:#7a2616;color:#fff;font:11px/17px Georgia;display:none}
+#waveTabs button.on .x{display:block}
+.wsub{font-size:11px;letter-spacing:.2em;color:var(--dim);text-transform:uppercase;text-align:center}
+#vetRow,#formRow,#delayRow{display:flex;align-items:center;gap:6px;margin-top:7px;font-size:13px}
+#vetRow .lb,#formRow .lb,#delayRow .lb{flex:0 0 74px;color:var(--dim);font-size:11px;letter-spacing:.08em;text-transform:uppercase;line-height:1.1}
+.sm1{width:34px;height:34px;border-radius:50%;border:1px solid var(--brass);background:radial-gradient(circle at 40% 30%,#6a5a3a,#2a2217);color:#f3e2b8;font-size:20px;line-height:1;cursor:pointer}
+.sm1:active{transform:translateY(2px)}
+#vetRow b,#delayRow b{flex:1;text-align:center;font-family:Impact,sans-serif;font-size:22px;color:#f0c870}
+#formRow button{flex:1;height:40px;border-radius:5px;border:1px solid var(--line);background:linear-gradient(#3a3226,#1f1a13);color:var(--ink);cursor:pointer;font-size:10px;font-family:Georgia;padding:2px}
+#formRow button svg{display:block;margin:0 auto 1px}
+#formRow button.on{border-color:var(--brass);background:linear-gradient(#6a5634,#2a2215)}
+#warn{margin-top:6px;font-size:12px;line-height:1.35}
+#warn div{padding:4px 6px;border-radius:4px;margin-top:3px;background:#5a1a0e99;border-left:3px solid #e0603a;color:#ffd9c0}
+#warn div.ok{background:#2a3a1a99;border-left-color:#9ac060;color:#dfeec8}
 #right{right:12px;top:72px;width:270px;max-height:calc(100vh - 170px);overflow:auto}
 .stepper{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:2px 0 6px}
 .rb{width:52px;height:52px;border-radius:50%;border:1px solid var(--brass);background:radial-gradient(circle at 40% 30%,#6a5a3a,#2a2217);color:#f3e2b8;font-size:30px;line-height:1;cursor:pointer;box-shadow:inset 0 2px 0 #ffffff22,0 3px 0 #000;font-family:Georgia}
@@ -217,9 +236,15 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
     <div id="advisor" class="hide"><div class="face" id="advFace"></div><div><div class="who" id="advWho"></div><div class="say" id="advTxt"></div></div></div>
     <div class="panel" id="left">
       <div class="ph"><span id="lblSend">SEND</span><span id="lblVet"></span></div>
+      <div id="waveTabs"></div>
+      <div class="wsub" id="lblRec"></div>
       <div class="stepper"><button class="rb" id="bMinus">−</button><div class="bigN stencil" id="sendN">0</div><button class="rb" id="bPlus">+</button></div>
       <input type="range" id="sendR" min="0" max="100" value="0">
       <div class="presets" id="presets"></div>
+      <div id="vetRow"></div>
+      <div id="formRow"></div>
+      <div id="delayRow"></div>
+      <div id="warn"></div>
       <div id="sendInfo"></div>
       <div class="pdesc" id="sendD"></div>
     </div>
@@ -1058,24 +1083,82 @@ function buildSupports(){
     d.innerHTML=`<button class="sm0" data-a="-">−</button>${ico(k,"g")}<div class="tx"><b>${t.sup[k]}</b><i>${t.supD[k]}</i><div class="pips">${Array.from({length:S.sup[k]+used[k]},(_,i)=>`<em class="${i<used[k]?"u":""}"></em>`).join("")}</div></div><span class="n">${used[k]}</span><button class="sm0" data-a="+">+</button><span class="q">i</span>`;
     d.onclick=(e)=>{ const a=e.target.dataset&&e.target.dataset.a; if(e.target.classList.contains("q")){mechCard(k,true);return;} if(a==="-"){unuseSupport(k);return;} useSupport(k);};el.appendChild(d);}
 }
-function setSend(n){
-  const before=sendN; sendN=Math.max(0,Math.min(S.reserve,n));
-  const t=L_(); $("sendN").innerHTML=`${sendN}<small>${S.lang==="zh"?"人":"MEN"}</small>`;
-  const v=Math.min(S.vets,sendN); $("lblVet").textContent=`/ ${S.reserve}`;
-  const r=$("sendR"); r.max=S.reserve; r.value=sendN; r.style.setProperty("--p",(S.reserve?sendN/S.reserve*100:0)+"%");
-  $("sendInfo").innerHTML=`<div><span>${t.sendInfoA}</span><b>★ ${v}</b></div><div><span>${t.sendInfoB}</span><b>${S.reserve-sendN}</b></div>`;
-  // push soldiers into the trench one by one (visual)
-  if(sendN>before) pushQueue+=sendN-before; else { pushQueue=Math.max(0,pushQueue-(before-sendN)); let rm=before-sendN; for(let i=men.length-1;i>=0&&rm>0;i--){if(men[i].sent&&!men[i].arriving){men.splice(i,1);rm--;}} if(rm>0){for(let i=men.length-1;i>=0&&rm>0;i--){if(men[i].sent){men.splice(i,1);rm--;}}} }
-  advisor();
+/* ---------- WAVES (冲击波帧): each wave = recruits + veterans + formation + delay ---------- */
+let waves=[{r:0,v:0,f:1,d:0}], wSel=0;
+const FORM=[{k:"loose",fire:0.72,melee:0.78,zw:1.0,xj:34},{k:"line",fire:1.0,melee:1.0,zw:0.8,xj:12},{k:"dense",fire:1.5,melee:1.25,zw:0.42,xj:6}];
+const MAXW=()=>Math.min(6,3+Math.floor(S.lvl/4));
+const recAvail=()=>Math.max(0,S.reserve-S.vets);
+function wTot(w){return w.r+w.v;}
+function totR(ex){return waves.reduce((a,w,i)=>a+(i===ex?0:w.r),0);}
+function totV(ex){return waves.reduce((a,w,i)=>a+(i===ex?0:w.v),0);}
+function formIcon(f){const pts=f===0?[[3,4],[13,3],[23,5],[7,12],[19,13],[4,19],[15,20],[24,18]]:f===1?[[3,6],[9,6],[15,6],[21,6],[3,16],[9,16],[15,16],[21,16]]:[[7,6],[11,6],[15,6],[19,6],[7,11],[11,11],[15,11],[19,11],[7,16],[11,16],[15,16],[19,16]];
+  return `<svg width="26" height="20" viewBox="0 0 26 22">${pts.map(p=>`<circle cx="${p[0]}" cy="${p[1]}" r="2.2" fill="#e8d6a8"/>`).join("")}</svg>`;}
+function buildWaves(){
+  const zh=S.lang==="zh"; const W0=waves[wSel];
+  $("waveTabs").innerHTML=waves.map((w,i)=>`<button class="${i===wSel?"on":""}" data-i="${i}">W${i+1}<small>${w.r}${w.v?"+★"+w.v:""}</small>${i>0?`<span class="x" data-x="${i}">×</span>`:""}</button>`).join("")+(waves.length<MAXW()?`<button class="add" data-add="1" title="${zh?"新增波次":"add wave"}">+</button>`:"");
+  $("waveTabs").querySelectorAll("button").forEach(b=>b.onclick=(e)=>{AU.init();AU.click(); if(e.target.dataset.x){waves.splice(+e.target.dataset.x,1);wSel=Math.min(wSel,waves.length-1);syncMen();buildWaves();return;}
+    if(b.dataset.add){const pf=waves[waves.length-1];waves.push({r:0,v:0,f:pf?pf.f:1,d:4});wSel=waves.length-1;buildWaves();return;} wSel=+b.dataset.i;buildWaves();});
+  $("lblRec").textContent=(zh?"新兵":"RECRUITS")+` · W${wSel+1}`;
+  $("sendN").innerHTML=`${W0.r}<small>${zh?"新兵":"RECRUITS"}</small>`;
+  const rmax=W0.r+Math.max(0,recAvail()-totR()); const r=$("sendR"); r.max=rmax; r.value=W0.r; r.style.setProperty("--p",(rmax?W0.r/rmax*100:0)+"%");
+  $("vetRow").innerHTML=`<span class="lb">★ ${zh?"老兵":"Veterans"}<br><small>${S.vets-totV()} ${zh?"可用":"free"}</small></span><button class="sm1" data-v="-1">−</button><b>★${W0.v}</b><button class="sm1" data-v="1">+</button>`;
+  $("vetRow").querySelectorAll("button").forEach(b=>holdBtnF(b,()=>{setWave(wSel,null,W0.v+(+b.dataset.v));}));
+  const fl=zh?["散兵线","横队","密集"]:["Loose","Line","Dense"];
+  $("formRow").innerHTML=`<span class="lb">${zh?"队形":"Formation"}</span>`+[0,1,2].map(f=>`<button data-f="${f}" class="${W0.f===f?"on":""}">${formIcon(f)}${fl[f]}</button>`).join("");
+  $("formRow").querySelectorAll("button").forEach(b=>b.onclick=()=>{AU.init();AU.click();W0.f=+b.dataset.f;syncMen(true);buildWaves();});
+  $("delayRow").innerHTML= wSel===0? "" : `<span class="lb">${zh?"间隔":"Delay"}<br><small>${zh?"上一波后":"after prev."}</small></span><button class="sm1" data-d="-1">−</button><b>${W0.d}s</b><button class="sm1" data-d="1">+</button>`;
+  $("delayRow").querySelectorAll("button").forEach(b=>b.onclick=()=>{AU.init();AU.click();W0.d=Math.max(0,Math.min(20,W0.d+(+b.dataset.d)*2));buildWaves();});
+  // warnings (historical logic, plain words)
+  const warn=[]; const g=Math.max(1,cur?cur.gr:1);
+  waves.forEach((w,i)=>{ const n=wTot(w); if(!n)return;
+    if(w.f===2&&n>=24) warn.push(zh?`W${i+1} 过于密集：机枪和炮弹会成片收割。`:`W${i+1} too dense: MGs and shells will reap whole files.`);
+    if(w.f===0&&n>=8&&n<g) warn.push(zh?`W${i+1} 散兵线人数少于守军：白刃战会吃亏。`:`W${i+1} loose & fewer than the garrison: weak at the bayonet.`);
+    if(i>0&&w.d>=12) warn.push(zh?`W${i+1} 间隔太久：前一波会孤军奋战。`:`W${i+1} waits too long: the previous wave fights alone.`); });
+  if(waves.length>1&&waves.some(w=>!wTot(w))) warn.push(zh?"有空的波次。":"A wave is empty.");
+  if(!warn.length&&sendN>0) warn.push("OK");
+  $("warn").innerHTML=warn.map(w=>w==="OK"?`<div class="ok">${zh?"队形合理。":"Formation sound."}</div>`:`<div>⚠ ${w}</div>`).join("");
+  const t=L_();
+  $("sendInfo").innerHTML=`<div><span>${zh?"总计派出":"Total going over"}</span><b>${sendN}</b></div><div><span>${zh?"其中老兵":"of which veterans"}</span><b>★ ${totV()}</b></div><div><span>${t.sendInfoB}</span><b>${S.reserve-sendN}</b></div>`;
+  $("lblVet").textContent=`${recAvail()-totR()} + ★${S.vets-totV()} / ${S.reserve}`;
 }
-let pushQueue=0, pushT=0;
-function pushOne(){ // soldier climbs up from behind into jump-off line
-  const bx=trenchX(S.lvl); const idx=men.filter(m=>m.sent).length;
-  const vet=idx<Math.min(S.vets,sendN);
-  const zz=laneZ((idx*0.618)%1); const m=mkMan(Math.min(bx-120, cam.x-(W/2)/scaleZ(zz)-30-Math.random()*60),zz,vet); m.sent=true; m.arriving=true;
-  m.tx=bx-8-Math.random()*26-(idx>60?Math.random()*40:0); m.state="run"; m.speed=260;
-  men.push(m); sortMen(); AU.thud(); if(Math.random()<0.25)AU.clang();
+function setWave(i,r,v){ const w=waves[i]; if(!w)return;
+  if(r!=null) w.r=Math.max(0,Math.min(r, recAvail()-totR(i)));
+  if(v!=null) w.v=Math.max(0,Math.min(v, S.vets-totV(i)));
+  syncMen(); buildWaves(); }
+function setSend(n){ // compatibility: sets selected wave recruits so total ~ n (vets included when recruits run out)
+  if(!waves[wSel])wSel=0; const others=sendN-wTot(waves[wSel]);
+  let want=Math.max(0,n-others); const w=waves[wSel];
+  const rr=Math.min(want, recAvail()-totR(wSel)); w.r=Math.max(0,rr); want-=w.r;
+  if(want>0) w.v=Math.min(S.vets-totV(wSel), w.v+want); else if(n<sendN&&w.r===0) w.v=Math.max(0,w.v-(sendN-n));
+  syncMen(); buildWaves(); }
+let pushQueue=0, pushT=0, pushList=[];
+function syncMen(reform){ // make visible men match waves (add queued arrivals / remove extras)
+  sendN=waves.reduce((a,w)=>a+wTot(w),0);
+  if(reform){ men=men.filter(m=>!m.sent); pushList=[]; }
+  pushList=pushList.filter(q=>waves[q.w]);
+  waves.forEach((w,wi)=>{ for(const vet of [true,false]){ const want=vet?w.v:w.r;
+    const have=men.filter(m=>m.sent&&m.wave===wi&&m.vet===vet); const q=pushList.filter(p=>p.w===wi&&p.vet===vet);
+    let d=want-have.length-q.length;
+    if(d>0){ for(let k=0;k<d;k++)pushList.push({w:wi,vet}); }
+    else if(d<0){ let rm=-d; for(let k=pushList.length-1;k>=0&&rm>0;k--){if(pushList[k].w===wi&&pushList[k].vet===vet){pushList.splice(k,1);rm--;}}
+      for(let k=have.length-1;k>=0&&rm>0;k--){men.splice(men.indexOf(have[k]),1);rm--;} } } });
+  men=men.filter(m=>!m.sent||waves[m.wave]);
+  pushQueue=pushList.length;
 }
+function slotZ(i,f){ // fill NEAR → FAR: first ~40 in the near zone, overflow goes to the far zone
+  const fz=FORM[f].zw; const cap=f===2?60:f===1?44:34;
+  if(i<cap){ const u=((i*0.618)%1); return NEARZ+0.02+ (0.5-fz/2 + u*fz)*0.40; }
+  const u=(((i-cap)*0.618)%1); return 0.05+(0.5-fz/2+u*fz)*0.42; }
+function pushOne(){
+  const q=pushList.shift(); pushQueue=pushList.length; if(!q)return;
+  const bx=trenchX(S.lvl); const w=waves[q.w]; if(!w)return;
+  const idx=men.filter(m=>m.sent&&m.wave===q.w).length;
+  const zz=slotZ(idx,w.f); const m=mkMan(Math.min(bx-120, cam.x-(W/2)/scaleZ(zz)-30-Math.random()*60),zz,q.vet); m.sent=true; m.arriving=true; m.wave=q.w;
+  m.tx=bx-8-q.w*46-Math.random()*FORM[w.f].xj; m.state="run"; m.speed=260;
+  men.push(m); sortMen(); if(Math.random()<0.5)AU.thud(); if(Math.random()<0.15)AU.clang();
+}
+function holdBtnF(el,fn){ let iv=null,to=null; const go=()=>{AU.init();fn();AU.click();}; const stop=()=>{clearTimeout(to);clearInterval(iv);};
+  el.onpointerdown=(e)=>{e.preventDefault();go();to=setTimeout(()=>{iv=setInterval(go,70);},380);}; el.onpointerup=el.onpointerleave=stop; }
 
 /* ---------- Advisor: Monte-Carlo estimate, words only ---------- */
 function simulateQuick(n,vets,c,runs=120){
@@ -1155,7 +1238,7 @@ function toPlan(){
   if(S.done){showEnd();return;}
   AU.init(); AU.click();
   mode="pan"; $("menu").classList.add("hide"); $("hud").classList.add("hide");
-  setupFront(); men=[]; pushQueue=0;
+  setupFront(); men=[]; pushQueue=0; pushList=[]; waves=[{r:0,v:0,f:1,d:0}]; wSel=0;
   cam.tx=trenchX(S.lvl)+SEGL()*0.42; cam.tz=0.82; cam.tt=0.45;
   setTimeout(()=>{ if(mode!=="pan")return; mode="plan"; $("plan").classList.remove("hide"); hazRows(); buildSupports(); buildPresets(); setSend(Math.min(S.reserve, Math.max(0, Math.ceil(lvl.gr*2)))); CG.gameplayStart(); updTop();
     if(lvl.fort) big(`⚠ ${L_().fortress}`,L_().fortTip,2200);
@@ -1183,12 +1266,13 @@ function startCharge(){
   AU.init();
   mode="charge"; $("plan").classList.add("hide");
   // finalize soldiers: ensure count = sendN (materialize remaining queue instantly)
-  while(men.filter(m=>m.sent).length<sendN)pushOne();
+  syncMen(); while(pushList.length)pushOne();
   men=men.filter(m=>m.sent);
-  const vetsSent=Math.min(S.vets,sendN);
+  const vetsSent=totV(); S.lastWaves=waves.map(w=>({r:w.r,v:w.v,f:w.f,d:w.d}));
   S.reserve-=sendN; S.vets-=vetsSent; save(); updTop();
   const bx=trenchX(S.lvl);
-  men.forEach((m,i)=>{m.arriving=false;if(m.x<bx-60)m.x=bx-40-Math.random()*20;m.state="crouch";m.delay=0.9+Math.random()*1.2+(i/sendN)*1.2;m.speed=(135+Math.random()*35)*(lvl.ch===2?0.87:1)*(0.85+0.15*mf()/1.0);});
+  let acc=0; const wStart=waves.map((w,i)=>{ if(i>0) acc+=w.d+1.2; return acc; });
+  men.forEach((m,i)=>{m.arriving=false;m.x=m.tx;m.state="crouch";const wf=waves[m.wave||0]; m.form=wf?wf.f:1; m.delay=0.9+wStart[m.wave||0]+Math.random()*(m.form===0?1.6:m.form===1?0.8:0.45);m.mor=55+S.morale*0.4+(m.vet?30:0)+Math.random()*25;m.speed=(135+Math.random()*35)*(lvl.ch===2?0.87:1)*(0.85+0.15*mf()/1.0);});
   battle={t:0,sent:sendN,dead:0,reached:0,nodes:[0.3,0.6,0.86].map(f=>({x:bx+SEGL()*f,done:false})),mgT:0,rfT:0,shT:0,gasZones:[],smoke:used.smk?4+used.smk*4:0,snipers:used.snp,tank:null,melee:false,sniperDone:false,over:false};
   // gas zones
   for(let i=0;i<Math.round(cur.gs);i++)battle.gasZones.push({x:bx+SEGL()*(0.25+0.5*Math.random()),w:120+Math.random()*80});
@@ -1413,14 +1497,14 @@ $("bAdW").onclick=()=>{ AU.init();
   CG.rewarded(ok=>{ if(!ok)return; S.adDay=S.day+1; giveDay(); S.adDay=S.day; save(); updTop(); toast(`${L_().adOk} +${S.income}`); if(mode==="menu")worldVisibleIdle(); if(mode==="plan"){buildSupports();setSend(sendN);} });
 };
 // --- send panel: hold-to-repeat steppers, slider, presets ---
-function holdBtn(el,d){ let iv=null,to=null,n=0; const go=()=>{AU.init();setSend(sendN+d*(n>12?5:1));AU.click();n++;};
+function holdBtn(el,d){ let iv=null,to=null,n=0; const go=()=>{AU.init();setWave(wSel,waves[wSel].r+d*(n>12?5:1));AU.click();n++;};
   const stop=()=>{clearTimeout(to);clearInterval(iv);n=0;};
   el.addEventListener("pointerdown",e=>{e.preventDefault();go();to=setTimeout(()=>iv=setInterval(go,70),350);});
   ["pointerup","pointerleave","pointercancel"].forEach(ev=>el.addEventListener(ev,stop)); }
 holdBtn($("bPlus"),1); holdBtn($("bMinus"),-1);
-$("sendR").addEventListener("input",e=>{ setSend(+e.target.value); });
+$("sendR").addEventListener("input",e=>{ setWave(wSel,+e.target.value); });
 function buildPresets(){ const t=L_(); const f=[1,1.5,2,0]; $("presets").innerHTML=f.map((x,i)=>`<button data-f="${x}">${t.presets[i]}<small>${t.presetsS[i]}</small></button>`).join("");
-  document.querySelectorAll("#presets button").forEach(b=>b.onclick=()=>{AU.init();AU.click();const x=+b.dataset.f;setSend(x?Math.ceil(cur.gr*x):S.reserve);}); }
+  document.querySelectorAll("#presets button").forEach(b=>b.onclick=()=>{AU.init();AU.click();const x=+b.dataset.f;setWave(wSel,x?Math.ceil(cur.gr*x):99999);}); }
 // --- mechanics detail cards ---
 const MECH={
  en:{
@@ -1541,7 +1625,7 @@ function frame(now){
   if(mode==="charge"&&!montage){cam.tt=Math.min(0.85,0.35+battle.t*0.07); cam.tz=Math.max(0.78,1.1-battle.t*0.05);}  // camera rises with the charge
   const shx=(Math.random()-0.5)*cam.shake, shy=(Math.random()-0.5)*cam.shake; cam.shake*=0.9;
   // push queue (soldiers entering one by one)
-  if(mode==="plan"&&pushQueue>0){pushT-=rdt; if(pushT<=0){ pushOne(); pushQueue--; pushT=Math.max(0.03,0.16-pushQueue*0.004);} }
+  if(mode==="plan"&&pushList.length>0){pushT-=rdt; if(pushT<=0){ pushOne(); pushT=Math.max(0.02,0.16-pushList.length*0.005);} }
   // update men
   for(const m of men){ if(!m.alive)continue;
     if(m.arriving){ m.x+=m.speed*rdt; m.phase+=rdt*18; if(m.x>=m.tx){m.x=m.tx;m.arriving=false;m.state=Math.random()<0.5?"crouch":"idle";} }
