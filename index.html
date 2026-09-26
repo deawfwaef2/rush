@@ -1611,10 +1611,6 @@ function syncMen(reform){ // make visible men match waves (add queued arrivals /
 const SLOT_MIN=[0.03,0.02,0.014];
 function slotZ(i,f){ const per=Math.floor(0.97/SLOT_MIN[f||0]); const r=Math.floor(i/per), j=i-r*per; return 0.03+((0.5+j*0.6180339+r*0.309)%1)*0.97; } // round 13: WHOLE depth, near foreground to far side
 function slotRank(i,f){ return Math.floor(i/Math.floor(0.97/SLOT_MIN[f||0])); }
-function slotZ_old(i,f){ // fill NEAR → FAR: first ~40 in the near zone, overflow goes to the far zone
-  const fz=FORM[f].zw; const cap=f===2?60:f===1?44:34;
-  if(i<cap){ const u=((i*0.618)%1); return NEARZ+0.02+ (0.5-fz/2 + u*fz)*0.40; }
-  const u=(((i-cap)*0.618)%1); return 0.05+(0.5-fz/2+u*fz)*0.42; }
 function pushOne(){
   const q=pushList.shift(); pushQueue=pushList.length; if(!q)return;
   const bx=trenchX(S.lvl); const w=waves[q.w]; if(!w)return;
@@ -2164,7 +2160,7 @@ function meleeStep(dt){ const b=battle; if(!b)return; const ex=trenchX(S.lvl+1);
   b.rsT=(b.rsT||0)-dt; if(b.e>active&&active<MVIS&&b.rsT<=0){ b.rsT=0.18+Math.random()*0.25; const free=b.mel.filter(m=>m.alive&&m.state==="melee"&&!m.foe&&!m.sup); const src=free.length?pick(free):pick(b.mel.filter(m=>m.alive))||null; const z=src?Math.max(0.03,Math.min(1,(src.lz??src.z)+(Math.random()-0.5)*0.06)):0.03+Math.random()*0.97; spawnRiser(z); }
   b.asT=(b.asT||0)-dt; if(b.asT<=0){ b.asT=0.2; meleeAssign(); }
   b.gnT=(b.gnT==null?1.2:b.gnT)-dt; if(b.gnT<=0){ b.gnT=0.9+Math.random()*1.1; if(b.e>active+1){ const idle=b.mel.filter(m=>m.alive&&m.state==="melee"&&!m.foe&&!m.sup); const t=pick(idle); if(t){ const x1=lipX(t.z)+TR_W*0.55+(Math.random()-0.5)*14, z1=t.z; t.flash=0; t.fT=1.6; if(Math.random()<0.3)say(t,pick(S.lang==="zh"?["手榴弹！","接着！"]:["Bomb!","Have this!"]),0.9);
-      nadeFX.push({x0:t.x+8,z0:t.z,x1,z1,t:0,T:0.75,done:()=>{ if(battle!==b||b.over)return; explosion(x1,z1,0.45); if(Math.random()<0.6&&b.e>1){ b.e=Math.max(0,b.e-1); b.eKilled++; if(cur)cur.gr=b.e; } }}); } } }
+      nadeFX.push({x0:t.x+8,z0:t.z,x1,z1,t:0,T:0.75,done:()=>{ if(battle!==b||b.over)return; explosion(x1,z1,0.45); if(Math.random()<0.6&&b.e>1){ b.e=Math.max(0,b.e-1); b.eKilled++; if(cur)cur.gr=b.e; } const fk=b.flK==null?(cur.fl||0):b.flK; if(fk>0&&Math.random()<0.15){ b.flK=fk-1; evFeed(S.lang==="zh"?"一枚手榴弹炸掉了一个喷火小组！":"A grenade knocks out a flame team!",1); } }}); } } }
   // our fighters
   const eBase=meleeE(); b.clT=(b.clT||0)-dt;
   b.cmT=(b.cmT||0)-dt; if(b.cmT<=0){ b.cmT=1; b.mel=b.mel.filter(m=>m.alive); }
@@ -2408,7 +2404,7 @@ const MECH={
   mn:["Mines","Buried somewhere in no man's land.",["Invisible. The first man to step on one sets it off.","The blast kills him and many men near him.","Each mine only explodes once. Big crowds lose more men per mine."],"Artillery can set mines off early."],
   sh:["Enemy artillery","Their guns are ranged on the field.",["Every few seconds a shell lands on a group of runners.","Men close together die together."],"Artillery."],
   sn:["Snipers","Hidden marksmen in the enemy line.",["A glint on their parapet means a shot is coming.","They pick priority targets: the officer, engineers, Lewis gunners, veterans.","Take Cover can save the marked man."],"Smoke, your own snipers."],
-  fl:["Flamethrowers","Flame teams in the enemy trench.",["During the trench fight they burn a group of attackers now and then.","Dense formations lose more men to each burst.","Bombers can knock a flame team out."],"Bombers, Loose/Line formation."],
+  fl:["Flamethrowers","Flame teams in the enemy trench.",["During the trench fight they burn a group of attackers now and then.","Dense formations lose more men to each burst.","Grenades thrown during the trench fight can knock a flame team out."],"Loose/Line formation; grenades in the trench fight."],
   ca:["Counter-attack","Enemy reserves waiting behind the line.",["After you take the trench, fresh enemies strike back within seconds.","Send enough men to hold what you took — but every surplus man costs you stars."],"Enough men, veterans, a massed assault."],
   wr:["Barbed wire","A belt of wire in the middle of the field.",["Men slow down to crawl through it.","Slower men spend longer under fire."],"—"],
   gs:["Gas","Clouds of gas drifting over the field.",["Men inside a cloud slow down.","Every second in the cloud may kill."],"—"],
@@ -2427,7 +2423,7 @@ const MECH={
   mn:["地雷","埋在无人区的某处。",["看不见。第一个踩中的人会引爆它。","爆炸会炸死他和附近很多人。","每颗地雷只爆一次。人越密集，损失越大。"],"炮击可以提前引爆地雷。"],
   sh:["敌方炮击","他们的火炮已经瞄准了战场。",["每隔几秒就有炮弹落在人群里。","挤在一起的人会一起死。"],"炮击。"],
   sn:["狙击手","藏在敌方阵地里的神枪手。",["敌方胸墙上的反光意味着子弹要来了。","优先狙杀：军官、工兵、刘易斯机枪手、老兵。","“隐蔽”可以救下被瞄准的人。"],"烟幕、己方狙击手。"],
-  fl:["火焰喷射器","敌方战壕里的喷火小组。",["白刃战中不时焚烧一群进攻者。","队形越密，每次损失越大。","掷弹兵可以摧毁喷火小组。"],"掷弹兵、散兵线/横队。"],
+  fl:["火焰喷射器","敌方战壕里的喷火小组。",["白刃战中不时焚烧一群进攻者。","队形越密，每次损失越大。","白刃战中投进战壕的手榴弹可以炸掉喷火小组。"],"散兵线/横队；白刃战中的手榴弹。"],
   ca:["反冲锋","敌方阵地后的预备队。",["占领战壕后，几秒内敌军援兵会反扑。","要派足够的人守住阵地——但多余的人会降低星级。"],"兵力充足、老兵、集中突击。"],
   wr:["铁丝网","战场中段的一道铁丝网。",["士兵要减速爬过去。","越慢，暴露在火力下越久。"],"—"],
   gs:["毒气","飘过战场的毒云。",["毒云中的士兵会减速。","每一秒都可能致死。"],"—"],
