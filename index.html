@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>RUSH</title>
+<title>CHARGE!</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
 html,body{width:100%;height:100%;overflow:hidden;background:#0d0b09;font-family:Georgia,"Times New Roman","Songti SC","SimSun",serif;color:#efe4cc;touch-action:none}
@@ -41,8 +41,8 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
 #frontinfo{margin-top:10px;font-size:14px;opacity:.8;letter-spacing:.15em;text-shadow:0 1px 2px #000}
 /* plan panels */
 .panel{position:absolute;background:linear-gradient(#211c15ee,#14110dee);border:1px solid #6b5a3e;border-radius:4px;box-shadow:0 6px 20px #000a;padding:10px}
-#left{left:12px;top:64px;width:212px}
-#right{right:12px;top:64px;width:212px}
+#left{left:12px;top:70px;width:230px}
+#right{right:12px;top:70px;width:250px}
 .ph{font-size:12px;letter-spacing:.3em;opacity:.6;margin-bottom:8px;display:flex;justify-content:space-between}
 .bigN{font-size:44px;text-align:center;line-height:1;margin:4px 0}
 .row{display:flex;gap:6px;justify-content:center;margin:6px 0}
@@ -85,6 +85,16 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
 #toast.show{opacity:1}
 .set-row{display:flex;justify-content:space-between;align-items:center;gap:20px;margin:12px 0;font-size:18px}
 #adbanner{position:absolute;right:12px;bottom:12px;width:300px;height:250px;display:none}
+.hz{flex-wrap:wrap}.hz .nm{font-size:14px;flex:1}.hz .ds{width:100%;font-size:11px;opacity:.6;margin:-2px 0 0 34px;font-style:italic}
+.hz .bar{flex:0 0 100%;margin-left:34px;max-width:calc(100% - 34px)}
+.chip .lb{font-size:10px;letter-spacing:.15em;opacity:.55;display:block;line-height:1}
+.chip .vv{display:flex;flex-direction:column}
+.sup{width:auto!important;height:auto!important;border-radius:6px!important;display:flex!important;align-items:center;gap:6px;padding:5px 10px 5px 6px;max-width:190px;text-align:left}
+.sup .tx{display:flex;flex-direction:column}.sup .tx b{font-size:14px}.sup .tx i{font-size:10.5px;opacity:.65;line-height:1.2}
+.pdesc{font-size:11px;opacity:.6;text-align:center;font-style:italic;margin-top:4px}
+#supT{position:absolute;left:50%;transform:translateX(-50%);font-size:11px;letter-spacing:.2em;opacity:.6;white-space:nowrap}
+#bAdW{display:flex;align-items:center;gap:6px;cursor:pointer}
+#bAdW .lb2{font-size:12px;line-height:1.15;text-align:right;text-shadow:0 1px 2px #000}
 #rot{position:fixed;inset:0;background:#0d0b09;display:none;align-items:center;justify-content:center;flex-direction:column;gap:14px;z-index:9;font-size:18px}
 @media (orientation:portrait) and (max-width:700px){#rot{display:flex}}
 @media (max-height:500px){
@@ -104,13 +114,13 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
     <div class="chip" id="cTimer"></div>
     <div class="chip" id="cDay"></div>
     <div class="grow"></div>
-    <div class="ibtn" id="bAd" title="+1 day"></div>
+    <div id="bAdW"><div class="lb2" id="adLbl"></div><div class="ibtn" id="bAd"></div></div>
     <div class="ibtn" id="bSound"></div>
     <div class="ibtn" id="bSet"></div>
   </div>
 
   <div id="menu">
-    <div id="logo"><h1 class="stencil">RUSH</h1><div id="subtitle">1914 — 1918</div></div>
+    <div id="logo"><h1 class="stencil" id="title">CHARGE</h1><div id="subtitle">1914 — 1918</div></div>
     <button class="btn red stencil" id="play">▶</button>
     <div id="frontinfo"></div>
   </div>
@@ -122,6 +132,7 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
       <div class="bigN stencil" id="sendN">0</div>
       <div class="row"><button class="sbtn" data-d="-10">−−</button><button class="sbtn" data-d="-1">−</button><button class="sbtn" data-d="1">+</button><button class="sbtn" data-d="10">++</button></div>
       <div class="row"><button class="sbtn" data-d="0">0</button><button class="sbtn" data-d="999">MAX</button></div>
+      <div class="pdesc" id="sendD"></div>
     </div>
     <div class="panel" id="right">
       <div class="ph"><span id="lblEnemy">ENEMY</span><span id="lvlName"></span></div>
@@ -164,7 +175,12 @@ const T = {
   deathcries:["Medic!","Argh!","Mum...","I'm hit!"],
   winCries:["Hurrah!","The trench is ours!","We did it!","Hold it, boys!"],
   sup:{art:"Artillery",snp:"Sniper",smk:"Smoke",tnk:"Tank"},
-  hz:{mg:"Machine guns",rf:"Rifles",mn:"Mines",gr:"Garrison",sh:"Shelling",gs:"Gas",wr:"Wire"},
+  hz:{mg:"Machine guns",rf:"Rifles",mn:"Mines",gr:"Garrison",sh:"Enemy artillery",gs:"Gas",wr:"Barbed wire"},
+  hzD:{gr:"Men you must beat in the trench fight",mg:"Mows down runners every second",rf:"Picks off random runners",mn:"Hidden. Blow up whoever steps on them",sh:"Shells land on groups of runners",wr:"Slows the charge in the middle",gs:"Green clouds slow and choke"},
+  supD:{art:"Shell their line. Fire more for a bigger hit",snp:"Takes out a machine gunner mid-charge",smk:"Their fire −55% for the first 7 s",tnk:"Leads the charge, silences guns"},
+  lblRes:"Reserve",lblNext:"Next men",lblDay:"Day",lblAd:"Skip a day",lblAdD:"Watch ad: get tomorrow's men now",
+  sendD:"Men going over the top. Veterans go first.",rewardT:"Win reward: more men every day",advT:"Advisor",supT:"Support (refills daily)",
+  winHold:"stay to hold the trench",winVet:"survivors become veterans",winInc:"more men every day",winLost:"fallen",nextObj:"Next objective",
   endT:"ARMISTICE",endP:"11 November 1918, 11:00. The guns fall silent.",time:"Time",days:"Days",lost:"Fallen",
   loading:"Loading ad…"},
  zh:{send:"派遣",enemy:"敌军",charge:"冲锋！",fail:"冲锋失败",failS:"无人生还",win:"阵地攻克",winS:"战线向前推进",
@@ -176,7 +192,12 @@ const T = {
   deathcries:["医护兵！","啊！","妈妈……","我中弹了！"],
   winCries:["乌拉！","战壕是我们的了！","我们做到了！","守住，兄弟们！"],
   sup:{art:"炮击",snp:"狙击手",smk:"烟幕",tnk:"坦克"},
-  hz:{mg:"机枪",rf:"步枪",mn:"地雷",gr:"守军",sh:"炮击",gs:"毒气",wr:"铁丝网"},
+  hz:{mg:"机枪",rf:"步枪",mn:"地雷",gr:"守军",sh:"敌方炮击",gs:"毒气",wr:"铁丝网"},
+  hzD:{gr:"战壕白刃战中必须击败的敌人",mg:"冲锋途中每秒扫射倒一片",rf:"随机射杀冲锋的士兵",mn:"隐藏。踩到就爆炸",sh:"炮弹落在人群中",wr:"中段拖慢冲锋速度",gs:"绿色毒云，减速并致死"},
+  supD:{art:"轰击敌阵。连续发射效果越强",snp:"冲锋途中干掉一名机枪手",smk:"前7秒敌方火力 −55%",tnk:"领头冲锋，压制火力"},
+  lblRes:"预备兵",lblNext:"下批援军",lblDay:"天数",lblAd:"跳过一天",lblAdD:"看广告：立即获得明天的援军",
+  sendD:"翻出战壕的人数。老兵优先出击。",rewardT:"胜利奖励：每天增援更多",advT:"参谋",supT:"火力支援（每日补充）",
+  winHold:"人留守战壕",winVet:"幸存者晋升老兵",winInc:"每日援军增加",winLost:"阵亡",nextObj:"下一个目标",
   endT:"停战",endP:"1918年11月11日，11时。枪声停了。",time:"用时",days:"天数",lost:"阵亡",
   loading:"广告加载中…"}
 };
@@ -253,10 +274,10 @@ function levelDef(i){
 }
 
 /* ---------------- Save ---------------- */
-const SAVE_KEY="rush_save_v1";
+const SAVE_KEY="charge_save_v2";
 let S;
 function newSave(){return {lvl:0,reserve:START_TROOPS,vets:0,income:START_INCOME,lastPay:Date.now(),day:1,adDay:0,
-  supDay:0,sup:{art:0,snp:0,smk:0,tnk:0},hist:[],lost:0,start:Date.now(),playMs:0,lang:(navigator.language||"").startsWith("zh")?"zh":"en",
+  supDay:0,sup:{art:0,snp:0,smk:0,tnk:0},hist:[],lost:0,start:Date.now(),playMs:0,lang:"en",
   snd:1,mus:1,done:false,lvlDay:1,lvlLost:0}}
 function load(){try{S=JSON.parse(localStorage.getItem(SAVE_KEY))}catch(e){} if(!S||typeof S.lvl!=="number")S=newSave(); S=Object.assign(newSave(),S);}
 function save(){try{localStorage.setItem(SAVE_KEY,JSON.stringify(S))}catch(e){}}
@@ -646,31 +667,34 @@ function sortMen(){men.sort((a,b)=>a.z-b.z);}
 /* ---------- UI build ---------- */
 function applyTexts(){
   const t=L_();
-  $("charge").textContent=t.charge; $("lblSend").textContent=t.send; $("lblEnemy").textContent=t.enemy;
+  $("charge").textContent=t.charge; $("title").textContent=S.lang==="zh"?"冲锋":"CHARGE"; document.title=S.lang==="zh"?"冲锋！":"CHARGE!"; $("lblSend").textContent=t.send; $("lblEnemy").textContent=t.enemy;
   $("bAd").innerHTML=IC.ad; $("bSet").innerHTML=IC.gear; $("bBack").innerHTML=IC.back; $("bSound").innerHTML=S.snd?IC.snd:IC.mute;
   document.documentElement.lang=S.lang;
 }
 function fmtT(ms){ms=Math.max(0,ms);const h=Math.floor(ms/3600000),m=Math.floor(ms/60000)%60,s=Math.floor(ms/1000)%60;return `${h}:${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;}
 function updTop(){
-  $("cTroops").innerHTML=`${IC.man}<b>${S.reserve}</b>${S.vets?`<small>${IC.vet.replace('<svg','<svg style="width:16px;height:16px"')}${S.vets}</small>`:""}`;
-  $("cTimer").innerHTML=`${IC.clock}<span>${fmtT(S.lastPay+DAY_MS-Date.now())}</span><small>+${S.income}</small>`;
-  $("cDay").innerHTML=`${IC.cal}<b>${S.day}</b>`;
+  const t=L_();
+  $("cTroops").innerHTML=`${IC.man}<div class="vv"><span class="lb">${t.lblRes}</span><b>${S.reserve}${S.vets?` <small>(${S.vets} ${t.vet})</small>`:""}</b></div>`;
+  $("cTimer").innerHTML=`${IC.clock}<div class="vv"><span class="lb">${t.lblNext} +${S.income}</span><span>${fmtT(S.lastPay+DAY_MS-Date.now())}</span></div>`;
+  $("cDay").innerHTML=`${IC.cal}<div class="vv"><span class="lb">${t.lblDay}</span><b>${S.day}</b></div>`;
+  $("adLbl").innerHTML=S.adDay===S.day?`<span style="opacity:.5">${t.adUsed}</span>`:`<b>${t.lblAd}</b><br><span style="opacity:.7">+${S.income} ${S.lang==="zh"?"人":"men"}</span>`;
   $("bAd").classList.toggle("dim",S.adDay===S.day); $("bAd").style.opacity=S.adDay===S.day?0.35:1;
 }
 function hazRows(){
   const t=L_(), rows=[];
-  const add=(k,v,max)=>{ if(lvl[k]>0||v>0) rows.push(`<div class="hz" id="hz_${k}" title="${t.hz[k]}">${IC[k]}<div class="bar"><i style="width:${Math.min(100,v/max*100)}%"></i></div><b>${k==="gr"?v:Math.round(v*10)/10}</b></div>`); };
+  const add=(k,v,max)=>{ if(lvl[k]>0||v>0) rows.push(`<div class="hz" id="hz_${k}">${IC[k]}<span class="nm">${t.hz[k]}</span><b>${k==="gr"?v:Math.round(v*10)/10}</b><div class="bar"><i style="width:${Math.min(100,v/max*100)}%"></i></div><div class="ds">${t.hzD[k]}</div></div>`); };
   add("gr",cur.gr,Math.max(1,lvl.gr));add("mg",cur.mg,6);add("rf",cur.rf,10);add("mn",cur.mn,14);add("sh",cur.sh,5);add("wr",cur.wr,3);add("gs",cur.gs,4);
   $("hzList").innerHTML=rows.join("");
-  $("reward").innerHTML=`${IC.up.replace('<svg','<svg width=22 height=22')} +${lvl.reward} ${IC.man.replace('<svg','<svg width=20 height=20')}<small style="opacity:.7">/${S.lang==="zh"?"日":"day"}</small>`;
+  $("reward").innerHTML=`<div style="text-align:center"><div style="font-size:11px;opacity:.7;letter-spacing:.1em">${t.rewardT}</div>${IC.up.replace('<svg','<svg width=20 height=20 style="vertical-align:-4px"')} +${lvl.reward} ${S.lang==="zh"?"人/天":"men / day"}</div>`;
+  $("sendD").textContent=t.sendD;
   const f=$("fort"); f.classList.toggle("hide",!lvl.fort); f.textContent=`⚠ ${t.fortress} · ${t.fortTip}`;
-  const ch=CHAPTERS[lvl.ch]; $("lvlName").textContent=`${S.lvl+1}/${NLV}`;
+  $("lvlName").textContent=`${LV[S.lvl][0]} · ${S.lvl+1}/${NLV}`;
 }
 function buildSupports(){
   const t=L_(),el=$("supports");el.innerHTML="";
   for(const k of ["art","snp","smk","tnk"]){ const mx=supMax()[k]; if(!mx)continue;
     const d=document.createElement("div");d.className="sup"+(S.sup[k]<=0?" off":"")+(used[k]?" on":"");d.title=t.sup[k];
-    d.innerHTML=IC[k]+`<span class="n">${S.sup[k]}</span>`;d.onclick=()=>useSupport(k);el.appendChild(d);}
+    d.innerHTML=IC[k]+`<div class="tx"><b>${t.sup[k]}</b><i>${t.supD[k]}</i></div><span class="n">${S.sup[k]}</span>`;d.onclick=()=>useSupport(k);el.appendChild(d);}
 }
 function setSend(n){
   const before=sendN; sendN=Math.max(0,Math.min(S.reserve,n));
@@ -858,7 +882,7 @@ function stepBattle(dt){
   for(let ni=0;ni<b.nodes.length;ni++){ const nd=b.nodes[ni]; if(!nd.done&&lead>=nd.x){ nd.done=true; nodeEvent(ni); } }
   // end conditions
   const stillMoving=alive.filter(m=>m.state==="run"||m.state==="crouch").length;
-  if(alive.length===0){ b.over=true; setTimeout(()=>result(false),1600); slowmo=0.4; }
+  if(alive.length===0){ b.over=true; setTimeout(()=>result(false),1600); }
   else if(stillMoving===0&&!b.melee){ b.melee=true; startMelee(); }
   // camera follows the mass
   if(running.length){ const avg=running.reduce((s,m)=>s+m.x,0)/running.length; cam.tx=Math.min(ex-200,Math.max(bx+100,avg+160)); }
@@ -872,7 +896,6 @@ function nodeEvent(ni){
   const opts=[]; if(cur.mg>0.3)opts.push("mg"); if(cur.rf>0.5)opts.push("rf"); if(cur.sh>0.3)opts.push("sh");
   if(!opts.length)return;
   const kind= ni===0&&cur.mg>0.3 ? "mg" : pick(opts);
-  slowmo=0.35; setTimeout(()=>slowmo=1,1400);
   const counter = kind==="mg" && used.snp && !b.sniperDone;
   insets.push({kind,t:0,dur:counter?3.2:2.2,side:"right",counter});
   // casualties burst (stepwise)
@@ -883,7 +906,6 @@ function nodeEvent(ni){
   if(kind==="sh"){ for(let i=0;i<3;i++)setTimeout(()=>{const tg=pick(running);if(tg)explosion(tg.x,tg.z,1.2);},i*300); }
   if(counter){ b.sniperDone=true; insets.push({kind:"snp",t:0,dur:3.2,side:"left"});
     setTimeout(()=>{ AU.shot(0.6); cur.mg=Math.max(0,cur.mg-1.5); toast(`${IC.snp.replace('<svg','<svg width=18 height=18 style="vertical-align:middle"')} ${IC.mg.replace('<svg','<svg width=18 height=18 style="vertical-align:middle"')} ✕`); },1500); }
-  running.slice(0,Math.min(running.length,30)).forEach(m=>m.hold=Math.random()*0.5);
 }
 
 /* ---------- MELEE ---------- */
@@ -940,7 +962,12 @@ function result(win){
       const ov=$("ov");ov.classList.remove("hide");
       const L=LV[done];
       ov.innerHTML=`<div class="card"><div class="date">${L[1]} · ${t.day} ${S.hist[S.hist.length-1].day}${S.lang==="zh"?"天":""}</div><h2 class="stencil">${L[0]}</h2><p>${L[S.lang==="zh"?3:2]}</p>
-        <div class="stats"><div>${IC.skull}${b.dead}</div><div>${IC.vet}+${vetGain}</div><div title="${t.hold}">${IC.gr}${hold}</div><div>${IC.up}+${lvl.reward}${IC.man}</div></div>
+        <div style="text-align:left;font-size:16px;line-height:1.9;margin:10px auto;display:inline-block">
+          <div>${IC.skull.replace('<svg','<svg width=18 height=18 style="vertical-align:-3px"')} <b>${b.dead}</b> ${t.winLost}</div>
+          <div>${IC.vet.replace('<svg','<svg width=18 height=18 style="vertical-align:-3px"')} <b>+${vetGain}</b> ${t.winVet}</div>
+          <div>${IC.gr.replace('<svg','<svg width=18 height=18 style="vertical-align:-3px"')} <b>${hold}</b> ${t.winHold}</div>
+          <div>${IC.up.replace('<svg','<svg width=18 height=18 style="vertical-align:-3px"')} <b>+${lvl.reward}</b> ${t.winInc} (${S.income})</div></div>
+        <div style="font-size:13px;opacity:.7">${S.done?"":t.nextObj+": <b>"+LV[S.lvl][0]+"</b>"}</div>
         <button class="btn" id="okr">▶</button></div>`;
       CG.banner(true); // [AD SPOT C]
       $("okr").onclick=()=>{AU.click();CG.banner(false);CG.midgame(()=>{ if(S.done)showEnd(); else advanceCamp(); });}; // [AD SPOT B]
@@ -950,17 +977,17 @@ function result(win){
     big(t.fail,t.failS,2400);
     setTimeout(()=>{
       const ov=$("ov");ov.classList.remove("hide");
-      ov.innerHTML=`<div class="card"><h2 class="stencil">${t.fail}</h2><div class="stats"><div>${IC.skull}${b.dead}</div><div>${IC.gr}${Math.round(cur.gr)}</div></div>
+      ov.innerHTML=`<div class="card"><h2 class="stencil">${t.fail}</h2><div style="font-size:16px;line-height:1.9">${IC.skull.replace('<svg','<svg width=18 height=18 style="vertical-align:-3px"')} <b>${b.dead}</b> ${t.winLost} · ${IC.gr.replace('<svg','<svg width=18 height=18 style="vertical-align:-3px"')} <b>${Math.round(cur.gr)}</b> ${t.hz.gr}</div>
         <p>${S.lang==="zh"?"战壕里又空出了几个位置。":"More empty places in the trench tonight."}</p><button class="btn" id="okr">▶</button></div>`;
       CG.banner(true);
-      $("okr").onclick=()=>{AU.click();CG.banner(false);CG.midgame(()=>toMenu());};
+      $("okr").onclick=()=>{AU.click();CG.banner(false);CG.midgame(()=>advanceCamp());};
     },2600);
   }
 }
 let flagRaise=null;
-function advanceCamp(){ // camera glides to new position = one continuous world
-  $("ov").classList.add("hide"); ragdolls.length=0; // keep corpses baked
-  toMenu();
+function advanceCamp(){ // camera glides forward to the new line = one continuous world
+  $("ov").classList.add("hide"); for(const r of ragdolls)corpses.push(r); ragdolls.length=0; if(corpses.length>400)corpses.splice(0,corpses.length-400);
+  toPlan();
 }
 function showEnd(){
   const t=L_(); const ov=$("ov");ov.classList.remove("hide");
