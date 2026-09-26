@@ -65,6 +65,7 @@ b{font-weight:700}
 .ph{font-size:12px;letter-spacing:.3em;color:var(--brass);margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;text-transform:uppercase}
 .ph span:last-child{letter-spacing:.05em;color:var(--dim);text-transform:none;font-size:12px}
 .rep{margin:10px 0 6px;text-align:left;font-size:13px}.rep table{width:100%;border-collapse:collapse}.rep td{padding:3px 6px;border-bottom:1px solid #ffffff14}.rep td:last-child{text-align:right;font-family:Impact,sans-serif;font-size:17px}.rep td small{font-family:Georgia;font-size:10px;opacity:.7}.rep .red{color:#e87a5a}.rep .gold{color:#f0c870}.rep .rem{margin-top:8px;padding:7px 9px;background:#0005;border-left:3px solid var(--brass);font-style:italic;line-height:1.4}
+.rep .rg{display:grid;grid-template-columns:1fr 1fr;column-gap:16px}.rep .rg>div{display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:2px 3px;border-bottom:1px solid #6b5a3e33}.rep .rg b{font:16px Impact,sans-serif;white-space:nowrap}.rep .rg .wide{grid-column:1/-1}.rep .rg .wide b{font:bold 12px Georgia,serif;white-space:normal;text-align:right}.card .rep .gold{color:#8a5a10}.card .rep .red{color:#9a2a18}.rep .wv{font-size:11px;opacity:.75;margin:3px 2px 0}.card .rep .rem{background:#00000018;margin-top:6px;padding:5px 9px}
 .fails{grid-column:1/-1;width:100%;margin-top:8px;font-size:11px;border-top:1px solid #ffffff18;padding-top:6px}.fails .ft{color:#e87a5a;letter-spacing:.15em;margin-bottom:3px}.fails .fr{padding:2px 0;color:var(--ink)}.fails .fr i{color:var(--dim);margin:0 3px 0 1px}.fails .fr span{color:#e8a080;margin-left:4px}
 .ov .card{max-height:96vh;overflow:auto}
 #topStrip{position:absolute;left:50%;top:92px;transform:translateX(-50%);display:flex;justify-content:center;pointer-events:none}
@@ -165,12 +166,12 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 #advisor .say{font-style:italic;font-size:15px}
 /* ---------- overlays ---------- */
 .ov{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:radial-gradient(#0007,#000d);text-align:center;padding:20px;overflow:auto}
-.card{background:linear-gradient(#ebdcb6,#c8b082);color:#241a0e;padding:22px 30px;border-radius:3px;max-width:600px;box-shadow:0 12px 40px #000;position:relative}
+.card{background:linear-gradient(#ebdcb6,#c8b082);color:#241a0e;padding:16px 26px;border-radius:3px;max-width:640px;box-shadow:0 12px 40px #000;position:relative}
 .card:before{content:"";position:absolute;inset:6px;border:1px solid #6b5a3e66;pointer-events:none}
 .card svg{filter:brightness(.4) contrast(1.4)}
 .card .badge svg{filter:none}
-.card h2{font-size:30px;letter-spacing:.1em;margin-bottom:6px}
-.card p{font-size:16px;line-height:1.5;margin:10px 0;font-style:italic}
+.card h2{font-size:27px;letter-spacing:.1em;margin-bottom:4px}
+.card p{font-size:14.5px;line-height:1.45;margin:6px 0;font-style:italic}
 .card .date{font-size:12px;letter-spacing:.3em;opacity:.7}
 .card table{width:100%;border-collapse:collapse;font-size:15px;margin:8px 0;text-align:left}
 .card td{padding:5px 4px;border-bottom:1px solid #6b5a3e44}
@@ -211,9 +212,9 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 @keyframes spinIn{0%{transform:translateX(-50%) rotateY(720deg) scale(0)}100%{transform:translateX(-50%) rotateY(0) scale(1)}}
 .vcard{animation:cardIn .5s cubic-bezier(.2,1.4,.4,1) both;border-top:6px solid #a8321f}
 @keyframes cardIn{0%{transform:translateY(40px) scale(.9);opacity:0}100%{transform:none;opacity:1}}
-.tiles{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:14px 0 10px}
-.tile{background:#00000014;border:1px solid #6b5a3e55;border-radius:4px;padding:8px 4px;display:flex;flex-direction:column;align-items:center;gap:2px}
-.tile b{font-family:Impact,sans-serif;font-size:30px;line-height:1;color:#2a1c0c}
+.tiles{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:8px 0 6px}
+.tile{background:#00000014;border:1px solid #6b5a3e55;border-radius:4px;padding:6px 4px;display:flex;flex-direction:column;align-items:center;gap:2px}
+.tile b{font-family:Impact,sans-serif;font-size:26px;line-height:1;color:#2a1c0c}
 .tile span{font-size:11px;line-height:1.2}
 .tile i{font-size:10px;opacity:.7}
 .tile.gold{background:linear-gradient(#f3d890,#c9a45a);border-color:#8a6a2e;box-shadow:0 0 16px #c9a45a88}
@@ -248,6 +249,20 @@ body.cgon #hud,body.cgon #menu,body.cgon #top,body.cgon #advisor,body.cgon #adba
 #offpad .dp button:nth-child(1){grid-column:2;grid-row:1}#offpad .dp button:nth-child(2){grid-column:1;grid-row:2}#offpad .dp button:nth-child(3){grid-column:2;grid-row:2}#offpad .dp button:nth-child(4){grid-column:3;grid-row:2}
 #offpad button{background:#1c160ecc;border:1px solid #f0c87066;color:#f0c870;font:15px Impact,sans-serif;border-radius:6px}
 #offpad .hb{height:92px;padding:0 14px;display:flex;flex-direction:column;justify-content:center;gap:4px}#offpad .hb small{font:10px Georgia;color:#bba}#offpad .hb.on{background:#7a2a18cc}
+.nxt{display:flex;align-items:center;justify-content:center;gap:16px;margin-top:6px;font-size:13px}.nxt span{opacity:.75}.nxt .btn{margin:0;padding:6px 26px}
+.card .timeRow{margin:4px 0 2px}.card .timeRow>div{padding:2px 10px}.card .timeRow b{font-size:19px}
+.perfRow{display:flex;align-items:center;justify-content:center;gap:14px;margin:4px 0 0}
+.perfRow .pl{display:flex;flex-direction:column;align-items:flex-start;font-size:12px;line-height:1.35;text-align:left}
+.perfRow .pl>b{font:22px Impact,Haettenschweiler,'Arial Narrow Bold',sans-serif;letter-spacing:.12em;color:#7a4e0e}
+.stars{display:inline-flex;gap:1px;vertical-align:-1px}.stars i{display:inline-block;width:1em;height:1em;color:#8a7a5a55}.stars i.on{color:#f0c870}.stars .ti{width:1em;height:1em;display:block}
+.card .stars svg{filter:none}.card .stars i{color:#00000026}.card .stars i.on{color:#b9861c}
+.stars.sm{font-size:12px}
+.stars.big{font-size:40px;gap:4px}.card .stars.big i.on{animation:starIn .45s cubic-bezier(.2,1.7,.4,1) both;animation-delay:calc(.38s + var(--d)*.28s)}.card .stars.big i.on svg{filter:drop-shadow(0 2px 0 #5a3a08) drop-shadow(0 0 8px #f3d890)}
+@keyframes starIn{0%{transform:scale(0) rotate(-50deg);opacity:0}100%{transform:none;opacity:1}}
+#reward .bz{font-size:11px;color:var(--dim);font-weight:normal}
+.pgrid{display:flex;gap:3px;margin:5px 0 3px}.pgrid .pc{flex:1;display:flex;flex-direction:column;align-items:center;padding:2px 0 1px;border-radius:4px;background:#0006;line-height:1.1}
+.pgrid .pc b{font:13px Impact,sans-serif;color:#f0c870;display:flex;align-items:center;gap:1px}.pgrid .pc b .ti{width:10px;height:10px}.pgrid .pc em{font-style:normal;font-size:10px;color:#d8c9a4}.pgrid .pc.top{background:#6a4c14;box-shadow:inset 0 0 0 1px #f0c87099}
+.ptab tr.me td{background:#f0c87055;font-weight:bold}.ptab td{padding:3px 6px}.ptab td:nth-child(3){font-family:Impact,sans-serif}
 .timeRow{display:flex;gap:10px;justify-content:center;margin:8px 0 4px}.timeRow>div{background:#0005;border:1px solid #f0c87033;border-radius:6px;padding:4px 12px;min-width:110px;text-align:center}
 .timeRow span{display:block;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}.timeRow b{font:22px Impact,sans-serif;color:#f0c870;font-variant-numeric:tabular-nums}.timeRow i{display:block;font-size:10px;color:#9fd07a;font-style:normal}
 .covc{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:4px 10px;background:#1c160ecc;border:1px solid #f0c87055;border-radius:6px;color:#f0c870}.covc b{font:20px Impact,sans-serif}.covc small{font-size:9px;letter-spacing:.12em}
@@ -330,7 +345,7 @@ body.cgon #hud,body.cgon #menu,body.cgon #top,body.cgon #advisor,body.cgon #adba
    ============================================================ */
 const DEBUG = /debug/.test(location.search);
 const DAY_MS = 24*3600*1000;          // real time per "day" of reinforcements
-const START_TROOPS = 100, START_INCOME = 20;
+const START_TROOPS = 100, START_INCOME = 100;   // v1.3: daily draft x3 (starts at 100/day)
 
 /* ---------------- i18n ---------------- */
 const T = {
@@ -346,11 +361,11 @@ const T = {
   hz:{mg:"Machine guns",rf:"Rifles",mn:"Mines",gr:"Garrison",sh:"Enemy artillery",gs:"Gas",wr:"Barbed wire"},
   hzD:{gr:"Men you must beat in the trench fight",mg:"Mows down runners every second",rf:"Picks off random runners",mn:"Hidden. Blow up whoever steps on them",sh:"Shells land on groups of runners",wr:"Slows the charge in the middle",gs:"Green clouds slow and choke"},
   supD:{art:"Shell their line. Fire more for a bigger hit",snp:"Takes out a machine gunner mid-charge",smk:"Their fire −55% for the first 7 s",tnk:"Leads the charge, silences guns"},
-  lblRes:"Reserve",lblNext:"Next men",lblDay:"Day",lblAd:"Skip a day",lblAdD:"Watch ad: get tomorrow's men now",
+  lblRes:"Reserve",lblNext:"Next men",lblDay:"Day",lblAd:"Extra draft",lblAdD:"Watch ad: get a third of a day's men now",
   sendD:"Men going over the top. Veterans go first.",rewardT:"Win reward: more men every day",advT:"Advisor",supT:"Support (refills daily)",
   winHold:"stay to hold the trench",winVet:"survivors become veterans",winInc:"more men every day",winLost:"fallen",nextObj:"Next objective",advWho:"Major Hale · advisor",morale:"Morale",reinf:"Reinforcements",perDay:"per day",
   presets:["×1","×1.5","×2","ALL"],presetsS:["garrison","garrison","garrison","reserve"],sendInfoA:"Including veterans",sendInfoB:"Reserve left",sendInfoC:"Est. arrive alive",
-  spent:"Everyone who goes over is spent: survivors hold the new trench. Only 1 in 4 comes back as a veteran.",
+  spent:"All who go over are spent. Surplus survivors go to the rear: less surplus = more stars.",
   endT:"ARMISTICE",endP:"11 November 1918, 11:00. The guns fall silent.",time:"Time",days:"Days",lost:"Fallen",
   loading:"Loading ad…"},
  zh:{send:"派遣",enemy:"敌军",charge:"冲锋！",fail:"冲锋失败",failS:"无人生还",win:"阵地攻克",winS:"战线向前推进",
@@ -365,11 +380,11 @@ const T = {
   hz:{mg:"机枪",rf:"步枪",mn:"地雷",gr:"守军",sh:"敌方炮击",gs:"毒气",wr:"铁丝网"},
   hzD:{gr:"战壕白刃战中必须击败的敌人",mg:"冲锋途中每秒扫射倒一片",rf:"随机射杀冲锋的士兵",mn:"隐藏。踩到就爆炸",sh:"炮弹落在人群中",wr:"中段拖慢冲锋速度",gs:"绿色毒云，减速并致死"},
   supD:{art:"轰击敌阵。连续发射效果越强",snp:"冲锋途中干掉一名机枪手",smk:"前7秒敌方火力 −55%",tnk:"领头冲锋，压制火力"},
-  lblRes:"预备兵",lblNext:"下批援军",lblDay:"天数",lblAd:"跳过一天",lblAdD:"看广告：立即获得明天的援军",
+  lblRes:"预备兵",lblNext:"下批援军",lblDay:"天数",lblAd:"紧急征兵",lblAdD:"看广告：立即获得三分之一天的援军",
   sendD:"翻出战壕的人数。老兵优先出击。",rewardT:"胜利奖励：每天增援更多",advT:"参谋",supT:"火力支援（每日补充）",
   winHold:"人留守战壕",winVet:"幸存者晋升老兵",winInc:"每日援军增加",winLost:"阵亡",nextObj:"下一个目标",advWho:"黑尔少校 · 参谋",morale:"士气",reinf:"援军",perDay:"每天",
   presets:["×1","×1.5","×2","全部"],presetsS:["守军","守军","守军","预备"],sendInfoA:"其中老兵",sendInfoB:"剩余预备",sendInfoC:"预计抵达",
-  spent:"派上去的人都会被消耗：幸存者留守新战壕，只有四分之一会作为老兵回来。",
+  spent:"派上去的人都会被消耗。多余的幸存者调往后方：多余越少，星级越高。",
   endT:"停战",endP:"1918年11月11日，11时。枪声停了。",time:"用时",days:"天数",lost:"阵亡",
   loading:"广告加载中…"}
 };
@@ -439,7 +454,7 @@ function levelDef(i){
     sh: ch>=1 ? Math.min(5, 1+Math.floor((d-8)/5) + (fort?1:0)) : 0,
     wr: ch>=1 ? 1 + (fort?1:0) + (ch>=3?1:0) : 0,
     gs: ch>=3 ? Math.min(4, 1+Math.floor((d-24)/3)+(fort?1:0)) : 0,
-    reward: fort ? 8 + ch*2 : 2 + Math.floor(ch/1.5),
+    reward: (fort ? 8 + ch*2 : 2 + Math.floor(ch/1.5))*3,   // v1.3: economy x3 (scaled by PERFECTION stars on win)
   };
   if(i===0){L.gr=4;L.mg=0;L.rf=1;}
   return L;
@@ -450,8 +465,9 @@ const SAVE_KEY="charge_save_v3";
 let S;
 function newSave(){return {rp:2,lvl:0,reserve:START_TROOPS,vets:0,income:START_INCOME,lastPay:Date.now(),day:1,adDay:0,
   supDay:0,sup:{art:0,snp:0,smk:0,tnk:0},hist:[],lost:0,start:Date.now(),playMs:0,lang:"en",
-  snd:1,mus:1,done:false,lvlDay:1,lvlLost:0,morale:60,moraleT:Date.now(),tut:0,dev:0,lastGain:0}}
-function load(){try{S=JSON.parse(localStorage.getItem(SAVE_KEY))}catch(e){} if(!S||typeof S.lvl!=="number")S=newSave(); S=Object.assign(newSave(),S);}
+  snd:1,mus:1,done:false,lvlDay:1,lvlLost:0,morale:60,moraleT:Date.now(),tut:0,dev:0,lastGain:0,econ:3,stars:{}}}
+function load(){try{S=JSON.parse(localStorage.getItem(SAVE_KEY))}catch(e){} if(!S||typeof S.lvl!=="number")S=newSave(); S=Object.assign(newSave(),S);
+  if(S.econ!==3){ S.income=START_INCOME+Math.max(0,(S.income||20)-20)*3; S.econ=3; } if(!S.stars)S.stars={}; }
 function save(){try{localStorage.setItem(SAVE_KEY,JSON.stringify(S))}catch(e){}}
 load();
 const L_ = ()=>T[S.lang];
@@ -477,7 +493,7 @@ function adLeft(){ const d=new Date().toDateString(); if(S.adDate!==d){S.adDate=
 function adOffer(){ if(adLeft()<=0||mode!=="plan")return; const zh=S.lang==="zh",ov=$("ov"); ov.classList.remove("hide"); AU.click();
   ov.innerHTML=`<div class="card tele"><div class="date">${zh?"电报 · 师部":"TELEGRAM · DIVISION HQ"}</div><h2 class="stencil">${zh?"兵力不足":"NO MEN LEFT"}</h2>
   <p style="font-family:'Courier New',monospace;text-align:left;font-size:14px;line-height:1.6">${zh?"前线兵力枯竭 停 预备营可提前开拔 停 需要您批准 停":"FRONT LINE EXHAUSTED STOP RESERVE BATTALION CAN ENTRAIN NOW STOP AWAITING YOUR SIGNATURE STOP"}</p>
-  <div style="display:flex;gap:10px;justify-content:center"><button class="btn red" id="tAd">${IC.ad.replace('<svg','<svg width=20 height=20 style="vertical-align:-4px"')} +${dailyMen()} (${adLeft()}/3)</button><button class="btn" id="tNo">${zh?"等待":"Wait"}</button></div></div>`;
+  <div style="display:flex;gap:10px;justify-content:center"><button class="btn red" id="tAd">${IC.ad.replace('<svg','<svg width=20 height=20 style="vertical-align:-4px"')} +${adMen()} (${adLeft()}/3)</button><button class="btn" id="tNo">${zh?"等待":"Wait"}</button></div></div>`;
   $("tNo").onclick=()=>ov.classList.add("hide"); $("tAd").onclick=()=>{ov.classList.add("hide");$("bAdW").onclick();}; }
 function payDays(){
   const now=Date.now(); let n=Math.floor((now-S.lastPay)/DAY_MS);
@@ -486,6 +502,16 @@ function payDays(){
 }
 function refreshSupports(force){ if(force||S.supDay!==S.day){S.sup=supMax();S.supDay=S.day;} }
 function giveDay(){ S.lastGain=dailyMen(); S.reserve+=dailyMen(); S.lastPay=Date.now(); S.day+=1; refreshSupports(true); save(); }
+/* v1.3: a rewarded ad = ONE THIRD of the daily draft (3 ads/day = one extra day). Does not advance the day. */
+function adMen(){ return Math.max(1,Math.round(dailyMen()/3)); }
+function giveAd(){ const n=adMen(); S.lastGain=n; S.reserve+=n; save(); return n; }
+/* v1.3 PERFECTION (1-5 stars) per captured position: share of the men sent that ends up SURPLUS (rotated to the rear).
+   Less surplus = more stars. The level's base reward is scaled: 5*=300% 4*=150% 3*=100% 2*=75% 1*=50%. */
+const PERF_T=[0.05,0.15,0.30,0.50], PERF_M=[0.5,0.75,1,1.5,3];
+function perfStars(rear,sent){ const r=sent>0?rear/sent:1; let st=5; for(const t of PERF_T){ if(r>t+1e-9)st--; } return Math.max(1,st); }
+function perfGain(base,st){ return Math.max(1,Math.round(base*PERF_M[st-1])); }
+const STARF='<svg class="ti" viewBox="0 0 12 12"><path d="M6 .8l1.5 3.4 3.7.3-2.8 2.4.9 3.6L6 8.6 2.7 10.5l.9-3.6L.8 4.5l3.7-.3z" fill="currentColor"/></svg>';
+function starsHTML(n,max=5,cls=""){ let h=`<span class="stars ${cls}">`; for(let i=0;i<max;i++) h+=`<i class="${i<n?"on":""}" style="--d:${i}">${STARF}</i>`; return h+"</span>"; }
 
 /* ---------------- Audio (procedural) ---------------- */
 const AU={ctx:null,master:null,music:null,
@@ -1319,7 +1345,7 @@ function updTop(){ updStrip(); updClock(); updDepotB();
   $("cMorale").innerHTML=`<div class="ic">${IC.morale}</div><div class="vv"><span class="lb">${t.morale} · ${moraleWord()}</span><b>${Math.round(S.morale)}</b><div class="mbar"><i style="width:${S.morale}%;background-position:${-S.morale*0}px 0"></i></div></div>`;
   $("cDay").innerHTML=`<div class="ic">${IC.cal}</div><div class="vv"><span class="lb">${t.lblDay}</span><b>${S.day}</b></div>`;
   const used=adLeft()<=0; $("bAdW").classList.toggle("used",used);
-  $("adLbl").innerHTML=used?`<b>${t.adUsed}</b><br>${zh?"每天3次":"3 per day"}`:`<b>${t.lblAd}</b><br>+${dailyMen()} · ${adLeft()}/3`;
+  $("adLbl").innerHTML=used?`<b>${t.adUsed}</b><br>${zh?"每天3次":"3 per day"}`:`<b>${t.lblAd}</b><br>+${adMen()} · ${adLeft()}/3`;
   $("bDev").classList.toggle("hide",!S.dev);
   const ch=$("charge"); if(ch){ ch.classList.toggle("refuse",S.morale<=2); }
 }
@@ -1363,7 +1389,10 @@ function hazRows(){
   const add=(k,v,max)=>{ if(lvl[k]>0||v>0) rows.push(`<div class="hz" id="hz_${k}" data-k="${k}">${ico(k)}<span class="nm">${t.hz[k]}</span><span class="val">${k==="gr"||k==="mn"?Math.round(v):Math.round(v*10)/10}</span><div class="bar"><i style="width:${Math.min(100,v/max*100)}%"></i></div><div class="ds">${t.hzD[k]} <span class="inf">ⓘ</span></div></div>`); };
   add("gr",cur.gr,Math.max(1,lvl.gr));add("mg",cur.mg,6);add("rf",cur.rf,10);add("mn",cur.mn,14);add("sh",cur.sh,5);add("wr",cur.wr,3);add("gs",cur.gs,4);
   $("hzList").innerHTML=rows.join(""); document.querySelectorAll(".hz").forEach(el=>el.onclick=()=>mechCard(el.dataset.k,false));
-  $("reward").innerHTML=`${ico("truck","b")}<div><div class="t">${t.rewardT}</div><div class="v">+${lvl.reward} ${S.lang==="zh"?"人 / 天":"men / day"}</div><div class="t">${S.income} → ${S.income+lvl.reward}</div></div>`;
+  { const zh=S.lang==="zh", bs=(S.stars||{})[S.lvl]; // v1.3: base reward x PERFECTION multiplier
+  $("reward").innerHTML=`${ico("truck","b")}<div style="flex:1;min-width:0"><div class="t">${t.rewardT}</div><div class="v">+${lvl.reward} <small class="bz">${zh?"人/天 · 基础":"men/day · base"}</small>${bs?` <span class="bz">${starsHTML(bs,5,"sm")}</span>`:""}</div>
+   <div class="pgrid">${[5,4,3,2,1].map(s=>`<span class="pc${s===5?" top":""}"><b>${s}${STARF}</b><em>×${PERF_M[s-1]*100}%</em></span>`).join("")}</div>
+   <div class="t">${zh?"调往后方的多余兵力越少，星级越高":"Less surplus sent to the rear = more stars"}</div></div>`; }
   $("sendD").textContent=t.spent;
   const f=$("fort"); f.classList.toggle("hide",!lvl.fort); f.innerHTML=`${SVI.warn} ${t.fortress} · ${t.fortTip}`;
   $("lvlName").textContent=LV[S.lvl][0]; updStrip(); failBtnUpd(); { const nu=NEWM(S.lvl+1), el=$("nextU"), zh=S.lang==="zh"; el.classList.toggle("hide",!nu.length); el.innerHTML=nu.length?`<span>${zh?"攻克后解锁 / 出现":"AFTER THIS LEVEL"}</span>`+nu.map(k=>`<div class="nu" data-k="${k}">${IC[k]||""}<b>${(MECH[S.lang][k]||[k])[0]}</b></div>`).join(""):""; el.querySelectorAll(".nu").forEach(d=>d.onclick=()=>mechCard(d.dataset.k,["art","snp","smk","tnk","eng","flare","off"].includes(d.dataset.k))); }
@@ -1873,6 +1902,19 @@ function startMelee(){
 }
 
 /* ---------- RESULT ---------- */
+/* v1.3 PERFECTION: star row on the win card + one-time lesson after the first victory */
+function perfRowHTML(st,rear,sent,base,gain){ const zh=S.lang==="zh"; const PN=zh?["过量投入","浪费","合格","优秀","完美"]:["OVERKILL","WASTEFUL","SOUND","EXCELLENT","PERFECT"];
+  return `<div class="perfRow">${starsHTML(st,5,"big")}<div class="pl"><b>${PN[st-1]}</b><span>${zh?"调往后方的多余兵力":"Surplus sent to the rear"}: ${rear}/${sent} (${Math.round(sent?rear/sent*100:0)}%)</span><span>${zh?"基础奖励":"Base reward"} +${base} × ${PERF_M[st-1]*100}% = <b>+${gain} ${zh?"人/天":"men/day"}</b></span></div></div>`; }
+function perfTeach(st,base,cb){ const zh=S.lang==="zh", ov=$("ov"); ov.classList.remove("hide"); AU.click();
+  const lim=["> 50%","≤ 50%","≤ 30%","≤ 15%","≤ 5%"];
+  const rows=[5,4,3,2,1].map(s=>`<tr class="${s===st?"me":""}"><td>${starsHTML(s,5,"sm")}</td><td>${zh?"多余":"surplus"} ${lim[s-1]}</td><td>×${PERF_M[s-1]*100}%</td><td>+${perfGain(base,s)}</td></tr>`).join("");
+  ov.innerHTML=`<div class="card newm"><div class="nwr">${zh?"战地一课":"FIELD LESSON"}</div><h2 class="stencil">${zh?"完美度":"PERFECTION"}</h2>
+   <div class="mech">${zh?"每拿下一个阵地都会评 <b>1-5 星</b>。幸存者一部分留守新战壕，一部分晋升老兵回来，<b>剩下的多余兵力被调往后方</b>，对这次进攻毫无用处。<br>多余兵力占派出人数的比例越低，星级越高，<b>每日增援奖励最高可达 300%</b>。":"Every captured position earns <b>1-5 stars</b>. Some survivors hold the new trench and some return as veterans; <b>the rest are surplus and are rotated to the rear</b>, wasted on this attack.<br>The smaller that surplus is as a share of the men you sent, the more stars, and <b>up to 300% daily reward</b>."}</div>
+   <table class="ptab">${rows}</table>
+   <div class="mech">${zh?"技巧：善用火力支援、队形和波次，派<b>刚好够用</b>的人。":"Skill: use support, formation and waves to send <b>just enough</b> men."}</div>
+   <button class="btn" id="okp">${zh?"明白":"UNDERSTOOD"}</button></div>`;
+  $("okp").onclick=()=>{ AU.click(); cb(); };
+}
 function reportHTML(b,surv,vetGain,hold,rear,fail){
   const zh=S.lang==="zh"; const lw=S.lastWaves||[]; const fl=zh?["散兵线","横队","密集"]:["loose","line","dense"];
   const row=(k,v,c="")=>`<tr><td>${k}</td><td class="${c}">${v}</td></tr>`;
@@ -1884,11 +1926,10 @@ function reportHTML(b,surv,vetGain,hold,rear,fail){
   else if(b.dead>b.sent*0.7) rem = zh?"惨胜：代价极高。考虑更多火力支援或分波次进攻。":"Pyrrhic: the price was terrible. Consider more support or more waves.";
   else if(eff<3&&b.dead<b.sent*0.5) rem = zh?"高效：兵力恰到好处。参谋部很满意。":"Efficient: just enough men. Staff is pleased.";
   else rem = zh?"合格：阵地拿下，损失可以接受。":"Sound: the line is taken at an acceptable cost.";
-  return `<div class="rep"><table>${row(zh?"派出":"Sent",`${b.sent} <small>(${lw.map((w,i)=>`W${i+1}:${w.r}${w.v?"+"+VETI+w.v:""} ${fl[w.f]}`).join(" · ")})</small>`)}
-   ${row(zh?"阵亡":"Killed",b.dead,"red")}${row(zh?"趴下不起 (计为损失)":"Went to ground (lost)",b.pinned,"red")}
-   ${row(zh?"击毙守军":"Enemy killed",b.eKilled)}
-   ${fail?"":row(zh?"幸存":"Survived",surv)+row(zh?"留守新阵地":"Hold the new trench",hold)+row(zh?"调往后方":"Transferred to the rear",rear, rear>b.e0?"red":"")+row(zh?"晋升老兵 返回":"Return as veterans",vetGain,"gold")+(b.recovered?row(zh?"担架队救回":"Carried back by stretcher bearers",b.recovered,"gold"):"")+(b.rpGain?row(zh?"获得增援点":"Reinforcement points earned","+"+b.rpGain+" RP","gold"):"")+(b.merits&&b.merits.length?row(zh?"战术评价 (+5%老兵/项)":"Tactical merit (+5% vets each)",b.merits.join(" · "),"gold"):"")}
-   </table><div class="rem">${rem}</div></div>`;
+  const cell=(k,v,c="",wide)=>`<div class="${wide?"wide":""}"><span>${k}</span><b class="${c}">${v}</b></div>`;   // v1.3: compact 2-column report (card no longer overflows)
+  return `<div class="rep"><div class="rg">${cell(zh?"派出":"Sent",b.sent)}${cell(zh?"阵亡":"Killed",b.dead,"red")}${cell(zh?"趴下不起 (计为损失)":"Went to ground (lost)",b.pinned,"red")}${cell(zh?"击毙守军":"Enemy killed",b.eKilled)}
+   ${fail?"":cell(zh?"幸存":"Survived",surv)+cell(zh?"留守新阵地":"Hold the new trench",hold)+cell(zh?"调往后方 (多余)":"Rotated to the rear (surplus)",rear,rear>b.e0?"red":"")+cell(zh?"晋升老兵 返回":"Return as veterans",vetGain,"gold")+(b.recovered?cell(zh?"担架队救回":"Carried back by stretcher bearers",b.recovered,"gold"):"")+(b.rpGain?cell(zh?"获得增援点":"Reinforcement points earned","+"+b.rpGain+" RP","gold"):"")+(b.merits&&b.merits.length?cell(zh?"战术评价 (+5%老兵/项)":"Tactical merit (+5% vets each)",b.merits.join(" · "),"gold",1):"")}
+   </div><div class="wv">${lw.map((w,i)=>`W${i+1}: ${w.r}${w.v?" +"+VETI+w.v:""} ${fl[w.f]}`).join(" · ")}</div><div class="rem">${rem}</div></div>`;
 }
 function result(win){ $("tools")&&$("tools").classList.add("hide");
   mode="result"; CG.gameplayStop(); slowmo=1;
@@ -1900,9 +1941,10 @@ function result(win){ $("tools")&&$("tools").classList.add("hide");
     CG.happy();
     const zhM=S.lang==="zh"; const merits=[]; if(b.shock)merits.push(zhM?"集中突击":"Massed assault"); if(b.flared&&b.holdMsg)merits.push(zhM?"信号弹协同":"Flare timing"); if(b.offUsed&&!b.offDied)merits.push(zhM?"军官指挥":"Officer's lead"); if(b.sent&&b.dead/b.sent<0.35)merits.push(zhM?"低伤亡":"Low losses"); if(!b.pinned)merits.push(zhM?"无人溃散":"Nobody broke"); if((b.covUsed||0)>=2)merits.push(zhM?"眼疾手快":"Quick reflexes");
     b.merits=merits; S.rp+=merits.length; b.rpGain=2+(lvl.fort?3:0)+merits.length; const vetGain=surv>0?Math.min(surv,Math.max(1,Math.floor(surv*(0.25+0.05*merits.length)))):0; const need=Math.max(1,Math.ceil(b.e0*0.6)); const hold=Math.min(surv-vetGain,need); const rear=surv-vetGain-hold;
+    const pst=perfStars(rear,b.sent), gain=perfGain(lvl.reward,pst); b.pst=pst; b.gain=gain; const base=lvl.reward;   // v1.3 PERFECTION
     S.vets+=vetGain; S.reserve+=vetGain;
-    S.hist.push({lvl:S.lvl,day:S.day,lost:b.dead,sent:b.sent});
-    S.income+=lvl.reward;
+    S.hist.push({lvl:S.lvl,day:S.day,lost:b.dead,sent:b.sent,st:pst,gain});
+    S.income+=gain; if(!S.stars)S.stars={}; S.stars[S.lvl]=Math.max(S.stars[S.lvl]||0,pst);
     const done=S.lvl; const lvTime=(S.lvlT||{})[done]||0; const chDone=(done%8===7)||done===NLV-1; const chTime=chapT(Math.floor(done/8)); if(!S.best)S.best={}; const pb=S.best[done]; const isPB=!pb||lvTime<pb; if(isPB)S.best[done]=lvTime;
     S.lvl++; if(S.lvl>=NLV){S.done=true;S.lvl=NLV-1;S.endMs=Date.now()-S.start;}
     save();
@@ -1919,18 +1961,19 @@ function result(win){ $("tools")&&$("tools").classList.add("hide");
       const ov=$("ov");ov.classList.remove("hide");
       const L=LV[done];
       ov.innerHTML=`<div class="card${grand?" fortwin":""}">${grand?`<div class="fwr">${SVI.fort||""}${S.lang==="zh"?"要塞攻克":"FORTRESS TAKEN"}</div>`:""}<div class="date">${L[1]} · ${t.day} ${S.hist[S.hist.length-1].day}${S.lang==="zh"?"天":""}</div><h2 class="stencil">${L[0]}</h2><p>${L[S.lang==="zh"?3:2]}</p>
+        ${perfRowHTML(pst,rear,b.sent,base,gain)}
         <div class="tiles">
-          <div class="tile gold"><b class="cu" data-v="${lvl.reward}" data-p="+">0</b><span>${t.winInc}</span><i>${S.income-lvl.reward} → ${S.income} / ${S.lang==="zh"?"天":"day"}</i></div>
+          <div class="tile gold"><b class="cu" data-v="${gain}" data-p="+">0</b><span>${t.winInc}</span><i>${S.income-gain} → ${S.income} / ${S.lang==="zh"?"天":"day"}</i></div>
           <div class="tile"><b class="cu" data-v="${vetGain}" data-p="+">0</b><span>${t.winVet}</span></div>
           <div class="tile"><b class="cu" data-v="${S.lastMoraleD}" data-p="+">0</b><span>${t.morale}</span><i>${Math.round(S.morale)} · ${moraleWord()}</i></div>
           <div class="tile"><b class="cu" data-v="${hold}">0</b><span>${t.winHold}</span></div>
           <div class="tile dark"><b class="cu" data-v="${b.dead}">0</b><span>${t.winLost}</span></div></div>
         <div class="timeRow"><div><span>${S.lang==="zh"?"本关用时":"Level time"}</span><b>${fmtT(lvTime)}</b>${isPB&&pb?`<i>${S.lang==="zh"?"新纪录":"new best"}</i>`:""}</div>${chDone?`<div><span>${S.lang==="zh"?"本章用时":"Chapter time"}</span><b>${fmtT(chTime)}</b></div>`:""}<div><span>${S.lang==="zh"?"总用时":"Run time"}</span><b>${fmtT(S.clock)}</b></div></div>
         ${reportHTML(b,surv,vetGain,hold,rear)}
-        <div style="font-size:13px;opacity:.7">${S.done?"":t.nextObj+": <b>"+LV[S.lvl][0]+"</b>"}</div>
-        <button class="btn" id="okr">▶︎</button></div>`;
+        <div class="nxt"><span>${S.done?"":t.nextObj+": <b>"+LV[S.lvl][0]+"</b>"}</span><button class="btn" id="okr">▶︎</button></div></div>`;
       ov.querySelectorAll(".cu").forEach(e=>e.textContent=((+e.dataset.v>0&&e.dataset.p)||"")+e.dataset.v); CG.banner(true); // [AD SPOT C]
-      $("okr").onclick=()=>{AU.click();CG.banner(false);CG.midgame(()=>{ if(S.done)showEnd(); else advanceCamp(); });}; // [AD SPOT B]
+      for(let i=0;i<pst;i++) setTimeout(()=>SFX.play("bolt",0.32+i*0.04,{gap:0.02,dur:0.35}),380+i*280); if(pst===5) setTimeout(()=>SFX.play("cheer",0.45,{gap:1}),380+5*280);
+      $("okr").onclick=()=>{AU.click();CG.banner(false);CG.midgame(()=>{ const go=()=>{ if(S.done)showEnd(); else advanceCamp(); }; if(!S.perfTut){ S.perfTut=1; save(); perfTeach(pst,base,go); } else go(); });}; // [AD SPOT B]
     },grand?6200:3200);
   } else {
     (S.fails=S.fails||{})[S.lvl]=(S.fails[S.lvl]||[]).concat([{day:S.day,w:S.lastWaves||[],dead:b.dead,pin:b.pinned,e:Math.round(b.e)}]).slice(-8);
@@ -1991,7 +2034,7 @@ $("bSet").onclick=()=>{AU.init();AU.click();openSettings();};
 $("bSound").onclick=()=>{AU.init();S.snd^=1;S.mus=S.snd;save();AU.set();applyTexts();};
 $("bAdW").onclick=()=>{ AU.init();
   if(adLeft()<=0){toast(L_().adUsed);return;}
-  CG.rewarded(ok=>{ if(!ok)return; adLeft(); S.adN++; giveDay(); save(); updTop(); toast(`${L_().adOk} +${S.income}`); if(mode==="menu")worldVisibleIdle(); if(mode==="plan"){buildSupports();setSend(sendN);} });
+  CG.rewarded(ok=>{ if(!ok)return; adLeft(); S.adN++; const g=giveAd(); save(); updTop(); toast(`${L_().adOk} +${g}`); if(mode==="menu")worldVisibleIdle(); if(mode==="plan"){buildSupports();setSend(sendN);} });
 };
 // --- send panel: hold-to-repeat steppers, slider, presets ---
 function holdBtn(el,d){ let iv=null,to=null,n=0; const go=()=>{AU.init();setWave(wSel,waves[wSel].r+d*(n>12?5:1));AU.click();n++;};
@@ -2048,7 +2091,7 @@ function mechCard(k,isSup,isNew){ const m=MECH[S.lang][k]; if(!m)return; const o
 // --- reinforcement / morale panels ---
 function reinfCard(){ const t=L_(),zh=S.lang==="zh",ov=$("ov"); ov.classList.remove("hide"); AU.click();
   const base=START_INCOME, won=S.income-base, mfI=moraleIncomeF(); const left=S.lastPay+DAY_MS-Date.now();
-  const hist=S.hist.slice(-4).reverse().map(h=>`<tr><td>${LV[h.lvl][0]}</td><td>+${levelDef(h.lvl).reward}</td></tr>`).join("");
+  const hist=S.hist.slice(-4).reverse().map(h=>`<tr><td>${LV[h.lvl][0]} ${h.st?starsHTML(h.st,5,"sm"):""}</td><td>+${h.gain!=null?h.gain:levelDef(h.lvl).reward}</td></tr>`).join("");
   ov.innerHTML=`<div class="card" style="min-width:340px"><div class="date">${zh?"后勤处":"SUPPLY OFFICE"}</div><h2 class="stencil">${t.reinf}</h2>
    <div style="font-size:36px;font-family:Impact">${fmtT(left)}</div><div class="tbar" style="width:100%;height:8px;background:#0003"><i style="width:${100-left/DAY_MS*100}%;background:#7e1d12"></i></div>
    <table><tr><td>${zh?"基础援军":"Base draft"}</td><td>${base}</td></tr>
@@ -2056,8 +2099,8 @@ function reinfCard(){ const t=L_(),zh=S.lang==="zh",ov=$("ov"); ov.classList.rem
    <tr><td>${t.morale} (${moraleWord()})</td><td>${mfI>1?"+10%":mfI<1?"−10%":"±0"}</td></tr>
    <tr style="font-size:18px"><td><b>${zh?"每天抵达":"Arriving each day"}</b></td><td>${dailyMen()}</td></tr></table>
    ${hist?`<div class="date" style="margin-top:6px">${zh?"最近的奖励":"RECENT REWARDS"}</div><table>${hist}</table>`:""}
-   <p style="font-size:13px">${zh?"援军每24小时抵达一次（离线也会累计，最多7天）。每天可看3次广告，每次立即领取一天的援军。":"Men arrive every 24 hours, even while you're away (up to 7 days stored). Up to 3 times a day you can watch an ad to get a day's men now."}</p>
-   <div style="display:flex;gap:10px;justify-content:center"><button class="btn ${adLeft()<=0?"dim":"red"}" id="rAd">${IC.ad.replace('<svg','<svg width=20 height=20 style="vertical-align:-4px;filter:none"')} +${dailyMen()}</button><button class="btn" id="rOk">OK</button></div></div>`;
+   <p style="font-size:13px">${zh?"援军每24小时抵达一次（离线也会累计，最多7天）。每天可看3次广告，每次立即领取三分之一天的援军。":"Men arrive every 24 hours, even while you're away (up to 7 days stored). Up to 3 times a day you can watch an ad for a third of a day's men."}</p>
+   <div style="display:flex;gap:10px;justify-content:center"><button class="btn ${adLeft()<=0?"dim":"red"}" id="rAd">${IC.ad.replace('<svg','<svg width=20 height=20 style="vertical-align:-4px;filter:none"')} +${adMen()}</button><button class="btn" id="rOk">OK</button></div></div>`;
   $("rOk").onclick=()=>ov.classList.add("hide"); $("rAd").onclick=()=>{ov.classList.add("hide");$("bAdW").onclick();}; }
 function moraleCard(){ const t=L_(),zh=S.lang==="zh",ov=$("ov"); ov.classList.remove("hide"); AU.click(); moraleTick();
   const f=mf();
@@ -2076,7 +2119,7 @@ const TUT={en:[
  ["#right","THE ENEMY","This is what waits across no man's land. Tap any line to see exactly how it works."],
  ["#hz_gr","GARRISON","Your survivors must beat these men hand to hand. Bring clearly more than this."],
  ["#left","SEND","Choose how many go over. Hold + / − or drag the slider. Presets are multiples of the garrison."],
- ["#left","THEY DON'T COME BACK","Everyone you send is spent. Survivors hold the new trench; only 1 in 4 returns as a veteran. Send enough, not everything."],
+ ["#left","THEY DON'T COME BACK","Everyone you send is spent. Survivors hold the new trench; only 1 in 4 returns as a veteran. Surplus men go to the rear and cost you stars. Send enough, not everything."],
  ["#supWrap","SUPPORT","Free each day. Artillery gets stronger the more shots you fire in a row."],
  ["#cTimer","REINFORCEMENTS","New men arrive every day. Win to get more per day. Tap for details."],
  ["#cMorale","MORALE","Wins raise it, losses drop it. High morale = faster, tougher men. At 0 they refuse."],
@@ -2085,7 +2128,7 @@ const TUT={en:[
  ["#right","敌军","这是无人区对面等着你的东西。点击任意一行查看详细机制。"],
  ["#hz_gr","守军","你的幸存者必须在白刃战中击败他们。带明显多于这个数的人。"],
  ["#left","派遣","选择翻出战壕的人数。按住 + / − 或拖动滑条。快捷键是守军的倍数。"],
- ["#left","他们回不来","派出去的人都会被消耗。幸存者留守新战壕，只有四分之一作为老兵回来。派够就好，别全派。"],
+ ["#left","他们回不来","派出去的人都会被消耗。幸存者留守新战壕，只有四分之一作为老兵回来。多余的人会被调往后方并降低星级。派够就好，别全派。"],
  ["#supWrap","火力支援","每天免费。炮击连续发射越多越强。"],
  ["#cTimer","援军","每天都有新兵抵达。胜利可以增加每日援军。点击查看详情。"],
  ["#cMorale","士气","胜利提升，失败降低。士气高=更快更强。士气为0时拒绝冲锋。"],

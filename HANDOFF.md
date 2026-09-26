@@ -256,3 +256,14 @@ COMBAT / PERF
 ## v1.2d perf
 - Adaptive quality QUAL 2→1→0 (perfTick: 2s avg frame >26ms drops a level; recovers only outside battle when <17.5ms). QUAL<2: no film grain; QUAL<1: no ground fog, weather only rain/snow, DPR 1.
 - grain pattern cached; speech bubbles capped at 3 (drawBubbles was heavy with 200 men); drawMan/drawManInTrench cull off-screen.
+
+## v1.3a (2026-09-26) economy + PERFECTION stars — DONE
+- START_INCOME 100/day; level rewards x3; old saves migrated once (S.econ=3: income = 100 + (old-20)*3).
+- Rewarded ad = adMen() = round(dailyMen()/3), 3/day, does NOT advance the day (giveAd). DEV +1d still uses giveDay.
+- perfStars(rear,sent): surplus share <=5% 5*, <=15% 4*, <=30% 3*, <=50% 2*, else 1*. Reward = base x PERF_M (300/150/100/75/50%).
+  Stored in S.hist[].st/.gain and best per level S.stars[lvl]. Win card: animated stars (perfRowHTML) + bolt SFX per star.
+- perfTeach(): one-time FIELD LESSON card after the first victory (S.perfTut).
+- Result card compacted (2-col report grid, next-objective + button on one row) -> no more overflow at 720p.
+- PERF FINDING (CDP CPU profile, 300 men): ctx.restore() after per-man clip() = 52-65% of JS time. Fix next (v1.3b):
+  crop with drawImage source rect, pre-mirrored sprites (no save/scale/restore), bake prone/corpses.
+- Tools (outside repo): /home/user/dev/shot.py (win scenario), prof.py, cpuprof.py (CDP profiler), ablate.py, jst.py.
