@@ -411,3 +411,8 @@ User LIKES this version (v1.4b). Requests:
 1. Make promo videos: one 1920x1080 and one 1080x1920, 15 s each. "Edit together the exciting moments - that charge feeling" (whistle, over the top, barrage, bayonet fight, victory).
    Plan: deterministic capture (virtual clock, stepped rAF) of real gameplay with Playwright -> ffmpeg edit, SFX track rebuilt from the game's own SFX calls + BGM.
    Videos are delivered as GitHub release assets (not committed into the repo, keep the repo small); the capture/edit script goes to tools/.
+- 2026-09-27 03:45 UTC: workspace had been rolled back to 63d031a (tools/promo existed only on GitHub) - resumed from origin, keep pushing small steps.
+  CrazyGames preview-video rules (docs.crazygames.com/requirements/game-covers): 15-20 s, <=50 MB, landscape 1080p 16:9 AND portrait 1080p 2:3 (1080x1620) mandatory;
+  no black screen/logo transition, no black bars, no cursor, no "Play now"/promotional text, no icons, no fast-forward, NO SOUND, open on the cover frame.
+  -> deliver the requested 1920x1080 + 1080x1920 (music + SFX) and CrazyGames-ready silent 1920x1080 + 1080x1620. No text overlays at all (rules).
+  Look test (lvl 7 sepia / 15 rain / 23 snow / 39 green+gas): snow (chapter III) reads best on small thumbnails; rain is too dark.
