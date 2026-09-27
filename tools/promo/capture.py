@@ -16,7 +16,8 @@ from playwright.sync_api import sync_playwright
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, "..", ".."))
-URL = "file://" + os.path.join(ROOT, "index.html")
+URL = "file://" + os.environ.get("GAME", os.path.join(ROOT, "index.html"))
+VT_EPOCH = 1790000000000   # must match vt.js
 
 FLAGS = {"tut": 1, "perfTut": 1, "gfx": "h", "lang": "en", "morale": 95, "snd": 1, "mus": 1,
          **{f"seenCG{i}": 1 for i in range(5)}, **{f"seenCh{i}": 1 for i in range(5)}, **{f"seenSub{i}": 1 for i in range(5)},
@@ -41,7 +42,9 @@ SETUP_JS = """(spec)=>{
     L.push({t, k, v:vol, d:o.delay||0, dur:o.dur||0, off:o.off||0, rate:o.rate||1, fixed:o.fixed?1:0, lp:o.lp||0, pan:(o.pan==null?null:o.pan), mode}); return true; };
   const ot=AU.tone; AU.tone=function(t,f,dur,vol,type,out,f2){ L.push({t:__VT.now,k:"@tone",f,dur,v:vol,f2:f2||0,mode}); };
   const ob=BGM.play.bind(BGM); BGM.play=function(k){ L.push({t:__VT.now,k:"@bgm:"+k,mode}); };
-  if(spec.clean){ drawEvTags=function(){}; drawAimMarks=function(){}; drawUnitMarks=function(){}; }
+  { const _db=drawBackground; drawBackground=function(){ Math.random=__VT.rnd; return _db.apply(this,arguments); }; }   // drawing uses the RENDER stream
+  if(spec.clean){ drawEvTags=function(){}; drawAimMarks=function(){}; drawUnitMarks=function(){};
+    drawFlameTeam=(0,eval)("("+drawFlameTeam.toString().replace('if(mode==="charge"&&s>0.3){','if(false){')+")"); }
   if(spec.nobubbles){ drawBubbles=function(){ bubbles.length=0; }; }
   if(spec.noinsets){ drawInsets=function(){ insets.length=0; }; }
   if(spec.nobars||spec.pmontage){ let src=drawMontage.toString();
@@ -73,6 +76,30 @@ DIRECTOR_JS = """(spec)=>{
   return 0; }"""
 
 
+# keyframed camera (absolute world x, zoom, tilt, y) indexed by frame f since CHARGE was pressed (f=0 = first captured frame),
+# plus slow-motion windows. Needs a deterministic battle (vt.js sim stream) so a preview pass gives the exact timeline.
+TRACK_JS = """(spec)=>{
+  const K=spec.camtrack||[], SL=spec.slow||[], dt=1000/(spec.fps||30);
+  window.__CT={on:false,x:0,zoom:1,tilt:0.3,y:0};
+  for(const k of ['x','zoom','tilt','y']){ const own='_'+k; cam[own]=cam[k]||0;
+    Object.defineProperty(cam,k,{configurable:true, get(){ return __CT.on&&__CT[k]!=null?__CT[k]:this[own]; }, set(v){ this[own]=v; }}); }
+  let slowOn=0;
+  __VT.pre=function(now){
+    if(window.__F0==null) return;
+    const f=Math.round((now-window.__F0)/dt)-1;
+    for(const w of SL){ if(f>=w[0]&&f<w[1]){ slowmo=w[2]; slowOn=1; } else if(f===w[1]&&slowOn){ slowmo=1; slowOn=0; } }
+    if(!K.length||f<K[0][0]){ __CT.on=false; return; }
+    let i=0; while(i<K.length-1&&K[i+1][0]<=f) i++;
+    const a=K[i], b=K[Math.min(i+1,K.length-1)];
+    let u=b[0]>a[0]?(f-a[0])/(b[0]-a[0]):0; u=Math.max(0,Math.min(1,u));
+    const mode_=a[5]||'s', e= mode_==='hold'?0 : mode_==='lin'?u : mode_==='in'?u*u : mode_==='out'?1-(1-u)*(1-u) : u*u*(3-2*u);
+    __CT.on=true; __CT.x=a[1]+(b[1]-a[1])*e; __CT.zoom=a[2]+(b[2]-a[2])*e; __CT.tilt=a[3]+(b[3]-a[3])*e; __CT.y=(a[4]||0)+((b[4]||0)-(a[4]||0))*e;
+  };
+  return 0; }"""
+
+SET_DPR_JS = "(d)=>{ Object.defineProperty(window,'devicePixelRatio',{configurable:true,get:()=>d}); resize(); return DPR; }"
+
+
 def main():
     spec = json.loads(sys.argv[1])
     name = spec["name"]; fps = spec.get("fps", 30); w = spec.get("w", 1920); h = spec.get("h", 1080)
@@ -81,7 +108,7 @@ def main():
         if f.endswith(".jpg"): os.remove(os.path.join(out, f))
     vt = open(os.path.join(HERE, "vt.js")).read().replace("__SEED__", str(int(spec.get("seed", 1))))
     save = {**FLAGS, "lvl": spec["lvl"], "reserve": spec.get("men", 100) + spec.get("vets", 0) + 50, "vets": spec.get("vets", 0) + 10,
-            "income": 400, "econ": 3, "day": 5, "lastPay": int(time.time() * 1000), "moraleT": int(time.time() * 1000)}
+            "income": 400, "econ": 3, "day": 5, "lastPay": VT_EPOCH + 1000, "moraleT": VT_EPOCH + 1000}
     q = spec.get("q", 0.92)
     t0 = time.time()
     with sync_playwright() as p:
@@ -104,6 +131,8 @@ def main():
         pg.evaluate("__VT.run(600,50)")
         if spec.get("director"):
             pg.evaluate(DIRECTOR_JS, spec)
+        if spec.get("camtrack") or spec.get("slow"):
+            pg.evaluate(TRACK_JS, spec)
         if spec.get("cur"):
             pg.evaluate("(c)=>{ Object.assign(cur,c); return 0; }", spec["cur"])
         if spec.get("nowire"):
@@ -112,18 +141,27 @@ def main():
             pg.evaluate("(n)=>{ mines.length=Math.min(mines.length,n); cur.mn=mines.length; return 0; }", spec["mines"])
         info = pg.evaluate("JSON.stringify({mode, lvl:S.lvl, sendN, used, gr:cur.gr, mg:cur.mg, W, H, DPR, QUAL})")
         print("setup", info, "errs", errs[:3], f"{time.time()-t0:.1f}s", flush=True)
-        pg.evaluate("(()=>{ startCharge(); return 0; })()")
+        pg.evaluate("(()=>{ window.__F0=__VT.now; startCharge(); return 0; })()")
         meta = open(os.path.join(out, "meta.jsonl"), "w")
         dt = 1000.0 / fps
         nmax = int(spec.get("dur", 40) * fps); tail = int(spec.get("tail", 6) * fps)
         won_at = None; f = 0; tl = time.time()
         grab = "(a)=>{ __VT.step(a[0]); const u=a[2]?cv.toDataURL('image/jpeg',a[1]):''; return [u, %s]; }" % META_JS
         every = spec.get("grab_every", 1); g0 = spec.get("grab_from", 0)
+        grabs = spec.get("grab")          # [[f0,f1],...] inclusive; overrides grab_every/grab_from
+        full_dpr = spec.get("dsf", 1); low_dpr = spec.get("lowdpr"); cur_dpr = None
         stopf = os.path.join(spec.get("outdir", "/var/tmp/promo"), name + ".stop")
         def dump():
             open(os.path.join(out, "sfx.json"), "w").write(pg.evaluate("JSON.stringify(window.__SFXLOG||[])"))
         while f < nmax:
-            want = f >= g0 and (f - g0) % every == 0
+            if grabs is not None:
+                want = any(a <= f <= b for a, b in grabs)
+                if low_dpr:
+                    d = full_dpr if any(a - 3 <= f <= b for a, b in grabs) else low_dpr
+                    if d != cur_dpr:
+                        pg.evaluate(SET_DPR_JS, d); cur_dpr = d
+            else:
+                want = f >= g0 and (f - g0) % every == 0
             u, m = pg.evaluate(grab, [dt, q, want])
             if u:
                 with open(os.path.join(out, f"f{f:05d}.jpg"), "wb") as fh:
