@@ -416,3 +416,10 @@ User LIKES this version (v1.4b). Requests:
   no black screen/logo transition, no black bars, no cursor, no "Play now"/promotional text, no icons, no fast-forward, NO SOUND, open on the cover frame.
   -> deliver the requested 1920x1080 + 1080x1920 (music + SFX) and CrazyGames-ready silent 1920x1080 + 1080x1620. No text overlays at all (rules).
   Look test (lvl 7 sepia / 15 rain / 23 snow / 39 green+gas): snow (chapter III) reads best on small thumbnails; rain is too dark.
+## ROUND 16 user request (2026-09-29) - agent A working on it (claimed)
+User: make a 15 s promo video, one 1920x1080 and one 1080x1920, cut the most exciting moments ("爽点"), it must feel like a charge.
+- CrazyGames preview-video rules (docs.crazygames.com/requirements/game-covers): 15-20 s, <=50 MB, landscape 1080p 16:9 AND portrait 2:3
+  (mandatory), no sound, no black screen / logo transitions, no black bars, no mouse cursor, no "Play now"/promotional text, no fast-forward.
+- Plan: capture real gameplay frame by frame with virtual time (rAF/timers/clock stubbed, so the video runs at true game speed even though the
+  software canvas is slow), hide the HTML UI, cut a montage, add the game's own SFX + music for the social-media versions, silent versions for CrazyGames.
+- Videos are NOT committed to git (size); they go to a GitHub release. The capture tool lives in tools/promo/.
