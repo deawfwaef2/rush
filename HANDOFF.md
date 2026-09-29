@@ -423,3 +423,7 @@ User: make a 15 s promo video, one 1920x1080 and one 1080x1920, cut the most exc
 - Plan: capture real gameplay frame by frame with virtual time (rAF/timers/clock stubbed, so the video runs at true game speed even though the
   software canvas is slow), hide the HTML UI, cut a montage, add the game's own SFX + music for the social-media versions, silent versions for CrazyGames.
 - Videos are NOT committed to git (size); they go to a GitHub release. The capture tool lives in tools/promo/.
+- 2026-09-29 PAUSED (user switched to another project, repo deawfwaef2/head). State: capture pipeline works again (needs `pip install playwright
+  imageio-ffmpeg scipy`, `python3 -m playwright install chromium`, `sudo python3 -m playwright install-deps chromium`, ffmpeg symlink, SFX wavs
+  extracted to /var/tmp/promo/sfx). Overview take tools/promo/takes/ov23b.json (lvl 23, 360 men, art 4, softened cur) = a WIN at frame 1906:
+  barrage f0-225, whistle montage f225-351, charge f351-1140, melee f1140-1906, grand victory f1906+. Next: camera track + full-res grabs + EDL.
