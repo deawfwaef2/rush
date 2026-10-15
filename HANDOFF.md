@@ -427,3 +427,21 @@ User: make a 15 s promo video, one 1920x1080 and one 1080x1920, cut the most exc
   imageio-ffmpeg scipy`, `python3 -m playwright install chromium`, `sudo python3 -m playwright install-deps chromium`, ffmpeg symlink, SFX wavs
   extracted to /var/tmp/promo/sfx). Overview take tools/promo/takes/ov23b.json (lvl 23, 360 men, art 4, softened cur) = a WIN at frame 1906:
   barrage f0-225, whistle montage f225-351, charge f351-1140, melee f1140-1906, grand victory f1906+. Next: camera track + full-res grabs + EDL.
+
+---
+## v1.4g Playgama review fixes (2026-10-15)
+Playgama review ("Some updates required before publishing") asked for 3 fixes; all done + tested headless with a mock Bridge:
+1. **Title overlapped menu UI** (the big CHARGE logo covered the chapter strip). New `layoutLogo()`: the logo is placed in the free band
+   between the top bar / chapter strip (`#topStrip`) and the ▶ button and shrunk to fit (height + width). Runs on resize, toMenu, applyTexts,
+   updStrip and once per second in the menu. Checked at 1280x720, 1024x768, 960x540, 800x450, 640x360, 568x320.
+2. **Mute lost after reload / platform audio state at init.** Root cause: host mute (`isAudioEnabled===false`) was applied before the
+   AudioContext / BGM existed (they are created lazily on the first tap), so they started un-muted. Now ONE function `applyAudio()` decides
+   (S.snd / S.mus + host mute + host pause + ad + hidden tab) and is called at boot, after loadSave, inside `AU.init()` and on every change.
+   `BGM.play/pauseAll` respect it. Sound toggles call `saveAudioPref()` = save + immediate `AD.flush()` (no 500 ms debounce) + tiny
+   localStorage pref `charge_audio_v1` (re-applied after the Bridge save loads). Top-bar speaker now mutes/unmutes BOTH sound and music.
+3. **Pause signal ignored.** `PAUSE_STATE_CHANGED` (and initial `platform.isPaused`, Bridge `game` visibility, document visibility) now
+   pause the frame loop AND suspend audio. All gameplay/audio `setTimeout`s became `gTO()` game-time timers (`gCT()` to cancel) that only
+   advance inside the frame loop while not paused, so montage/shell/MG timers freeze too. Ad watchdogs + SDK wrapper keep native setTimeout
+   (they must run while paused). Sends `level_paused` / `level_resumed` for host pauses.
+Rule for future agents: **use gTO() (not setTimeout) for any new gameplay/audio timer**; route any new audio start through applyAudio()/BGM.
+Build: `python3 tools/build_zips.py` → upload `rush-playgama.zip` to the Playgama dashboard. ZIPs are attached to release v1.4g, never committed.
